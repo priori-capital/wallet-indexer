@@ -1,15 +1,15 @@
 import "@/pubsub/channels";
 
 // Import and subscribe to the following events
-import "@/pubsub/sources-updated-event";
-import _ from "lodash";
-import { redisSubscriber } from "@/common/redis";
-import { channels } from "@/pubsub/channels";
 import { logger } from "@/common/logger";
+import { redisSubscriber } from "@/common/redis";
 import { config } from "@/config/index";
-import { SourcesUpdatedEvent } from "@/pubsub/sources-updated-event";
 import { ApiKeyUpdatedEvent } from "@/pubsub/api-key-updated-event";
+import { channels } from "@/pubsub/channels";
 import { RateLimitUpdatedEvent } from "@/pubsub/rate-limit-updated-event";
+import "@/pubsub/sources-updated-event";
+import { SourcesUpdatedEvent } from "@/pubsub/sources-updated-event";
+import _ from "lodash";
 
 // Subscribe to all channels defined in the channels enum
 redisSubscriber.subscribe(_.values(channels), (err, count) => {

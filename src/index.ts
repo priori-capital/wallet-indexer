@@ -3,14 +3,13 @@ dotEnvConfig();
 
 import "@/common/tracer";
 import "@/jobs/index";
-import "@/pubsub/index";
-import "@/websockets/index";
+// import "@/pubsub/index";
+// import "@/websockets/index";
 
 import { start } from "@/api/index";
-import { config } from "@/config/index";
 import { logger } from "@/common/logger";
+import { config } from "@/config/index";
 import { getNetworkSettings } from "@/config/network";
-import { Sources } from "@/models/sources";
 
 process.on("unhandledRejection", (error) => {
   logger.error("process", `Unhandled rejection: ${error}`);
@@ -21,7 +20,7 @@ process.on("unhandledRejection", (error) => {
 
 const setup = async () => {
   if (config.doBackgroundWork) {
-    await Sources.syncSources();
+    // await Sources.syncSources();
 
     const networkSettings = getNetworkSettings();
     if (networkSettings.onStartup) {
@@ -29,8 +28,8 @@ const setup = async () => {
     }
   }
 
-  await Sources.getInstance();
-  await Sources.forceDataReload();
+  // await Sources.getInstance();
+  // await Sources.forceDataReload();
 };
 
 setup().then(() => start());
