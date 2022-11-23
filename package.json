@@ -98,8 +98,7 @@
     "@/jobs": "dist/jobs",
     "@/orderbook": "dist/orderbook",
     "@/events-sync": "dist/sync/events",
-    "@/pubsub": "dist/pubsub",
-    "@/websockets": "dist/websockets"
+    "@/pubsub": "dist/pubsub"
   },
   "devDependencies": {
     "tsconfig-paths": "^4.1.0"
