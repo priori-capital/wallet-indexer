@@ -1,9 +1,9 @@
 import axios from "axios";
 import { gql, request } from "graphql-request";
 
-import * as v001 from "@/arweave-sync/common/v001";
-import { arweaveGateway } from "@/common/provider";
+// import * as v001 from "@/arweave-sync/common/v001";
 import { logger } from "@/common/logger";
+import { arweaveGateway } from "@/common/provider";
 import { redis } from "@/common/redis";
 import { getNetworkName } from "@/config/network";
 
@@ -140,7 +140,8 @@ export const syncArweave = async (options: {
 
       switch (version) {
         case "0.0.1": {
-          await v001.processTransactionData(data);
+          logger.info("sync-arweave", `TODO handle`);
+          // await v001.processTransactionData(data);
           break;
         }
 

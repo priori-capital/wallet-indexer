@@ -4,12 +4,12 @@ import { getEventData } from "@/events-sync/data";
 import { EnhancedEvent, OnChainData } from "@/events-sync/handlers/utils";
 import * as es from "@/events-sync/storage";
 
-import * as orderUpdatesByMaker from "@/jobs/order-updates/by-maker-queue";
+// import * as orderUpdatesByMaker from "@/jobs/order-updates/by-maker-queue";
 
 export const handleEvents = async (events: EnhancedEvent[]): Promise<OnChainData> => {
   const ftTransferEvents: es.ftTransfers.Event[] = [];
 
-  const makerInfos: orderUpdatesByMaker.MakerInfo[] = [];
+  const makerInfos = [];
 
   // Handle the events
   for (const { kind, baseEventParams, log } of events) {
@@ -157,6 +157,6 @@ export const handleEvents = async (events: EnhancedEvent[]): Promise<OnChainData
   return {
     ftTransferEvents,
 
-    makerInfos,
+    // makerInfos,
   };
 };

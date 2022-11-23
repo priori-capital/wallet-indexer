@@ -1,19 +1,12 @@
-import { Interface } from "@ethersproject/abi";
 import { AddressZero } from "@ethersproject/constants";
 import { getTxTrace } from "@georgeroman/evm-tx-simulator";
-import * as Sdk from "@reservoir0x/sdk";
-import { getSource } from "@reservoir0x/sdk/dist/utils";
 
 import { baseProvider } from "@/common/provider";
 import { bn } from "@/common/utils";
-import { config } from "@/config/index";
 import { getBlocks, saveBlock } from "@/models/blocks";
-import { Sources } from "@/models/sources";
-import { SourcesEntity } from "@/models/sources/sources-entity";
-import { getTransaction, saveTransaction, saveTransactions } from "@/models/transactions";
 import { getTransactionLogs, saveTransactionLogs } from "@/models/transaction-logs";
 import { getTransactionTrace, saveTransactionTrace } from "@/models/transaction-traces";
-import { OrderKind, getOrderSourceByOrderKind } from "@/orderbook/orders";
+import { getTransaction, saveTransaction, saveTransactions } from "@/models/transactions";
 
 export const fetchBlock = async (blockNumber: number, force = false) =>
   getBlocks(blockNumber)
@@ -118,75 +111,75 @@ export const fetchTransactionLogs = async (txHash: string) =>
     });
   });
 
-export const extractAttributionData = async (
-  txHash: string,
-  orderKind: OrderKind,
-  address?: string
-) => {
-  const sources = await Sources.getInstance();
+// export const extractAttributionData = async (
+//   txHash: string,
+//   orderKind: OrderKind,
+//   address?: string
+// ) => {
+//   const sources = await Sources.getInstance();
 
-  let aggregatorSource: SourcesEntity | undefined;
-  let fillSource: SourcesEntity | undefined;
-  let taker: string | undefined;
+//   let aggregatorSource: SourcesEntity | undefined;
+//   let fillSource: SourcesEntity | undefined;
+//   let taker: string | undefined;
 
-  const orderSource = await getOrderSourceByOrderKind(orderKind, address);
+//   const orderSource = await getOrderSourceByOrderKind(orderKind, address);
 
-  // Properly set the taker when filling through router contracts
-  const tx = await fetchTransaction(txHash);
-  let router = Sdk.Common.Addresses.Routers[config.chainId]?.[tx.to];
-  if (!router) {
-    // Handle cases where we transfer directly to the router when filling bids
-    if (tx.data.startsWith("0xb88d4fde")) {
-      const iface = new Interface([
-        "function safeTransferFrom(address from, address to, uint256 tokenId, bytes data)",
-      ]);
-      const result = iface.decodeFunctionData("safeTransferFrom", tx.data);
-      router = Sdk.Common.Addresses.Routers[config.chainId]?.[result.to.toLowerCase()];
-    } else if (tx.data.startsWith("0xf242432a")) {
-      const iface = new Interface([
-        "function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes data)",
-      ]);
-      const result = iface.decodeFunctionData("safeTransferFrom", tx.data);
-      router = Sdk.Common.Addresses.Routers[config.chainId]?.[result.to.toLowerCase()];
-    }
-  }
-  if (router) {
-    taker = tx.from;
-  }
+//   // Properly set the taker when filling through router contracts
+//   const tx = await fetchTransaction(txHash);
+//   let router = Sdk.Common.Addresses.Routers[config.chainId]?.[tx.to];
+//   if (!router) {
+//     // Handle cases where we transfer directly to the router when filling bids
+//     if (tx.data.startsWith("0xb88d4fde")) {
+//       const iface = new Interface([
+//         "function safeTransferFrom(address from, address to, uint256 tokenId, bytes data)",
+//       ]);
+//       const result = iface.decodeFunctionData("safeTransferFrom", tx.data);
+//       router = Sdk.Common.Addresses.Routers[config.chainId]?.[result.to.toLowerCase()];
+//     } else if (tx.data.startsWith("0xf242432a")) {
+//       const iface = new Interface([
+//         "function safeTransferFrom(address from, address to, uint256 id, uint256 value, bytes data)",
+//       ]);
+//       const result = iface.decodeFunctionData("safeTransferFrom", tx.data);
+//       router = Sdk.Common.Addresses.Routers[config.chainId]?.[result.to.toLowerCase()];
+//     }
+//   }
+//   if (router) {
+//     taker = tx.from;
+//   }
 
-  let source = getSource(tx.data);
-  if (!source) {
-    const last4Bytes = "0x" + tx.data.slice(-8);
-    source = sources.getByDomainHash(last4Bytes)?.domain;
-  }
+//   let source = getSource(tx.data);
+//   if (!source) {
+//     const last4Bytes = "0x" + tx.data.slice(-8);
+//     source = sources.getByDomainHash(last4Bytes)?.domain;
+//   }
 
-  // Reference: https://github.com/reservoirprotocol/core/issues/22#issuecomment-1191040945
-  if (source) {
-    // TODO: Properly handle aggregator detection
-    if (source !== "opensea.io" && source !== "gem.xyz" && source !== "blur.io") {
-      // Do not associate OpenSea / Gem direct fills to Reservoir
-      aggregatorSource = await sources.getOrInsert("reservoir.tools");
-    } else if (source === "gem.xyz") {
-      // Associate Gem direct fills to Gem
-      aggregatorSource = await sources.getOrInsert("gem.xyz");
-    } else if (source === "blur.io") {
-      // Associate Blur direct fills to Blur
-      aggregatorSource = await sources.getOrInsert("blur.io");
-    }
-    fillSource = await sources.getOrInsert(source);
-  } else if (router === "reservoir.tools") {
-    aggregatorSource = await sources.getOrInsert("reservoir.tools");
-  } else if (router) {
-    aggregatorSource = await sources.getOrInsert(router);
-    fillSource = await sources.getOrInsert(router);
-  } else {
-    fillSource = orderSource;
-  }
+//   // Reference: https://github.com/reservoirprotocol/core/issues/22#issuecomment-1191040945
+//   if (source) {
+//     // TODO: Properly handle aggregator detection
+//     if (source !== "opensea.io" && source !== "gem.xyz" && source !== "blur.io") {
+//       // Do not associate OpenSea / Gem direct fills to Reservoir
+//       aggregatorSource = await sources.getOrInsert("reservoir.tools");
+//     } else if (source === "gem.xyz") {
+//       // Associate Gem direct fills to Gem
+//       aggregatorSource = await sources.getOrInsert("gem.xyz");
+//     } else if (source === "blur.io") {
+//       // Associate Blur direct fills to Blur
+//       aggregatorSource = await sources.getOrInsert("blur.io");
+//     }
+//     fillSource = await sources.getOrInsert(source);
+//   } else if (router === "reservoir.tools") {
+//     aggregatorSource = await sources.getOrInsert("reservoir.tools");
+//   } else if (router) {
+//     aggregatorSource = await sources.getOrInsert(router);
+//     fillSource = await sources.getOrInsert(router);
+//   } else {
+//     fillSource = orderSource;
+//   }
 
-  return {
-    orderSource,
-    fillSource,
-    aggregatorSource,
-    taker,
-  };
-};
+//   return {
+//     orderSource,
+//     fillSource,
+//     aggregatorSource,
+//     taker,
+//   };
+// };

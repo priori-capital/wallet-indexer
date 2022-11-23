@@ -7,8 +7,6 @@ import Hapi from "@hapi/hapi";
 import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
 import HapiSwagger from "hapi-swagger";
-import _ from "lodash";
-import { RateLimiterRes } from "rate-limiter-flexible";
 import qs from "qs";
 
 import { setupRoutes } from "@/api/routes";
@@ -16,8 +14,8 @@ import { logger } from "@/common/logger";
 import { config } from "@/config/index";
 import { getNetworkName } from "@/config/network";
 import { allJobQueues } from "@/jobs/index";
-import { ApiKeyManager } from "@/models/api-keys";
-import { RateLimitRules } from "@/models/rate-limit-rules";
+// import { ApiKeyManager } from "@/models/api-keys";
+// import { RateLimitRules } from "@/models/rate-limit-rules";
 
 let server: Hapi.Server;
 
@@ -91,7 +89,7 @@ export const start = async (): Promise<void> => {
   );
 
   // Getting rate limit instance will load rate limit rules into memory
-  await RateLimitRules.getInstance();
+  // await RateLimitRules.getInstance();
 
   const apiDescription =
     "You are viewing the reference docs for the Reservoir API.\
@@ -134,93 +132,93 @@ export const start = async (): Promise<void> => {
     },
   ]);
 
-  server.ext("onPreAuth", async (request, reply) => {
-    const key = request.headers["x-api-key"];
-    const apiKey = await ApiKeyManager.getApiKey(key);
-    const tier = apiKey?.tier || 0;
+  // server.ext("onPreAuth", async (request, reply) => {
+  //   const key = request.headers["x-api-key"];
+  //   const apiKey = await ApiKeyManager.getApiKey(key);
+  //   const tier = apiKey?.tier || 0;
 
-    // Get the rule for the incoming request
-    const rateLimitRules = await RateLimitRules.getInstance();
-    const rateLimitRule = rateLimitRules.getRule(
-      request.route.path,
-      request.route.method,
-      tier,
-      apiKey?.key
-    );
+  //   // Get the rule for the incoming request
+  //   const rateLimitRules = await RateLimitRules.getInstance();
+  //   const rateLimitRule = rateLimitRules.getRule(
+  //     request.route.path,
+  //     request.route.method,
+  //     tier,
+  //     apiKey?.key
+  //   );
 
-    // If matching rule was found
-    if (rateLimitRule) {
-      // If the requested path has no limit
-      if (rateLimitRule.points == 0) {
-        return reply.continue;
-      }
+  //   // If matching rule was found
+  //   if (rateLimitRule) {
+  //     // If the requested path has no limit
+  //     if (rateLimitRule.points == 0) {
+  //       return reply.continue;
+  //     }
 
-      const remoteAddress = request.headers["x-forwarded-for"]
-        ? _.split(request.headers["x-forwarded-for"], ",")[0]
-        : request.info.remoteAddress;
+  //     const remoteAddress = request.headers["x-forwarded-for"]
+  //       ? _.split(request.headers["x-forwarded-for"], ",")[0]
+  //       : request.info.remoteAddress;
 
-      const rateLimitKey =
-        _.isUndefined(key) || _.isEmpty(key) || _.isNull(apiKey) ? remoteAddress : key; // If no api key or the api key is invalid use IP
+  //     const rateLimitKey =
+  //       _.isUndefined(key) || _.isEmpty(key) || _.isNull(apiKey) ? remoteAddress : key; // If no api key or the api key is invalid use IP
 
-      try {
-        const rateLimiterRes = await rateLimitRule.consume(rateLimitKey, 1);
+  //     try {
+  //       const rateLimiterRes = await rateLimitRule.consume(rateLimitKey, 1);
 
-        if (rateLimiterRes) {
-          // Generate the rate limiting header and add them to the request object to be added to the response in the onPreResponse event
-          request.headers["X-RateLimit-Limit"] = `${rateLimitRule.points}`;
-          request.headers["X-RateLimit-Remaining"] = `${rateLimiterRes.remainingPoints}`;
-          request.headers["X-RateLimit-Reset"] = `${new Date(
-            Date.now() + rateLimiterRes.msBeforeNext
-          )}`;
-        }
-      } catch (error) {
-        if (error instanceof RateLimiterRes) {
-          if (
-            error.consumedPoints &&
-            (error.consumedPoints == Number(rateLimitRule.points) + 1 ||
-              error.consumedPoints % 50 == 0)
-          ) {
-            const log = {
-              message: `${rateLimitKey} ${apiKey?.appName || ""} reached allowed rate limit ${
-                rateLimitRule.points
-              } requests in ${rateLimitRule.duration}s by calling ${
-                error.consumedPoints
-              } times on route ${request.route.path}${
-                request.info.referrer ? ` from referrer ${request.info.referrer} ` : ""
-              }`,
-              route: request.route.path,
-              appName: apiKey?.appName || "",
-              key: rateLimitKey,
-              referrer: request.info.referrer,
-            };
+  //       if (rateLimiterRes) {
+  //         // Generate the rate limiting header and add them to the request object to be added to the response in the onPreResponse event
+  //         request.headers["X-RateLimit-Limit"] = `${rateLimitRule.points}`;
+  //         request.headers["X-RateLimit-Remaining"] = `${rateLimiterRes.remainingPoints}`;
+  //         request.headers["X-RateLimit-Reset"] = `${new Date(
+  //           Date.now() + rateLimiterRes.msBeforeNext
+  //         )}`;
+  //       }
+  //     } catch (error) {
+  //       if (error instanceof RateLimiterRes) {
+  //         if (
+  //           error.consumedPoints &&
+  //           (error.consumedPoints == Number(rateLimitRule.points) + 1 ||
+  //             error.consumedPoints % 50 == 0)
+  //         ) {
+  //           const log = {
+  //             message: `${rateLimitKey} ${apiKey?.appName || ""} reached allowed rate limit ${
+  //               rateLimitRule.points
+  //             } requests in ${rateLimitRule.duration}s by calling ${
+  //               error.consumedPoints
+  //             } times on route ${request.route.path}${
+  //               request.info.referrer ? ` from referrer ${request.info.referrer} ` : ""
+  //             }`,
+  //             route: request.route.path,
+  //             appName: apiKey?.appName || "",
+  //             key: rateLimitKey,
+  //             referrer: request.info.referrer,
+  //           };
 
-            logger.warn("rate-limiter", JSON.stringify(log));
-          }
+  //           logger.warn("rate-limiter", JSON.stringify(log));
+  //         }
 
-          const tooManyRequestsResponse = {
-            statusCode: 429,
-            error: "Too Many Requests",
-            message: `Max ${rateLimitRule.points} requests in ${rateLimitRule.duration}s reached`,
-          };
+  //         const tooManyRequestsResponse = {
+  //           statusCode: 429,
+  //           error: "Too Many Requests",
+  //           message: `Max ${rateLimitRule.points} requests in ${rateLimitRule.duration}s reached`,
+  //         };
 
-          return reply
-            .response(tooManyRequestsResponse)
-            .type("application/json")
-            .code(429)
-            .takeover();
-        } else {
-          logger.error("rate-limiter", `Rate limit error ${error}`);
-        }
-      }
-    }
+  //         return reply
+  //           .response(tooManyRequestsResponse)
+  //           .type("application/json")
+  //           .code(429)
+  //           .takeover();
+  //       } else {
+  //         logger.error("rate-limiter", `Rate limit error ${error}`);
+  //       }
+  //     }
+  //   }
 
-    return reply.continue;
-  });
+  //   return reply.continue;
+  // });
 
-  server.ext("onPreHandler", (request, h) => {
-    ApiKeyManager.logUsage(request);
-    return h.continue;
-  });
+  // server.ext("onPreHandler", (request, h) => {
+  //   ApiKeyManager.logUsage(request);
+  //   return h.continue;
+  // });
 
   server.ext("onPreResponse", (request, reply) => {
     const response = request.response;
