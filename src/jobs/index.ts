@@ -14,46 +14,13 @@
 // import "@/jobs/data-export";
 import "@/jobs/events-sync";
 // import "@/jobs/fill-updates";
-// import "@/jobs/metadata-index";
-// import "@/jobs/nft-balance-updates";
-// import "@/jobs/oracle";
-// import "@/jobs/order-fixes";
-// import "@/jobs/order-updates";
-// import "@/jobs/orderbook";
-// import "@/jobs/sources";
-// import "@/jobs/token-updates";
-// import "@/jobs/update-attribute";
-
-// // Export all job queues for monitoring through the BullMQ UI
-
-// import * as fixActivitiesMissingCollection from "@/jobs/activities/fix-activities-missing-collection";
-// import * as processActivityEvent from "@/jobs/activities/process-activity-event";
-// import * as removeUnsyncedEventsActivities from "@/jobs/activities/remove-unsynced-events-activities";
-
-// import * as arweaveSyncBackfill from "@/jobs/arweave-sync/backfill-queue";
-// import * as arweaveSyncRealtime from "@/jobs/arweave-sync/realtime-queue";
-
-// import * as backfillCollectionsRoyalties from "@/jobs/backfill/backfill-collections-royalties";
-// import * as backfillFixOpenSeaOrders from "@/jobs/backfill/backfill-fix-opensea-realtime-asks";
-
-// import * as topBidUpdate from "@/jobs/bid-updates/top-bid-update-queue";
-
-// import * as collectionsRefresh from "@/jobs/collections-refresh/collections-refresh";
-// import * as collectionsRefreshCache from "@/jobs/collections-refresh/collections-refresh-cache";
-
-// import * as collectionUpdatesFloorAsk from "@/jobs/collection-updates/floor-queue";
-// import * as collectionUpdatesMetadata from "@/jobs/collection-updates/metadata-queue";
-// import * as rarity from "@/jobs/collection-updates/rarity-queue";
-// import * as collectionUpdatesTopBid from "@/jobs/collection-updates/top-bid-queue";
-// import * as collectionRecalcFloorAsk from "@/jobs/collection-updates/recalc-floor-queue";
-
-import * as currencies from "@/jobs/currencies/index";
 
 // import * as dailyVolumes from "@/jobs/daily-volumes/daily-volumes";
 // import * as eventsSyncBackfillProcess from "@/jobs/events-sync/process/backfill";
-import * as eventsSyncRealtimeProcess from "@/jobs/events-sync/process/realtime";
-import * as eventsSyncRealtime from "@/jobs/events-sync/realtime-queue";
-import * as eventsSyncFtTransfersWriteBuffer from "@/jobs/events-sync/write-buffers/ft-transfers";
+// import * as backfillUserTransfers from "@/jobs/backfill/backfill-user-transfers";
+// import * as eventsSyncRealtimeProcess from "@/jobs/events-sync/process/realtime";
+// import * as eventsSyncRealtime from "@/jobs/events-sync/realtime-queue";
+// import * as eventsSyncFtTransfersWriteBuffer from "@/jobs/events-sync/write-buffers/ft-transfers";
 // import * as eventsSyncNftTransfersWriteBuffer from "@/jobs/events-sync/write-buffers/nft-transfers";
 
 // import * as fillUpdates from "@/jobs/fill-updates/queue";
@@ -104,7 +71,7 @@ export const allJobQueues = [
   // backfillCollectionsRoyalties.queue,
   // backfillFixOpenSeaOrders.queue,
 
-  currencies.queue,
+  // currencies.queue,
 
   // topBidUpdate.queue,
 
@@ -124,9 +91,10 @@ export const allJobQueues = [
   // eventsSyncBackfill.queue,
   // eventsSyncBlockCheck.queue,
   // eventsSyncBackfillProcess.queue,
-  eventsSyncRealtimeProcess.queue,
-  eventsSyncRealtime.queue,
-  eventsSyncFtTransfersWriteBuffer.queue,
+  // eventsSyncRealtimeProcess.queue,
+  // eventsSyncRealtime.queue,
+  // eventsSyncFtTransfersWriteBuffer.queue,
+  // backfillUserTransfers.queue,
   // eventsSyncNftTransfersWriteBuffer.queue,
 
   // fillUpdates.queue,

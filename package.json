@@ -96,9 +96,7 @@
     "@/models": "dist/models",
     "@/utils": "dist/utils",
     "@/jobs": "dist/jobs",
-    "@/orderbook": "dist/orderbook",
-    "@/events-sync": "dist/sync/events",
-    "@/pubsub": "dist/pubsub"
+    "@/events-sync": "dist/sync/events"
   },
   "devDependencies": {
     "tsconfig-paths": "^4.1.0"

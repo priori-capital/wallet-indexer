@@ -16,6 +16,7 @@ export const handleEvents = async (events: EnhancedEvent[]): Promise<OnChainData
     const eventData = getEventData([kind])[0];
     switch (kind) {
       case "erc20-transfer": {
+        console.log("li sync", "erc20 transfer event")
         const parsedLog = eventData.abi.parseLog(log);
         const from = parsedLog.args["from"].toLowerCase();
         const to = parsedLog.args["to"].toLowerCase();

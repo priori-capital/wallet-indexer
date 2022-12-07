@@ -19,10 +19,10 @@
       "@/common/*": ["common/*"],
       "@/config/*": ["config/*"],
       "@/jobs/*": ["jobs/*"],
-      "@/orderbook/*": ["orderbook/*"],
+      // "@/orderbook/*": ["orderbook/*"],
       "@/utils/*": ["utils/*"],
       "@/models/*": ["models/*"],
-      "@/pubsub/*": ["pubsub/*"],
+      // "@/pubsub/*": ["pubsub/*"],
       "@/events-sync/*": ["sync/events/*"]
     },
     "typeRoots": ["node_modules/@types", "./custom-typings"]

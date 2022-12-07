@@ -1,6 +1,6 @@
-import _ from "lodash";
 import { idb, pgp } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
+import _ from "lodash";
 
 export type Transaction = {
   hash: string;
