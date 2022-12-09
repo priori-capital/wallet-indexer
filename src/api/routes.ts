@@ -1,14 +1,11 @@
+import * as transfersEndpoints from "@/api/endpoints/users/transfers";
 import { Server } from "@hapi/hapi";
 
-
 export const setupRoutes = (server: Server) => {
-
   server.route({
     method: "GET",
-    path: "welcome",
-    handler: function (request, h) {
-      return "Hello World!";
-    }
+    path: "/users",
+    options: transfersEndpoints.getTransfersV2Options,
   });
   // Activity
 
@@ -1021,11 +1018,11 @@ export const setupRoutes = (server: Server) => {
   //   options: transfersEndpoints.getSalesBulkV1Options,
   // });
 
-  // server.route({
-  //   method: "GET",
-  //   path: "/transfers/v2",
-  //   options: transfersEndpoints.getTransfersV2Options,
-  // });
+  server.route({
+    method: "GET",
+    path: "/users/transfers",
+    options: transfersEndpoints.getTransfersV2Options,
+  });
 
   // server.route({
   //   method: "GET",

@@ -1,8 +1,4 @@
-import { createBullBoard } from "@bull-board/api";
-import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
-import { HapiAdapter } from "@bull-board/hapi";
 import Basic from "@hapi/basic";
-import { Boom } from "@hapi/boom";
 import Hapi from "@hapi/hapi";
 import Inert from "@hapi/inert";
 import Vision from "@hapi/vision";
@@ -13,7 +9,7 @@ import { setupRoutes } from "@/api/routes";
 import { logger } from "@/common/logger";
 import { config } from "@/config/index";
 import { getNetworkName } from "@/config/network";
-import { allJobQueues } from "@/jobs/index";
+// import { allJobQueues } from "@/jobs/index";
 // import { ApiKeyManager } from "@/models/api-keys";
 // import { RateLimitRules } from "@/models/rate-limit-rules";
 
@@ -70,23 +66,23 @@ export const start = async (): Promise<void> => {
   });
 
   // Setup the BullMQ monitoring UI
-  const serverAdapter = new HapiAdapter();
-  createBullBoard({
-    queues: allJobQueues.map((q) => new BullMQAdapter(q)),
-    serverAdapter,
-  });
-  serverAdapter.setBasePath("/admin/bullmq");
-  await server.register(
-    {
-      plugin: serverAdapter.registerPlugin(),
-      options: {
-        auth: "simple",
-      },
-    },
-    {
-      routes: { prefix: "/admin/bullmq" },
-    }
-  );
+  // const serverAdapter = new HapiAdapter();
+  // createBullBoard({
+  //   queues: allJobQueues.map((q) => new BullMQAdapter(q)),
+  //   serverAdapter,
+  // });
+  // serverAdapter.setBasePath("/admin/bullmq");
+  // await server.register(
+  //   {
+  //     plugin: serverAdapter.registerPlugin(),
+  //     options: {
+  //       auth: "simple",
+  //     },
+  //   },
+  //   {
+  //     routes: { prefix: "/admin/bullmq" },
+  //   }
+  // );
 
   // Getting rate limit instance will load rate limit rules into memory
   // await RateLimitRules.getInstance();
@@ -220,33 +216,32 @@ export const start = async (): Promise<void> => {
   //   return h.continue;
   // });
 
-  server.ext("onPreResponse", (request, reply) => {
-    const response = request.response;
+  // server.ext("onPreResponse", (request, reply) => {
+  //   const response = request.response;
 
-    // Set custom response in case of timeout
-    if ("isBoom" in response && "output" in response) {
-      if (response["output"]["statusCode"] == 503) {
-        const timeoutResponse = {
-          statusCode: 504,
-          error: "Gateway Timeout",
-          message: "Query cancelled because it took longer than 10s to execute",
-        };
+  //   // Set custom response in case of timeout
+  //   if ("isBoom" in response && "output" in response) {
+  //     if (response["output"]["statusCode"] == 503) {
+  //       const timeoutResponse = {
+  //         statusCode: 504,
+  //         error: "Gateway Timeout",
+  //         message: "Query cancelled because it took longer than 10s to execute",
+  //       };
 
-        return reply.response(timeoutResponse).type("application/json").code(504);
-      }
-    }
+  //       return reply.response(timeoutResponse).type("application/json").code(504);
+  //     }
+  //   }
 
-    if (!(response instanceof Boom)) {
-      response.header("X-RateLimit-Limit", request.headers["X-RateLimit-Limit"]);
-      response.header("X-RateLimit-Remaining", request.headers["X-RateLimit-Remaining"]);
-      response.header("X-RateLimit-Reset", request.headers["X-RateLimit-Reset"]);
-    }
+  //   if (!(response instanceof Boom)) {
+  //     response.header("X-RateLimit-Limit", request.headers["X-RateLimit-Limit"]);
+  //     response.header("X-RateLimit-Remaining", request.headers["X-RateLimit-Remaining"]);
+  //     response.header("X-RateLimit-Reset", request.headers["X-RateLimit-Reset"]);
+  //   }
 
-    return reply.continue;
-  });
-
+  //   return reply.continue;
+  // });
   setupRoutes(server);
-
   await server.start();
+
   logger.info("process", `Started on port ${config.port}`);
 };

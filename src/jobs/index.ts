@@ -15,6 +15,8 @@
 import "@/jobs/events-sync";
 // import "@/jobs/fill-updates";
 
+import * as processActivityEvent from "@/jobs/activities/process-activity-event";
+
 // import * as dailyVolumes from "@/jobs/daily-volumes/daily-volumes";
 // import * as eventsSyncBackfillProcess from "@/jobs/events-sync/process/backfill";
 // import * as backfillUserTransfers from "@/jobs/backfill/backfill-user-transfers";
@@ -62,7 +64,7 @@ import "@/jobs/events-sync";
 
 export const allJobQueues = [
   // fixActivitiesMissingCollection.queue,
-  // processActivityEvent.queue,
+  processActivityEvent.queue,
   // removeUnsyncedEventsActivities.queue,
 
   // arweaveSyncBackfill.queue,

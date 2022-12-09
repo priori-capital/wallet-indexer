@@ -22,27 +22,24 @@ import * as erc20 from "@/events-sync/handlers/erc20";
 // import * as rarible from "@/events-sync/handlers/rarible";
 
 export type EventsInfo = {
-  kind:
-    | "erc20"
-    | "erc721"
-    | "erc1155"
-    // | "blur"
-    // | "cryptopunks"
-    // | "element"
-    // | "forward"
-    // | "foundation"
-    // | "looks-rare"
-    // | "nftx"
-    // | "nouns"
-    // | "quixotic"
-    // | "seaport"
-    // | "sudoswap"
-    // | "wyvern"
-    // | "x2y2"
-    // | "zeroex-v4"
-    // | "zora"
-    // | "universe"
-    // | "rarible";
+  kind: "erc20" | "erc721" | "erc1155";
+  // | "blur"
+  // | "cryptopunks"
+  // | "element"
+  // | "forward"
+  // | "foundation"
+  // | "looks-rare"
+  // | "nftx"
+  // | "nouns"
+  // | "quixotic"
+  // | "seaport"
+  // | "sudoswap"
+  // | "wyvern"
+  // | "x2y2"
+  // | "zeroex-v4"
+  // | "zora"
+  // | "universe"
+  // | "rarible";
   events: EnhancedEvent[];
   backfill?: boolean;
 };

@@ -1,16 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Request, RouteOptions } from "@hapi/hapi";
-import Joi from "joi";
 
 import { redb } from "@/common/db";
 import { logger } from "@/common/logger";
-import {
-  formatEth,
-  fromBuffer,
-  regex, toBuffer
-} from "@/common/utils";
-import { Assets } from "@/utils/assets";
+import { formatEth, fromBuffer, regex, toBuffer } from "@/common/utils";
+import Joi from "joi";
 
 const version = "v1";
 
@@ -53,10 +48,10 @@ export const getTransfersV2Options: RouteOptions = {
       //   .description("Filter to a particular attribute, e.g. `attributes[Type]=Original`"),
       limit: Joi.number().integer().min(1).max(100).default(20),
       continuation: Joi.string().pattern(regex.base64),
-    })
-      // .oxor("contract", "token", "collection")
-      // .or("contract", "token", "collection")
-      // .with("attributes", "collection"),
+    }),
+    // .oxor("contract", "token", "collection")
+    // .or("contract", "token", "collection")
+    // .with("attributes", "collection"),
   },
   // response: {
   //   schema: Joi.object({
@@ -97,12 +92,12 @@ export const getTransfersV2Options: RouteOptions = {
       // and sale events that occurred close to each other. In most cases
       // we will first have the transfer followed by the sale but we have
       // some exceptions.
-      let baseQuery = `select * from ft_transfer_events fte`;
+      let baseQuery = `select * from user_activities fte`;
       // Filters
       const conditions: string[] = [];
       if (query.user) {
         query.user = toBuffer(query.user);
-        conditions.push(`fte.from = $/user/`);
+        conditions.push(`fte.address = $/user/`);
       }
 
       if (conditions.length) {
@@ -120,7 +115,6 @@ export const getTransfersV2Options: RouteOptions = {
       // Pagination
       baseQuery += ` LIMIT $/limit/`;
 
-
       const rawResult = await redb.manyOrNone(baseQuery, query);
 
       const continuation = null;
@@ -135,33 +129,30 @@ export const getTransfersV2Options: RouteOptions = {
       // }
 
       const result = rawResult.map((r) => ({
+        type: r.type,
+        direction: r.direction,
         token: {
-          contract: fromBuffer(r.address),
-          tokenId: r.token_id,
+          contract: fromBuffer(r.contract),
           name: r.name,
-          image: Assets.getLocalAssetsLink(r.image),
-          collection: {
-            id: r.collection_id,
-            name: r.collection_name,
-          },
+          // image: Assets.getLocalAssetsLink(r.image),
         },
-        from: fromBuffer(r.from),
-        to: fromBuffer(r.to),
+        from: fromBuffer(r.from_address),
+        to: fromBuffer(r.to_address),
         amount: String(r.amount),
-        block: r.block,
-        txHash: fromBuffer(r.tx_hash),
-        logIndex: r.log_index,
-        batchIndex: r.batch_index,
-        timestamp: r.timestamp,
+        address: fromBuffer(r.address),
+        // block: r.block,
+        txHash: fromBuffer(r.hash),
+        logIndex: r.metadata.logIndex,
+        batchIndex: r.metadata.batchIndex,
+        timestamp: r.eventTimestamp,
         price: r.price ? formatEth(r.price) : null,
       }));
-
       return {
         transfers: result,
         continuation,
       };
     } catch (error) {
-      logger.error(`get-transfers-${version}-handler`, `Handler failure: ${error}`);
+      logger.error(`get-users-transfers-${version}-handler`, `Handler failure: ${error}`);
       throw error;
     }
   },

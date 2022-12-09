@@ -5,7 +5,7 @@ import { BaseEventParams } from "@/events-sync/parser";
 
 import * as es from "@/events-sync/storage";
 
-// import * as processActivityEvent from "@/jobs/activities/process-activity-event";
+import * as processActivityEvent from "@/jobs/activities/process-activity-event";
 // import * as fillUpdates from "@/jobs/fill-updates/queue";
 // import * as orderUpdatesById from "@/jobs/order-updates/by-id-queue";
 // import * as orderUpdatesByMaker from "@/jobs/order-updates/by-maker-queue";
@@ -57,6 +57,7 @@ export type OnChainData = {
 
 // Process on-chain data (save to db, trigger any further processes, ...)
 export const processOnChainData = async (data: OnChainData, backfill?: boolean) => {
+  console.log("process on chain data");
   // Post-process fill events
   // const allFillEvents = concat(data.fillEvents, data.fillEventsPartial, data.fillEventsOnChain);
   // if (!backfill) {
@@ -137,29 +138,29 @@ export const processOnChainData = async (data: OnChainData, backfill?: boolean) 
   // });
   // await processActivityEvent.addToQueue(fillActivityInfos);
 
-  // // Process transfer activities
-  // const transferActivityInfos: processActivityEvent.EventInfo[] = (
-  //   data.nftTransferEvents ?? []
-  // ).map((event) => ({
-  //   context: [
-  //     processActivityEvent.EventKind.nftTransferEvent,
-  //     event.baseEventParams.txHash,
-  //     event.baseEventParams.logIndex,
-  //     event.baseEventParams.batchIndex,
-  //   ].join(":"),
-  //   kind: processActivityEvent.EventKind.nftTransferEvent,
-  //   data: {
-  //     contract: event.baseEventParams.address,
-  //     tokenId: event.tokenId,
-  //     fromAddress: event.from,
-  //     toAddress: event.to,
-  //     amount: Number(event.amount),
-  //     transactionHash: event.baseEventParams.txHash,
-  //     logIndex: event.baseEventParams.logIndex,
-  //     batchIndex: event.baseEventParams.batchIndex,
-  //     blockHash: event.baseEventParams.blockHash,
-  //     timestamp: event.baseEventParams.timestamp,
-  //   },
-  // }));
-  // await processActivityEvent.addToQueue(transferActivityInfos);
+  // Process transfer activities
+  const transferActivityInfos: processActivityEvent.EventInfo[] = (data.ftTransferEvents ?? []).map(
+    (event) => ({
+      context: [
+        processActivityEvent.EventKind.nftTransferEvent,
+        event.baseEventParams.txHash,
+        event.baseEventParams.logIndex,
+        event.baseEventParams.batchIndex,
+      ].join(":"),
+      kind: processActivityEvent.EventKind.nftTransferEvent,
+      data: {
+        contract: event.baseEventParams.address,
+        tokenId: "",
+        fromAddress: event.from,
+        toAddress: event.to,
+        amount: Number(event.amount),
+        transactionHash: event.baseEventParams.txHash,
+        logIndex: event.baseEventParams.logIndex,
+        batchIndex: event.baseEventParams.batchIndex,
+        blockHash: event.baseEventParams.blockHash,
+        timestamp: event.baseEventParams.timestamp,
+      },
+    })
+  );
+  await processActivityEvent.addToQueue(transferActivityInfos);
 };

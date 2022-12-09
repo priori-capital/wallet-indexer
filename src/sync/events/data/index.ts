@@ -11,10 +11,7 @@ export type EventDataKind =
   // | "erc1155-transfer-single"
   // | "erc1155-transfer-batch"
   // | "erc721/1155-approval-for-all"
-  | "erc20-approval"
-  | "erc20-transfer"
-  | "weth-deposit"
-  | "weth-withdrawal"
+  "erc20-approval" | "erc20-transfer" | "weth-deposit" | "weth-withdrawal";
 
 export type EventData = {
   kind: EventDataKind;
