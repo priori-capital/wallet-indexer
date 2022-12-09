@@ -4,7 +4,7 @@ import { Request, RouteOptions } from "@hapi/hapi";
 
 import { redb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { formatEth, fromBuffer, regex, toBuffer } from "@/common/utils";
+import { buildContinuation, formatEth, fromBuffer, regex, toBuffer } from "@/common/utils";
 import Joi from "joi";
 
 const version = "v1";
@@ -59,16 +59,15 @@ export const getTransfersV2Options: RouteOptions = {
   //       Joi.object({
   //         token: Joi.object({
   //           contract: Joi.string().lowercase().pattern(regex.address),
-  //           tokenId: Joi.string().pattern(regex.number),
+  //           decimals: Joi.string().pattern(regex.number),
   //           name: Joi.string().allow(null, ""),
   //           image: Joi.string().allow(null, ""),
-  //           collection: Joi.object({
-  //             id: Joi.string().allow(null),
-  //             name: Joi.string().allow(null, ""),
-  //           }),
   //         }),
+  //         type:Joi.string(),
+  //         direction:Joi.string(),
   //         from: Joi.string().lowercase().pattern(regex.address),
-  //         to: Joi.string().lowercase().pattern(regex.address),
+  //         destination: Joi.string().lowercase().pattern(regex.address),
+  //         account: Joi.string().lowercase().pattern(regex.address),
   //         amount: Joi.string(),
   //         txHash: Joi.string().lowercase().pattern(regex.bytes32),
   //         block: Joi.number(),
@@ -79,9 +78,9 @@ export const getTransfersV2Options: RouteOptions = {
   //       })
   //     ),
   //     continuation: Joi.string().pattern(regex.base64).allow(null),
-  //   }).label(`getTransfers${version.toUpperCase()}Response`),
+  //   }).label(`getUsersErc20Transfers${version.toUpperCase()}Response`),
   //   failAction: (_request, _h, error) => {
-  //     logger.error(`get-transfers-${version}-handler`, `Wrong response schema: ${error}`);
+  //     logger.error(`get-users-erc20-transfers-${version}-handler`, `Wrong response schema: ${error}`);
   //     throw error;
   //   },
   // },
@@ -92,12 +91,12 @@ export const getTransfersV2Options: RouteOptions = {
       // and sale events that occurred close to each other. In most cases
       // we will first have the transfer followed by the sale but we have
       // some exceptions.
-      let baseQuery = `select * from user_activities fte`;
+      let baseQuery = `select * from user_activities ua`;
       // Filters
       const conditions: string[] = [];
       if (query.user) {
         query.user = toBuffer(query.user);
-        conditions.push(`fte.address = $/user/`);
+        conditions.push(`ua.address = $/user/`);
       }
 
       if (conditions.length) {
@@ -105,28 +104,26 @@ export const getTransfersV2Options: RouteOptions = {
       }
 
       // Sorting
-      // baseQuery += `
-      //   ORDER BY
-      //     nft_transfer_events.timestamp DESC,
-      //     nft_transfer_events.log_index DESC,
-      //     nft_transfer_events.batch_index DESC
-      // `;
+      baseQuery += `
+        ORDER BY
+          ua.event_timestamp DESC
+      `;
 
       // Pagination
       baseQuery += ` LIMIT $/limit/`;
-
       const rawResult = await redb.manyOrNone(baseQuery, query);
 
-      const continuation = null;
-      // if (rawResult.length === query.limit) {
-      //   continuation = buildContinuation(
-      //     rawResult[rawResult.length - 1].timestamp +
-      //       "_" +
-      //       rawResult[rawResult.length - 1].log_index +
-      //       "_" +
-      //       rawResult[rawResult.length - 1].batch_index
-      //   );
-      // }
+      let continuation = null;
+      if (rawResult.length === query.limit) {
+        continuation = buildContinuation(
+          rawResult[rawResult.length - 1].event_timestamp
+          // +
+          // "_" +
+          // rawResult[rawResult.length - 1].log_index +
+          // "_" +
+          // rawResult[rawResult.length - 1].batch_index
+        );
+      }
 
       const result = rawResult.map((r) => ({
         type: r.type,
@@ -137,10 +134,10 @@ export const getTransfersV2Options: RouteOptions = {
           // image: Assets.getLocalAssetsLink(r.image),
         },
         from: fromBuffer(r.from_address),
-        to: fromBuffer(r.to_address),
+        destination: fromBuffer(r.to_address),
         amount: String(r.amount),
-        address: fromBuffer(r.address),
-        // block: r.block,
+        account: fromBuffer(r.address),
+        block: r.block,
         txHash: fromBuffer(r.hash),
         logIndex: r.metadata.logIndex,
         batchIndex: r.metadata.batchIndex,

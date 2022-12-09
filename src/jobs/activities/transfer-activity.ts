@@ -53,7 +53,6 @@ export class TransferActivity {
     }
 
     await Promise.all([
-      // Activities.addActivities([activity]),
       UserActivities.addActivities(userActivities),
     ]);
   }
