@@ -187,10 +187,6 @@ export const syncEvents = async (
 
 export const unsyncEvents = async (block: number, blockHash: string) => {
   await Promise.all([
-    // es.fills.removeEvents(block, blockHash),
-    // es.bulkCancels.removeEvents(block, blockHash),
-    // es.nonceCancels.removeEvents(block, blockHash),
-    // es.cancels.removeEvents(block, blockHash),
     es.ftTransfers.removeEvents(block, blockHash),
     // es.nftApprovals.removeEvents(block, blockHash),
     // es.nftTransfers.removeEvents(block, blockHash),

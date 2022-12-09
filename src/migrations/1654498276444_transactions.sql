@@ -6,7 +6,13 @@ CREATE TABLE "transactions" (
   "to" BYTEA NOT NULL,
   "value" NUMERIC NOT NULL,
   -- Optimization: force the `data` column to be TOASTed
-  "data" BYTEA
+  "data" BYTEA,
+   "block_number" INT,
+ "block_timestamp" INT,
+ "gas_used" NUMERIC,
+ "gas_price" NUMERIC,
+ "gas_fee" NUMERIC
+
 );
 
 ALTER TABLE "transactions"
