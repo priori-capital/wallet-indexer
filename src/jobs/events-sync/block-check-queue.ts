@@ -59,44 +59,9 @@ if (config.doBackgroundWork) {
           const result = await idb.manyOrNone(
             `
               (SELECT
-                nft_transfer_events.block_hash
-              FROM nft_transfer_events
-              WHERE nft_transfer_events.block = $/block/)
-
-              UNION
-
-              (SELECT
                 ft_transfer_events.block_hash
               FROM ft_transfer_events
               WHERE ft_transfer_events.block = $/block/)
-
-              UNION
-
-              (SELECT
-                nft_approval_events.block_hash
-              FROM nft_approval_events
-              WHERE nft_approval_events.block = $/block/)
-
-              UNION
-
-              (SELECT
-                fill_events_2.block_hash
-              FROM fill_events_2
-              WHERE fill_events_2.block = $/block/)
-
-              UNION
-
-              (SELECT
-                cancel_events.block_hash
-              FROM cancel_events
-              WHERE cancel_events.block = $/block/)
-
-              UNION
-
-              (SELECT
-                bulk_cancel_events.block_hash
-              FROM bulk_cancel_events
-              WHERE bulk_cancel_events.block = $/block/)
             `,
             { block }
           );

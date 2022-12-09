@@ -16,7 +16,7 @@ export enum ActivityType {
 }
 
 export class TransferActivity {
-  public static async handleEvent(data: NftTransferEventData) {
+  public static async handleEvent(data:TransferEventData) {
     const activity = {
       type: data.fromAddress == AddressZero ? ActivityType.mint : ActivityType.transfer,
       hash: data.transactionHash,
@@ -52,15 +52,12 @@ export class TransferActivity {
       userActivities.push(fromUserActivity);
     }
 
-    await Promise.all([
-      UserActivities.addActivities(userActivities),
-    ]);
+    await Promise.all([UserActivities.addActivities(userActivities)]);
   }
 }
 
-export type NftTransferEventData = {
+export type TransferEventData = {
   contract: string;
-  tokenId: string;
   fromAddress: string;
   toAddress: string;
   amount: number;
@@ -68,5 +65,6 @@ export type NftTransferEventData = {
   logIndex: number;
   batchIndex: number;
   blockHash: string;
+  block: number,
   timestamp: number;
 };

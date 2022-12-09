@@ -130,6 +130,7 @@ export const syncArweave = async (options: {
         });
         data = result.data;
       } else {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         data = JSON.parse(
           (await arweaveGateway.transactions.getData(node.id, {
             decode: true,

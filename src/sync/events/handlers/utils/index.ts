@@ -21,17 +21,6 @@ export type EnhancedEvent = {
 
 // Data extracted from purely on-chain information
 export type OnChainData = {
-  // // Fills
-  // fillEvents?: es.fills.Event[];
-  // fillEventsPartial?: es.fills.Event[];
-  // fillEventsOnChain?: es.fills.Event[];
-
-  // // Cancels
-  // cancelEvents?: es.cancels.Event[];
-  // cancelEventsOnChain?: es.cancels.Event[];
-  // bulkCancelEvents?: es.bulkCancels.Event[];
-  // nonceCancelEvents?: es.nonceCancels.Event[];
-
   // Approvals
   // Due to some complexities around them, ft approvals are handled
   // differently (eg. ft approvals can decrease implicitly when the
@@ -42,22 +31,10 @@ export type OnChainData = {
   // Transfers
   ftTransferEvents?: es.ftTransfers.Event[];
   // nftTransferEvents?: es.nftTransfers.Event[];
-
-  // For keeping track of mints and last sales
-  // fillInfos?: fillUpdates.FillInfo[];
-  // mintInfos?: tokenUpdatesMint.MintInfo[];
-
-  // // For properly keeping orders validated on the go
-  // orderInfos?: orderUpdatesById.OrderInfo[];
-  // makerInfos?: orderUpdatesByMaker.MakerInfo[];
-
-  // // Orders
-  // orders?: orderbookOrders.GenericOrderInfo[];
 };
 
 // Process on-chain data (save to db, trigger any further processes, ...)
 export const processOnChainData = async (data: OnChainData, backfill?: boolean) => {
-  console.log("process on chain data");
   // Post-process fill events
   // const allFillEvents = concat(data.fillEvents, data.fillEventsPartial, data.fillEventsOnChain);
   // if (!backfill) {
@@ -103,54 +80,21 @@ export const processOnChainData = async (data: OnChainData, backfill?: boolean) 
 
   // Mints and last sales
   // await tokenUpdatesMint.addToQueue(data.mintInfos ?? []);
-  // await fillUpdates.addToQueue(data.fillInfos ?? []);
 
   // TODO: Is this the best place to handle activities?
-
-  // Process fill activities
-  // const fillActivityInfos: processActivityEvent.EventInfo[] = allFillEvents.map((event) => {
-  //   let fromAddress = event.maker;
-  //   let toAddress = event.taker;
-
-  //   if (event.orderSide === "buy") {
-  //     fromAddress = event.taker;
-  //     toAddress = event.maker;
-  //   }
-
-  //   return {
-  //     kind: processActivityEvent.EventKind.fillEvent,
-  //     data: {
-  //       contract: event.contract,
-  //       tokenId: event.tokenId,
-  //       fromAddress,
-  //       toAddress,
-  //       price: Number(event.price),
-  //       amount: Number(event.amount),
-  //       transactionHash: event.baseEventParams.txHash,
-  //       logIndex: event.baseEventParams.logIndex,
-  //       batchIndex: event.baseEventParams.batchIndex,
-  //       blockHash: event.baseEventParams.blockHash,
-  //       timestamp: event.baseEventParams.timestamp,
-  //       orderId: event.orderId || "",
-  //       orderSourceIdInt: Number(event.orderSourceId),
-  //     },
-  //   };
-  // });
-  // await processActivityEvent.addToQueue(fillActivityInfos);
 
   // Process transfer activities
   const transferActivityInfos: processActivityEvent.EventInfo[] = (data.ftTransferEvents ?? []).map(
     (event) => ({
       context: [
-        processActivityEvent.EventKind.nftTransferEvent,
+        processActivityEvent.EventKind.erc20TransferEvent,
         event.baseEventParams.txHash,
         event.baseEventParams.logIndex,
         event.baseEventParams.batchIndex,
       ].join(":"),
-      kind: processActivityEvent.EventKind.nftTransferEvent,
+      kind: processActivityEvent.EventKind.erc20TransferEvent,
       data: {
         contract: event.baseEventParams.address,
-        tokenId: "",
         fromAddress: event.from,
         toAddress: event.to,
         amount: Number(event.amount),
@@ -158,6 +102,7 @@ export const processOnChainData = async (data: OnChainData, backfill?: boolean) 
         logIndex: event.baseEventParams.logIndex,
         batchIndex: event.baseEventParams.batchIndex,
         blockHash: event.baseEventParams.blockHash,
+        block: event.baseEventParams.block,
         timestamp: event.baseEventParams.timestamp,
       },
     })

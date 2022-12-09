@@ -19,12 +19,12 @@ import * as realtimeEventsSync from "@/jobs/events-sync/realtime-queue";
 // concurrent upserts of the balances):
 // https://stackoverflow.com/questions/46366324/postgres-deadlocks-on-concurrent-upserts
 
-// import "@/jobs/events-sync/backfill-queue";
-// import "@/jobs/events-sync/block-check-queue";
-// import "@/jobs/events-sync/process/backfill";
-// import "@/jobs/events-sync/process/realtime";
-// import "@/jobs/events-sync/realtime-queue";
-// import "@/jobs/events-sync/write-buffers/ft-transfers";
+import "@/jobs/events-sync/backfill-queue";
+import "@/jobs/events-sync/block-check-queue";
+import "@/jobs/events-sync/process/backfill";
+import "@/jobs/events-sync/process/realtime";
+import "@/jobs/events-sync/realtime-queue";
+import "@/jobs/events-sync/write-buffers/ft-transfers";
 // import "@/jobs/events-sync/write-buffers/nft-transfers";
 
 // BACKGROUND WORKER ONLY

@@ -7,7 +7,7 @@ import _ from "lodash";
 import { logger } from "@/common/logger";
 import { redis } from "@/common/redis";
 import { config } from "@/config/index";
-import { NftTransferEventData, TransferActivity } from "@/jobs/activities/transfer-activity";
+import { TransferActivity, TransferEventData } from "@/jobs/activities/transfer-activity";
 
 const QUEUE_NAME = "process-activity-event-queue";
 
@@ -33,8 +33,8 @@ if (config.doBackgroundWork) {
       const { kind, data } = job.data as EventInfo;
 
       switch (kind) {
-        case EventKind.nftTransferEvent:
-          await TransferActivity.handleEvent(data as NftTransferEventData);
+        case EventKind.erc20TransferEvent:
+          await TransferActivity.handleEvent(data as TransferEventData);
           break;
       }
     },
@@ -47,21 +47,14 @@ if (config.doBackgroundWork) {
 }
 
 export enum EventKind {
-  nftTransferEvent = "nftTransferEvent",
   erc20TransferEvent = "erc20TransferEvent",
 }
 
-export type EventInfo =
-  | {
-      kind: EventKind.nftTransferEvent;
-      data: NftTransferEventData;
-      context?: string;
-    }
-  | {
-      kind: EventKind.erc20TransferEvent;
-      data: NftTransferEventData;
-      context?: string;
-    };
+export type EventInfo = {
+  kind: EventKind.erc20TransferEvent;
+  data: TransferEventData;
+  context?: string;
+};
 
 export const addToQueue = async (events: EventInfo[]) => {
   await queue.addBulk(

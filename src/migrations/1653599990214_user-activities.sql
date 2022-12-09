@@ -5,8 +5,6 @@ CREATE TABLE user_activities (
 	hash text,
     type text NOT NULL,
     contract BYTEA,
-    collection_id text,
-    token_id NUMERIC(78),
     address BYTEA,
     from_address BYTEA,
     to_address BYTEA,
@@ -14,6 +12,7 @@ CREATE TABLE user_activities (
     amount NUMERIC(78),
     metadata JSONB,
     block_hash BYTEA,
+    block INT,
     event_timestamp INT,
     created_at timestamp with time zone DEFAULT NOW(),
     CONSTRAINT user_activities_pk PRIMARY KEY (id)
@@ -27,10 +26,6 @@ CREATE INDEX user_activities_address_created_at_type_index
 
 CREATE UNIQUE INDEX user_activities_hash_address_unique_index
     ON user_activities (hash, address);
-
-CREATE INDEX user_activities_contract_token_id_missing_collection_id_index
-    ON user_activities (contract, token_id)
-    WHERE ("collection_id" IS NULL);
 
 CREATE INDEX user_activities_block_hash_index
     ON user_activities (block_hash);
