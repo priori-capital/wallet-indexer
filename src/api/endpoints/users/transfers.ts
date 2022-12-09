@@ -128,11 +128,7 @@ export const getTransfersV2Options: RouteOptions = {
       const result = rawResult.map((r) => ({
         type: r.type,
         direction: r.direction,
-        token: {
-          contract: fromBuffer(r.contract),
-          name: r.name,
-          // image: Assets.getLocalAssetsLink(r.image),
-        },
+        token: r.token,
         from: fromBuffer(r.from_address),
         destination: fromBuffer(r.to_address),
         amount: String(r.amount),

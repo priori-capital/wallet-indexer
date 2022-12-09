@@ -3,11 +3,6 @@
 import { idb, pgp } from "@/common/db";
 import { toBuffer } from "@/common/utils";
 
-// import {
-//   UserActivitiesEntity, UserActivitiesEntityParams
-// } from "@/models/user-activities/user-activities-entity";
-// import { Orders } from "@/utils/orders";
-
 export class UserActivities {
   public static async addActivities(activities: any[]) {
     if (!activities.length) {
@@ -25,7 +20,9 @@ export class UserActivities {
         "price",
         "amount",
         "block_hash",
+        "block",
         "event_timestamp",
+        "token",
         "metadata",
         "direction",
       ],
@@ -34,16 +31,15 @@ export class UserActivities {
 
     const data = activities.map((activity) => ({
       type: activity.type,
-      hash: activity.hash,
+      hash: toBuffer(activity.hash),
+      token: activity.token,
       contract: toBuffer(activity.contract),
-      collection_id: activity.collectionId,
-      token_id: activity.tokenId,
-      order_id: activity.orderId,
       address: toBuffer(activity.address),
       from_address: toBuffer(activity.fromAddress),
       to_address: activity.toAddress ? toBuffer(activity.toAddress) : null,
       price: activity.price,
       amount: activity.amount,
+      block: activity.block,
       block_hash: activity.blockHash ? toBuffer(activity.blockHash) : null,
       event_timestamp: activity.eventTimestamp,
       metadata: activity.metadata,

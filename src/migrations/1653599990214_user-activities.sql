@@ -2,7 +2,8 @@
 
 CREATE TABLE user_activities (
     id bigserial NOT NULL,
-	hash text,
+	hash BYTEA,
+    direction text,
     type text NOT NULL,
     contract BYTEA,
     address BYTEA,
@@ -12,6 +13,7 @@ CREATE TABLE user_activities (
     amount NUMERIC(78),
     metadata JSONB,
     block_hash BYTEA,
+    token JSONB,
     block INT,
     event_timestamp INT,
     created_at timestamp with time zone DEFAULT NOW(),

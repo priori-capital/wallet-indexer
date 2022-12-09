@@ -6,7 +6,7 @@ import { EventData } from "@/events-sync/data";
 
 export const transfer: EventData = {
   kind: "erc20-transfer",
-  addresses: { [Common.Addresses.Weth[config.chainId]?.toLowerCase()]: true },
+  // addresses: { [Common.Addresses.Weth[config.chainId]?.toLowerCase()]: true },
   topic: "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
   numTopics: 3,
   abi: new Interface([

@@ -2,6 +2,7 @@
 // import { UserActivitiesEntityInsertParams } from "@/models/user-activities/user-activities-entity";
 
 import { UserActivities } from "@/models/user-activities";
+import { getCurrency } from "@/utils/currencies";
 import { AddressZero } from "@ethersproject/constants";
 import _ from "lodash";
 
@@ -17,6 +18,7 @@ export enum ActivityType {
 
 export class TransferActivity {
   public static async handleEvent(data:TransferEventData) {
+    const token = await getCurrency(data.contract)
     const activity = {
       type: data.fromAddress == AddressZero ? ActivityType.mint : ActivityType.transfer,
       hash: data.transactionHash,
@@ -32,6 +34,7 @@ export class TransferActivity {
         logIndex: data.logIndex,
         batchIndex: data.batchIndex,
       },
+      token: token||null,
       address: "",
       direction: "",
     };
