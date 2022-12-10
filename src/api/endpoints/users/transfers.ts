@@ -127,14 +127,14 @@ export const getTransfersV2Options: RouteOptions = {
 
       const result = rawResult.map((r) => ({
         type: r.type,
+        txHash: fromBuffer(r.hash),
         direction: r.direction,
         token: r.token,
         from: fromBuffer(r.from_address),
         destination: fromBuffer(r.to_address),
         amount: String(r.amount),
         account: fromBuffer(r.address),
-        block: r.block,
-        txHash: fromBuffer(r.hash),
+        blockNumber: r.block,
         logIndex: r.metadata.logIndex,
         batchIndex: r.metadata.batchIndex,
         timestamp: r.eventTimestamp,

@@ -7,8 +7,8 @@ import { idb } from "@/common/db";
 import { logger } from "@/common/logger";
 import { bn, toBuffer } from "@/common/utils";
 import { config } from "@/config/index";
-import { getCurrency } from "@/utils/currencies";
 import { getNetworkSettings } from "@/config/network";
+import { getCurrency } from "@/utils/currencies";
 
 const USD_DECIMALS = 6;
 // TODO: This should be a per-network setting
