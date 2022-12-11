@@ -8,10 +8,10 @@ export type TransactionLogs = {
   logs: Log[];
 };
 
-export const saveTransactionLogs = async (transactionLogs: TransactionLogs) => {
+export const saveTransactionLogs = async (chainId: number, transactionLogs: TransactionLogs) => {
   await idb.none(
     `
-      INSERT INTO transaction_logs (
+      INSERT INTO transaction_logs_${chainId} (
         hash,
         logs
       ) VALUES (
@@ -29,13 +29,16 @@ export const saveTransactionLogs = async (transactionLogs: TransactionLogs) => {
   return transactionLogs;
 };
 
-export const getTransactionLogs = async (hash: string): Promise<TransactionLogs> => {
+export const getTransactionLogs = async (
+  chainId: number,
+  hash: string
+): Promise<TransactionLogs> => {
   const result = await idb.oneOrNone(
     `
       SELECT
         transaction_logs.hash,
         transaction_logs.logs
-      FROM transaction_logs
+      FROM transaction_logs_${chainId} as transaction_logs
       WHERE transaction_logs.hash = $/hash/
     `,
     { hash: toBuffer(hash) }

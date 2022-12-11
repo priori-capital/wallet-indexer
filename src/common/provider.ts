@@ -2,16 +2,25 @@ import { StaticJsonRpcProvider, WebSocketProvider } from "@ethersproject/provide
 import Arweave from "arweave";
 
 import { logger } from "@/common/logger";
-import { config } from "@/config/index";
 
 // Use a static provider to avoid redundant `eth_chainId` calls
-export const baseProvider = new StaticJsonRpcProvider(config.baseNetworkHttpUrl, config.chainId);
+// export const baseProvider=(rpc:string, chainId=1) => new StaticJsonRpcProvider(rpc, chainId);
+const providers: any[] = [];
+
+export const initiateProviders = (network: any) => {
+  providers[network.chainId] = {
+    rpc: new StaticJsonRpcProvider(network.rpc, network.chainId),
+  };
+};
+
+export const getProvider = (chainId: number) => providers[chainId].rpc;
 
 // https://github.com/ethers-io/ethers.js/issues/1053#issuecomment-808736570
 export const safeWebSocketSubscription = (
+  wsUrl: string,
   callback: (provider: WebSocketProvider) => Promise<void>
 ) => {
-  const webSocketProvider = new WebSocketProvider(config.baseNetworkWsUrl);
+  const webSocketProvider = new WebSocketProvider(wsUrl);
   webSocketProvider.on("error", (error) => {
     logger.error("websocket-provider", `WebSocket subscription failed: ${error}`);
   });
@@ -44,7 +53,7 @@ export const safeWebSocketSubscription = (
     if (pingTimeout) {
       clearTimeout(pingTimeout);
     }
-    safeWebSocketSubscription(callback);
+    safeWebSocketSubscription(wsUrl, callback);
   });
 
   webSocketProvider._websocket.on("pong", () => {

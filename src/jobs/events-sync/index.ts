@@ -4,7 +4,7 @@ import { logger } from "@/common/logger";
 import { safeWebSocketSubscription } from "@/common/provider";
 import { redlock } from "@/common/redis";
 import { config } from "@/config/index";
-import { getNetworkSettings } from "@/config/network";
+import { ethereumNetworks, getNetworkSettings } from "@/config/network";
 import * as realtimeEventsSync from "@/jobs/events-sync/realtime-queue";
 
 // For syncing events we have two separate job queues. One is for
@@ -19,58 +19,69 @@ import * as realtimeEventsSync from "@/jobs/events-sync/realtime-queue";
 // concurrent upserts of the balances):
 // https://stackoverflow.com/questions/46366324/postgres-deadlocks-on-concurrent-upserts
 
-import "@/jobs/events-sync/backfill-queue";
-import "@/jobs/events-sync/block-check-queue";
-import "@/jobs/events-sync/process/backfill";
-import "@/jobs/events-sync/process/realtime";
-import "@/jobs/events-sync/realtime-queue";
-import "@/jobs/events-sync/write-buffers/ft-transfers";
+// import "@/jobs/events-sync/backfill-queue";
+// import "@/jobs/events-sync/block-check-queue";
+// import "@/jobs/events-sync/process/backfill";
+// import "@/jobs/events-sync/process/realtime";
+// import "@/jobs/events-sync/realtime-queue";
+// import "@/jobs/events-sync/write-buffers/ft-transfers";
 // import "@/jobs/events-sync/write-buffers/nft-transfers";
 
 // BACKGROUND WORKER ONLY
 if (config.doBackgroundWork && config.catchup) {
-  const networkSettings = getNetworkSettings();
+  ethereumNetworks.forEach((network) => {
+    const networkSettings = getNetworkSettings(network.networkId);
 
-  // Keep up with the head of the blockchain by polling for new blocks every once in a while
-  cron.schedule(
-    `*/${networkSettings.realtimeSyncFrequencySeconds} * * * * *`,
-    async () =>
-      await redlock
-        .acquire(
-          ["events-sync-catchup-lock"],
-          (networkSettings.realtimeSyncFrequencySeconds - 1) * 1000
-        )
-        .then(async () => {
-          logger.info("events-sync-catchup", "Catching up events");
+    // Keep up with the head of the blockchain by polling for new blocks every once in a while
+    cron.schedule(
+      `*/${networkSettings.realtimeSyncFrequencySeconds} * * * * *`,
+      async () =>
+        await redlock
+          .acquire(
+            ["events-sync-catchup-lock"],
+            (networkSettings.realtimeSyncFrequencySeconds - 1) * 1000
+          )
+          .then(async () => {
+            logger.info(
+              "events-sync-catchup",
+              `Catching up events on chain ${networkSettings.chainId}`
+            );
+
+            try {
+              await realtimeEventsSync.addToQueue(network.networkId);
+            } catch (error) {
+              logger.error("events-sync-catchup", `Failed to catch up events : ${error}`);
+            }
+          })
+          .catch(() => {
+            // Skip on any errors
+          })
+    );
+
+    // MASTER ONLY
+    if (config.master && networkSettings.enableWebSocket) {
+      // Besides the manual polling of events via the above cron job
+      // we're also integrating WebSocket subscriptions to fetch the
+      // latest events as soon as they're hapenning on-chain. We are
+      // still keeping the manual polling though to ensure no events
+      // are being missed.
+      safeWebSocketSubscription(networkSettings.ws, async (provider) => {
+        provider.on("block", async (block) => {
+          logger.info(
+            "events-sync-catchup",
+            `Detected new block ${block} on chain ${networkSettings.chainId}`
+          );
 
           try {
-            await realtimeEventsSync.addToQueue();
+            await realtimeEventsSync.addToQueue(networkSettings.chainId);
           } catch (error) {
-            logger.error("events-sync-catchup", `Failed to catch up events: ${error}`);
+            logger.error(
+              "events-sync-catchup",
+              `Failed to catch up events on chain ${networkSettings.chainId}: ${error}`
+            );
           }
-        })
-        .catch(() => {
-          // Skip on any errors
-        })
-  );
-
-  // MASTER ONLY
-  if (config.master && networkSettings.enableWebSocket) {
-    // Besides the manual polling of events via the above cron job
-    // we're also integrating WebSocket subscriptions to fetch the
-    // latest events as soon as they're hapenning on-chain. We are
-    // still keeping the manual polling though to ensure no events
-    // are being missed.
-    safeWebSocketSubscription(async (provider) => {
-      provider.on("block", async (block) => {
-        logger.info("events-sync-catchup", `Detected new block ${block}`);
-
-        try {
-          await realtimeEventsSync.addToQueue();
-        } catch (error) {
-          logger.error("events-sync-catchup", `Failed to catch up events: ${error}`);
-        }
+        });
       });
-    });
-  }
+    }
+  });
 }

@@ -17,7 +17,7 @@ let server: Hapi.Server;
 
 export const inject = (options: Hapi.ServerInjectOptions) => server.inject(options);
 
-export const start = async (): Promise<void> => {
+export const start = async (chainId = 1): Promise<void> => {
   server = Hapi.server({
     port: config.port,
     query: {
@@ -113,7 +113,7 @@ export const start = async (): Promise<void> => {
           },
         },
         schemes: ["https", "http"],
-        host: `${config.chainId === 1 ? "api" : `api-${getNetworkName()}`}.reservoir.tools`,
+        host: `${chainId === 1 ? "api" : `api-${getNetworkName()}`}.reservoir.tools`,
         cors: true,
         tryItOutEnabled: true,
         documentationPath: "/",

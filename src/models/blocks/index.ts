@@ -7,10 +7,10 @@ export type Block = {
   timestamp: number;
 };
 
-export const saveBlock = async (block: Block): Promise<Block> => {
+export const saveBlock = async (chainId: number, block: Block): Promise<Block> => {
   await idb.none(
     `
-      INSERT INTO blocks (
+      INSERT INTO blocks_${chainId} (
         hash,
         number,
         "timestamp"
@@ -31,10 +31,10 @@ export const saveBlock = async (block: Block): Promise<Block> => {
   return block;
 };
 
-export const deleteBlock = async (number: number, hash: string) =>
+export const deleteBlock = async (chainId: number, number: number, hash: string) =>
   idb.none(
     `
-      DELETE FROM blocks
+      DELETE FROM blocks_${chainId} as blocks
       WHERE blocks.hash = $/hash/
         AND blocks.number = $/number/
     `,
@@ -44,16 +44,16 @@ export const deleteBlock = async (number: number, hash: string) =>
     }
   );
 
-export const getBlocks = async (number: number): Promise<Block[]> =>
-  idb
+export const getBlocks = async (chainId = 1, number: number): Promise<Block[]> => {
+  return idb
     .manyOrNone(
       `
-        SELECT
-          blocks.hash,
-          blocks.timestamp
-        FROM blocks
-        WHERE blocks.number = $/number/
-      `,
+      SELECT
+        blocks.hash,
+        blocks.timestamp
+      FROM blocks_${chainId} as blocks
+      WHERE blocks.number = $/number/
+    `,
       { number }
     )
     .then((result) =>
@@ -63,3 +63,4 @@ export const getBlocks = async (number: number): Promise<Block[]> =>
         timestamp,
       }))
     );
+};

@@ -6,7 +6,10 @@ import * as es from "@/events-sync/storage";
 
 // import * as orderUpdatesByMaker from "@/jobs/order-updates/by-maker-queue";
 
-export const handleEvents = async (events: EnhancedEvent[]): Promise<OnChainData> => {
+export const handleEvents = async (
+  events: EnhancedEvent[],
+  chainId: number
+): Promise<OnChainData> => {
   const ftTransferEvents: es.ftTransfers.Event[] = [];
 
   const makerInfos = [];
@@ -26,6 +29,7 @@ export const handleEvents = async (events: EnhancedEvent[]): Promise<OnChainData
           to,
           amount,
           baseEventParams,
+          chainId,
         });
 
         // Make sure to only handle the same data once per transaction
@@ -38,10 +42,12 @@ export const handleEvents = async (events: EnhancedEvent[]): Promise<OnChainData
             kind: "balance-change",
             txHash: baseEventParams.txHash,
             txTimestamp: baseEventParams.timestamp,
+            chainId: chainId,
           },
           data: {
             kind: "buy-balance",
             contract: baseEventParams.address,
+            chainId: chainId,
           },
         });
 
@@ -52,10 +58,12 @@ export const handleEvents = async (events: EnhancedEvent[]): Promise<OnChainData
             kind: "balance-change",
             txHash: baseEventParams.txHash,
             txTimestamp: baseEventParams.timestamp,
+            chainId: chainId,
           },
           data: {
             kind: "buy-balance",
             contract: baseEventParams.address,
+            chainId: chainId,
           },
         });
 
@@ -98,6 +106,7 @@ export const handleEvents = async (events: EnhancedEvent[]): Promise<OnChainData
           to,
           amount,
           baseEventParams,
+          chainId: chainId,
         });
 
         // Make sure to only handle the same data once per transaction
@@ -130,6 +139,7 @@ export const handleEvents = async (events: EnhancedEvent[]): Promise<OnChainData
           to: AddressZero,
           amount,
           baseEventParams,
+          chainId: chainId,
         });
 
         // Make sure to only handle the same data once per transaction

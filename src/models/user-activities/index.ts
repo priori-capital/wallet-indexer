@@ -25,6 +25,7 @@ export class UserActivities {
         "token",
         "metadata",
         "direction",
+        "chain_id",
       ],
       { table: "user_activities" }
     );
@@ -44,6 +45,7 @@ export class UserActivities {
       event_timestamp: activity.eventTimestamp,
       metadata: activity.metadata,
       direction: activity.direction,
+      chain_id: activity.chainId,
     }));
 
     const query = pgp.helpers.insert(data, columns) + " ON CONFLICT DO NOTHING";

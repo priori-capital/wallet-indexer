@@ -2,7 +2,7 @@ import { Queue, QueueScheduler, Worker } from "bullmq";
 import { randomUUID } from "crypto";
 
 import { logger } from "@/common/logger";
-import { baseProvider } from "@/common/provider";
+import { getProvider } from "@/common/provider";
 import { redis } from "@/common/redis";
 import { config } from "@/config/index";
 import { getNetworkSettings } from "@/config/network";
@@ -27,18 +27,19 @@ new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 if (config.doBackgroundWork) {
   const worker = new Worker(
     QUEUE_NAME,
-    async () => {
+    async (job) => {
+      const { chainId } = job.data;
       try {
         // We allow syncing of up to `maxBlocks` blocks behind the head
         // of the blockchain. If we lag behind more than that, then all
         // previous blocks that we cannot cover here will be relayed to
         // the backfill queue.
-        const maxBlocks = getNetworkSettings().realtimeSyncMaxBlockLag;
+        const maxBlocks = getNetworkSettings(chainId).realtimeSyncMaxBlockLag;
 
-        const headBlock = await baseProvider.getBlockNumber();
+        const headBlock = await getProvider(chainId).getBlockNumber();
 
         // Fetch the last synced blocked
-        let localBlock = Number(await redis.get(`${QUEUE_NAME}-last-block`));
+        let localBlock = Number(await redis.get(`${QUEUE_NAME}-chain${chainId}-last-block`));
         if (localBlock >= headBlock) {
           // Nothing to sync
           return;
@@ -51,17 +52,20 @@ if (config.doBackgroundWork) {
         }
 
         const fromBlock = Math.max(localBlock, headBlock - maxBlocks + 1);
-        logger.info(QUEUE_NAME, `Events realtime syncing block range [${fromBlock}, ${headBlock}]`);
+        logger.info(
+          QUEUE_NAME,
+          `Events realtime syncing for chain ${chainId} for  block range [${fromBlock}, ${headBlock}]`
+        );
 
-        await syncEvents(fromBlock, headBlock);
+        await syncEvents(chainId, fromBlock, headBlock);
 
         // Send any remaining blocks to the backfill queue
         if (localBlock < fromBlock) {
           logger.info(
             QUEUE_NAME,
-            `Out of sync: local block ${localBlock} and upstream block ${fromBlock}`
+            `Out of sync: chain ${chainId} local block ${localBlock} and upstream block ${fromBlock}`
           );
-          await eventsSyncBackfill.addToQueue(localBlock, fromBlock - 1);
+          await eventsSyncBackfill.addToQueue(chainId, localBlock, fromBlock - 1);
         }
 
         // To avoid missing any events, save the last synced block with a delay
@@ -69,9 +73,9 @@ if (config.doBackgroundWork) {
         // once, which is exactly what we are looking for (since events for the
         // latest blocks might be missing due to upstream chain reorgs):
         // https://ethereum.stackexchange.com/questions/109660/eth-getlogs-and-some-missing-logs
-        await redis.set(`${QUEUE_NAME}-last-block`, headBlock - 5);
+        await redis.set(`${QUEUE_NAME}-chain${chainId}-last-block`, headBlock - 5);
       } catch (error) {
-        logger.error(QUEUE_NAME, `Events realtime syncing failed: ${error}`);
+        logger.error(QUEUE_NAME, `Events realtime syncing failed for chain ${chainId}: ${error}`);
         throw error;
       }
     },
@@ -82,6 +86,6 @@ if (config.doBackgroundWork) {
   });
 }
 
-export const addToQueue = async () => {
-  await queue.add(randomUUID(), {});
+export const addToQueue = async (chainId: number) => {
+  await queue.add(randomUUID(), { chainId });
 };

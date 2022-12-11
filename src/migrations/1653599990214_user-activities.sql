@@ -16,6 +16,7 @@ CREATE TABLE user_activities (
     token JSONB,
     block INT,
     event_timestamp INT,
+    chain_id INT,
     created_at timestamp with time zone DEFAULT NOW(),
     CONSTRAINT user_activities_pk PRIMARY KEY (id)
 );

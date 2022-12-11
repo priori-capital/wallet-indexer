@@ -34,7 +34,11 @@ export type OnChainData = {
 };
 
 // Process on-chain data (save to db, trigger any further processes, ...)
-export const processOnChainData = async (data: OnChainData, backfill?: boolean) => {
+export const processOnChainData = async (
+  chainId: number,
+  data: OnChainData,
+  backfill?: boolean
+) => {
   // Post-process fill events
   // const allFillEvents = concat(data.fillEvents, data.fillEventsPartial, data.fillEventsOnChain);
   // if (!backfill) {
@@ -58,7 +62,7 @@ export const processOnChainData = async (data: OnChainData, backfill?: boolean) 
     // es.bulkCancels.addEvents(data.bulkCancelEvents ?? []),
     // es.nonceCancels.addEvents(data.nonceCancelEvents ?? []),
     // es.nftApprovals.addEvents(data.nftApprovalEvents ?? []),
-    es.ftTransfers.addEvents(data.ftTransferEvents ?? [], Boolean(backfill)),
+    es.ftTransfers.addEvents(data.ftTransferEvents ?? [], Boolean(backfill), chainId),
     // es.nftTransfers.addEvents(data.nftTransferEvents ?? [], Boolean(backfill)),
   ]);
 
@@ -104,6 +108,7 @@ export const processOnChainData = async (data: OnChainData, backfill?: boolean) 
         blockHash: event.baseEventParams.blockHash,
         block: event.baseEventParams.block,
         timestamp: event.baseEventParams.timestamp,
+        chainId: chainId,
       },
     })
   );

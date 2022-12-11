@@ -22,13 +22,14 @@ export type Price = {
 
 const getUpstreamUSDPrice = async (
   currencyAddress: string,
-  timestamp: number
+  timestamp: number,
+  chainId = 1
 ): Promise<Price | undefined> => {
   try {
     const date = new Date(timestamp * 1000);
     const truncatedTimestamp = Math.floor(date.valueOf() / 1000);
 
-    const currency = await getCurrency(currencyAddress);
+    const currency = await getCurrency(currencyAddress, chainId);
     const coingeckoCurrencyId = currency?.metadata?.coingeckoCurrencyId;
 
     if (coingeckoCurrencyId) {
@@ -74,35 +75,36 @@ const getUpstreamUSDPrice = async (
           value,
         };
       }
-    } else if (getNetworkSettings().whitelistedCurrencies.has(currencyAddress)) {
-      //  Whitelisted currencies are 1:1 with USD
-      const value = "1";
-
-      await idb.none(
-        `
-            INSERT INTO usd_prices (
-              currency,
-              timestamp,
-              value
-            ) VALUES (
-              $/currency/,
-              date_trunc('day', to_timestamp($/timestamp/)),
-              $/value/
-            ) ON CONFLICT DO NOTHING
-          `,
-        {
-          currency: toBuffer(currencyAddress),
-          timestamp: truncatedTimestamp,
-          value,
-        }
-      );
-
-      return {
-        currency: currencyAddress,
-        timestamp: truncatedTimestamp,
-        value,
-      };
     }
+    // else if (getNetworkSettings().whitelistedCurrencies.has(currencyAddress)) {
+    //   //  Whitelisted currencies are 1:1 with USD
+    //   const value = "1";
+
+    //   await idb.none(
+    //     `
+    //         INSERT INTO usd_prices (
+    //           currency,
+    //           timestamp,
+    //           value
+    //         ) VALUES (
+    //           $/currency/,
+    //           date_trunc('day', to_timestamp($/timestamp/)),
+    //           $/value/
+    //         ) ON CONFLICT DO NOTHING
+    //       `,
+    //     {
+    //       currency: toBuffer(currencyAddress),
+    //       timestamp: truncatedTimestamp,
+    //       value,
+    //     }
+    //   );
+
+    //   return {
+    //     currency: currencyAddress,
+    //     timestamp: truncatedTimestamp,
+    //     value,
+    //   };
+    // }
   } catch (error) {
     logger.error(
       "prices",
@@ -146,6 +148,7 @@ const getCachedUSDPrice = async (
     .catch(() => undefined);
 
 const USD_PRICE_MEMORY_CACHE = new Map<string, Price>();
+
 const getAvailableUSDPrice = async (currencyAddress: string, timestamp: number) => {
   // At the moment, we support day-level granularity for prices
   const DAY = 24 * 3600;
@@ -185,6 +188,7 @@ export const getUSDAndNativePrices = async (
   currencyAddress: string,
   price: string,
   timestamp: number,
+  chainId: number,
   options?: {
     onlyUSD?: boolean;
   }
@@ -203,7 +207,7 @@ export const getUSDAndNativePrices = async (
       nativeUSDPrice = await getAvailableUSDPrice(AddressZero, timestamp);
     }
 
-    const currency = await getCurrency(currencyAddress);
+    const currency = await getCurrency(currencyAddress, chainId);
     if (currency.decimals && currencyUSDPrice) {
       const currencyUnit = bn(10).pow(currency.decimals);
       usdPrice = bn(price).mul(currencyUSDPrice.value).div(currencyUnit).toString();

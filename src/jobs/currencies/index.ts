@@ -29,9 +29,9 @@ if (config.doBackgroundWork) {
   const worker = new Worker(
     QUEUE_NAME,
     async (job: Job) => {
-      const { currency } = job.data as JobData;
+      const { currency, chainId } = job.data as JobData;
 
-      const details = await tryGetCurrencyDetails(currency);
+      const details = await tryGetCurrencyDetails(currency, chainId);
       await idb.none(
         `
           UPDATE currencies SET
@@ -56,6 +56,7 @@ if (config.doBackgroundWork) {
 
 export type JobData = {
   currency: string;
+  chainId: number;
 };
 
 export const addToQueue = async (data: JobData) => {

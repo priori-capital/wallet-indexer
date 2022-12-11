@@ -8,6 +8,7 @@ export type Event = {
   to: string;
   amount: string;
   baseEventParams: BaseEventParams;
+  chainId: number;
 };
 
 type DbEvent = {
@@ -21,9 +22,10 @@ type DbEvent = {
   from: Buffer;
   to: Buffer;
   amount: string;
+  chainId: number;
 };
 
-export const addEvents = async (events: Event[], backfill: boolean) => {
+export const addEvents = async (events: Event[], backfill: boolean, chainId: number) => {
   const transferValues: DbEvent[] = [];
   for (const event of events) {
     transferValues.push({
@@ -37,6 +39,7 @@ export const addEvents = async (events: Event[], backfill: boolean) => {
       from: toBuffer(event.from),
       to: toBuffer(event.to),
       amount: event.amount,
+      chainId: chainId,
     });
   }
 

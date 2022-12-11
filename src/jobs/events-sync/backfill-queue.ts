@@ -29,12 +29,12 @@ if (config.doBackgroundWork && config.doEventsSyncBackfill) {
   const worker = new Worker(
     QUEUE_NAME,
     async (job: Job) => {
-      const { fromBlock, toBlock, backfill, syncDetails } = job.data;
+      const { chainId, fromBlock, toBlock, backfill, syncDetails } = job.data;
 
       try {
         logger.info(QUEUE_NAME, `Events backfill syncing block range [${fromBlock}, ${toBlock}]`);
 
-        await syncEvents(fromBlock, toBlock, { backfill, syncDetails });
+        await syncEvents(chainId, fromBlock, toBlock, { backfill, syncDetails });
       } catch (error) {
         logger.error(QUEUE_NAME, `Events backfill syncing failed: ${error}`);
         throw error;
@@ -48,6 +48,7 @@ if (config.doBackgroundWork && config.doEventsSyncBackfill) {
 }
 
 export const addToQueue = async (
+  chainId: number,
   fromBlock: number,
   toBlock: number,
   options?: {
@@ -68,7 +69,8 @@ export const addToQueue = async (
   // Syncing is done in several batches since the requested block
   // range might result in lots of events which could potentially
   // not fit within a single provider response
-  const blocksPerBatch = options?.blocksPerBatch ?? getNetworkSettings().backfillBlockBatchSize;
+  const blocksPerBatch =
+    options?.blocksPerBatch ?? getNetworkSettings(chainId).backfillBlockBatchSize;
 
   // Important backfill processes should be prioritized
   const prioritized = options?.prioritized ?? false;
@@ -80,6 +82,7 @@ export const addToQueue = async (
     jobs.push({
       name: `${from}-${to}`,
       data: {
+        chainId: chainId,
         fromBlock: from,
         toBlock: to,
         backfill: options?.backfill,

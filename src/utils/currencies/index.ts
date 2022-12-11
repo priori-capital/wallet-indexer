@@ -4,7 +4,7 @@ import axios from "axios";
 
 import { idb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { baseProvider } from "@/common/provider";
+import { getProvider } from "@/common/provider";
 import { toBuffer } from "@/common/utils";
 import { getNetworkSettings } from "@/config/network";
 import * as currenciesQueue from "@/jobs/currencies/index";
@@ -23,7 +23,8 @@ export type Currency = {
 };
 
 const CURRENCY_MEMORY_CACHE: Map<string, Currency> = new Map<string, Currency>();
-export const getCurrency = async (currencyAddress: string): Promise<Currency> => {
+
+export const getCurrency = async (currencyAddress: string, chainId: number): Promise<Currency> => {
   if (!CURRENCY_MEMORY_CACHE.has(currencyAddress)) {
     const result = await idb.oneOrNone(
       `
@@ -56,24 +57,27 @@ export const getCurrency = async (currencyAddress: string): Promise<Currency> =>
 
       // If the currency is not available, then we try to retrieve its details
       try {
-        ({ name, symbol, decimals, metadata } = await tryGetCurrencyDetails(currencyAddress));
+        ({ name, symbol, decimals, metadata } = await tryGetCurrencyDetails(
+          currencyAddress,
+          chainId
+        ));
       } catch (error) {
         logger.error(
           "currencies",
           `Failed to initially fetch ${currencyAddress} currency details: ${error}`
         );
 
-        if (getNetworkSettings().whitelistedCurrencies.has(currencyAddress)) {
-          ({ name, symbol, decimals, metadata } =
-            getNetworkSettings().whitelistedCurrencies.get(currencyAddress)!);
-        } else {
-          // TODO: Although an edge case, we should ensure that when the job
-          // finally succeeds fetching the details of a currency, we also do
-          // update the memory cache (otherwise the cache will be stale).
+        // if (getNetworkSettings().whitelistedCurrencies.has(currencyAddress)) {
+        //   ({ name, symbol, decimals, metadata } =
+        //     getNetworkSettings().whitelistedCurrencies.get(currencyAddress)!);
+        // } else {
+        // TODO: Although an edge case, we should ensure that when the job
+        // finally succeeds fetching the details of a currency, we also do
+        // update the memory cache (otherwise the cache will be stale).
 
-          // Retry fetching the currency details
-          await currenciesQueue.addToQueue({ currency: currencyAddress });
-        }
+        // Retry fetching the currency details
+        await currenciesQueue.addToQueue({ currency: currencyAddress, chainId: chainId });
+        // }
       }
 
       metadata = metadata || {};
@@ -116,7 +120,7 @@ export const getCurrency = async (currencyAddress: string): Promise<Currency> =>
   return CURRENCY_MEMORY_CACHE.get(currencyAddress)!;
 };
 
-export const tryGetCurrencyDetails = async (currencyAddress: string) => {
+export const tryGetCurrencyDetails = async (currencyAddress: string, chainId: number) => {
   // `name`, `symbol` and `decimals` are fetched from on-chain
   const iface = new Interface([
     "function name() view returns (string)",
@@ -124,7 +128,7 @@ export const tryGetCurrencyDetails = async (currencyAddress: string) => {
     "function decimals() view returns (uint8)",
   ]);
 
-  const contract = new Contract(currencyAddress, iface, baseProvider);
+  const contract = new Contract(currencyAddress, iface, getProvider(chainId));
   const name = await contract.name();
   const symbol = await contract.symbol();
   const decimals = await contract.decimals();

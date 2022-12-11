@@ -3,7 +3,6 @@ import _ from "lodash";
 import pLimit from "p-limit";
 
 import { logger } from "@/common/logger";
-import { baseProvider } from "@/common/provider";
 import { getNetworkSettings } from "@/config/network";
 import { EventDataKind, getEventData } from "@/events-sync/data";
 import { EnhancedEvent } from "@/events-sync/handlers/utils";
@@ -12,11 +11,13 @@ import * as es from "@/events-sync/storage";
 import * as syncEventsUtils from "@/events-sync/utils";
 import * as blocksModel from "@/models/blocks";
 
+import { getProvider } from "@/common/provider";
 import * as blockCheck from "@/jobs/events-sync/block-check-queue";
 import * as eventsSyncBackfillProcess from "@/jobs/events-sync/process/backfill";
 import * as eventsSyncRealtimeProcess from "@/jobs/events-sync/process/realtime";
 
 export const syncEvents = async (
+  chainId: number,
   fromBlock: number,
   toBlock: number,
   options?: {
@@ -41,7 +42,7 @@ export const syncEvents = async (
   const backfill = Boolean(options?.backfill);
 
   // Cache the blocks for efficiency
-  const blocksCache = new Map<number, blocksModel.Block>();
+  const blocksCache = new Map<string, blocksModel.Block>();
   // Keep track of all handled `${block}-${blockHash}` pairs
   const blocksSet = new Set<string>();
 
@@ -52,7 +53,9 @@ export const syncEvents = async (
   if (!backfill && toBlock - fromBlock + 1 <= 32) {
     const limit = pLimit(32);
     await Promise.all(
-      _.range(fromBlock, toBlock + 1).map((block) => limit(() => syncEventsUtils.fetchBlock(block)))
+      _.range(fromBlock, toBlock + 1).map((block) =>
+        limit(() => syncEventsUtils.fetchBlock(chainId, block))
+      )
     );
   }
 
@@ -84,105 +87,107 @@ export const syncEvents = async (
   }
 
   const enhancedEvents: EnhancedEvent[] = [];
-  await baseProvider.getLogs(eventFilter).then(async (logs) => {
-    const availableEventData = getEventData();
-    for (const log of logs) {
-      try {
-        const baseEventParams = await parseEvent(log, blocksCache);
+  await getProvider(chainId)
+    .getLogs(eventFilter)
+    .then(async (logs) => {
+      const availableEventData = getEventData();
+      for (const log of logs) {
+        try {
+          const baseEventParams = await parseEvent(log, blocksCache, chainId);
+          // Cache the block data
+          if (!blocksCache.has(`${chainId}-${baseEventParams.block}`)) {
+            // It's very important from a performance perspective to have
+            // the block data available before proceeding with the events
+            // (otherwise we might have to perform too many db reads)
+            blocksCache.set(
+              `${chainId}-${baseEventParams.block}`,
+              await blocksModel.saveBlock(chainId, {
+                number: baseEventParams.block,
+                hash: baseEventParams.blockHash,
+                timestamp: baseEventParams.timestamp,
+              })
+            );
+          }
 
-        // Cache the block data
-        if (!blocksCache.has(baseEventParams.block)) {
-          // It's very important from a performance perspective to have
-          // the block data available before proceeding with the events
-          // (otherwise we might have to perform too many db reads)
-          blocksCache.set(
-            baseEventParams.block,
-            await blocksModel.saveBlock({
-              number: baseEventParams.block,
-              hash: baseEventParams.blockHash,
-              timestamp: baseEventParams.timestamp,
-            })
+          // Keep track of the block
+          blocksSet.add(`${log.blockNumber}-${log.blockHash}`);
+
+          // Find first matching event:
+          // - matching topic
+          // - matching number of topics (eg. indexed fields)
+          // - matching addresses
+          const eventData = availableEventData.find(
+            ({ addresses, topic, numTopics }) =>
+              log.topics[0] === topic &&
+              log.topics.length === numTopics &&
+              (addresses ? addresses[log.address.toLowerCase()] : true)
           );
-        }
-
-        // Keep track of the block
-        blocksSet.add(`${log.blockNumber}-${log.blockHash}`);
-
-        // Find first matching event:
-        // - matching topic
-        // - matching number of topics (eg. indexed fields)
-        // - matching addresses
-        const eventData = availableEventData.find(
-          ({ addresses, topic, numTopics }) =>
-            log.topics[0] === topic &&
-            log.topics.length === numTopics &&
-            (addresses ? addresses[log.address.toLowerCase()] : true)
-        );
-        if (eventData) {
-          enhancedEvents.push({
-            kind: eventData.kind,
-            baseEventParams,
-            log,
-          });
-        }
-      } catch (error) {
-        logger.info("sync-events", `Failed to handle events: ${error}`);
-        throw error;
-      }
-    }
-
-    // Process the retrieved events asynchronously
-    const eventsSyncProcess = backfill ? eventsSyncBackfillProcess : eventsSyncRealtimeProcess;
-    await eventsSyncProcess.addToQueue([
-      {
-        kind: "erc20",
-        events: enhancedEvents.filter(
-          ({ kind }) => kind.startsWith("erc20") || kind.startsWith("weth")
-        ),
-        backfill,
-      },
-      // {
-      //   kind: "erc721",
-      //   events: enhancedEvents.filter(({ kind }) => kind.startsWith("erc721")),
-      //   backfill,
-      // },
-      // {
-      //   kind: "erc1155",
-      //   events: enhancedEvents.filter(({ kind }) => kind.startsWith("erc1155")),
-      //   backfill,
-      // }
-    ]);
-
-    // Make sure to recheck the ingested blocks with a delay in order to undo any reorgs
-
-    const ns = getNetworkSettings();
-    if (!backfill && ns.enableReorgCheck) {
-      for (const blockData of blocksSet.values()) {
-        const block = Number(blockData.split("-")[0]);
-        const blockHash = blockData.split("-")[1];
-
-        // Act right away if the current block is a duplicate
-        if ((await blocksModel.getBlocks(block)).length > 1) {
-          await blockCheck.addToQueue(block, blockHash, 10);
-          await blockCheck.addToQueue(block, blockHash, 30);
+          if (eventData) {
+            enhancedEvents.push({
+              kind: eventData.kind,
+              baseEventParams,
+              log,
+            });
+          }
+        } catch (error) {
+          logger.info("sync-events", `Failed to handle events: ${error}`);
+          throw error;
         }
       }
 
-      // Put all fetched blocks on a delayed queue
-      await Promise.all(
-        [...blocksSet.values()].map(async (blockData) => {
+      // Process the retrieved events asynchronously
+      const eventsSyncProcess = backfill ? eventsSyncBackfillProcess : eventsSyncRealtimeProcess;
+      await eventsSyncProcess.addToQueue([
+        {
+          kind: "erc20",
+          events: enhancedEvents.filter(
+            ({ kind }) => kind.startsWith("erc20") || kind.startsWith("weth")
+          ),
+          backfill,
+          chainId: chainId,
+        },
+        // {
+        //   kind: "erc721",
+        //   events: enhancedEvents.filter(({ kind }) => kind.startsWith("erc721")),
+        //   backfill,
+        // },
+        // {
+        //   kind: "erc1155",
+        //   events: enhancedEvents.filter(({ kind }) => kind.startsWith("erc1155")),
+        //   backfill,
+        // }
+      ]);
+
+      // Make sure to recheck the ingested blocks with a delay in order to undo any reorgs
+
+      const ns = getNetworkSettings(chainId);
+      if (!backfill && ns.enableReorgCheck) {
+        for (const blockData of blocksSet.values()) {
           const block = Number(blockData.split("-")[0]);
           const blockHash = blockData.split("-")[1];
 
-          return Promise.all(
-            ns.reorgCheckFrequency.map((frequency) =>
-              blockCheck.addToQueue(block, blockHash, frequency * 60)
-            )
-          );
-        })
-      );
-    }
-  });
+          // Act right away if the current block is a duplicate
+          if ((await blocksModel.getBlocks(chainId, block)).length > 1) {
+            await blockCheck.addToQueue(chainId, block, blockHash, 10);
+            await blockCheck.addToQueue(chainId, block, blockHash, 30);
+          }
+        }
+
+        // Put all fetched blocks on a delayed queue
+        await Promise.all(
+          [...blocksSet.values()].map(async (blockData) => {
+            const block = Number(blockData.split("-")[0]);
+            const blockHash = blockData.split("-")[1];
+
+            return Promise.all(
+              ns.reorgCheckFrequency.map((frequency) =>
+                blockCheck.addToQueue(chainId, block, blockHash, frequency * 60)
+              )
+            );
+          })
+        );
+      }
+    });
 };
 
 export const unsyncEvents = async (block: number, blockHash: string) => {

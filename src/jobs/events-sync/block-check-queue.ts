@@ -3,7 +3,7 @@ import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 
 import { idb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { baseProvider } from "@/common/provider";
+import { getProvider } from "@/common/provider";
 import { redis } from "@/common/redis";
 import { fromBuffer } from "@/common/utils";
 import { config } from "@/config/index";
@@ -33,26 +33,27 @@ if (config.doBackgroundWork) {
   const worker = new Worker(
     QUEUE_NAME,
     async (job: Job) => {
-      const { block, blockHash }: { block: number; blockHash?: string } = job.data;
+      const { block, blockHash, chainId }: { block: number; blockHash?: string; chainId: number } =
+        job.data;
 
       try {
         // Generic method for handling an orphan block
         const handleOrphanBlock = async (block: { number: number; hash: string }) => {
           // Resync the detected orphaned block
-          await backfillEventsSync.addToQueue(block.number, block.number, {
+          await backfillEventsSync.addToQueue(chainId, block.number, block.number, {
             prioritized: true,
           });
           await unsyncEvents(block.number, block.hash);
 
           // Delete the orphaned block from the `blocks` table
-          await blocksModel.deleteBlock(block.number, block.hash);
+          await blocksModel.deleteBlock(chainId, block.number, block.hash);
 
           // TODO: Also delete transactions associated to the orphaned
           // block and fetch the transactions of the replacement block
         };
 
         // Fetch the latest upstream hash for the specified block
-        const upstreamBlockHash = (await baseProvider.getBlock(block)).hash.toLowerCase();
+        const upstreamBlockHash = (await getProvider(chainId).getBlock(block)).hash.toLowerCase();
 
         // When `blockHash` is empty, force recheck all event tables
         if (!blockHash) {
@@ -91,12 +92,18 @@ if (config.doBackgroundWork) {
   });
 }
 
-export const addToQueue = async (block: number, blockHash?: string, delayInSeconds = 0) => {
+export const addToQueue = async (
+  chainId: number,
+  block: number,
+  blockHash?: string,
+  delayInSeconds = 0
+) => {
   return queue.add(
     `${block}-${blockHash ?? HashZero}-${delayInSeconds}`,
     {
       block,
       blockHash,
+      chainId,
     },
     {
       jobId: `${block}-${blockHash ?? HashZero}-${delayInSeconds}`,

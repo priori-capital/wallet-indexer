@@ -20,10 +20,10 @@ export type Transaction = {
  * @param transaction
  * @return Transaction
  */
-export const saveTransaction = async (transaction: Transaction) => {
+export const saveTransaction = async (chainId: number, transaction: Transaction) => {
   await idb.none(
     `
-      INSERT INTO transactions (
+      INSERT INTO transactions_${chainId} (
         hash,
         "from",
         "to",
@@ -69,7 +69,7 @@ export const saveTransaction = async (transaction: Transaction) => {
  * Store batch transactions and return nothing
  * @param transactions
  */
-export const saveTransactions = async (transactions: Transaction[]) => {
+export const saveTransactions = async (chainId: number, transactions: Transaction[]) => {
   if (_.isEmpty(transactions)) {
     return;
   }
@@ -87,7 +87,7 @@ export const saveTransactions = async (transactions: Transaction[]) => {
       "gas_used",
       "gas_fee",
     ],
-    { table: "transactions" }
+    { table: `transactions_${chainId}` }
   );
 
   const transactionsValues = _.map(transactions, (transaction) => ({
@@ -105,7 +105,7 @@ export const saveTransactions = async (transactions: Transaction[]) => {
 
   await idb.none(
     `
-      INSERT INTO transactions (
+      INSERT INTO transactions_${chainId} (
         hash,
         "from",
         "to",
@@ -123,6 +123,7 @@ export const saveTransactions = async (transactions: Transaction[]) => {
 };
 
 export const getTransaction = async (
+  chainId: number,
   hash: string
 ): Promise<Pick<Transaction, "hash" | "from" | "to" | "value" | "data">> => {
   const result = await idb.oneOrNone(
@@ -132,7 +133,7 @@ export const getTransaction = async (
         transactions.to,
         transactions.value,
         transactions.data
-      FROM transactions
+      FROM transactions_${chainId} as transactions
       WHERE transactions.hash = $/hash/
     `,
     { hash: toBuffer(hash) }

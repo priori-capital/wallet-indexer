@@ -8,13 +8,14 @@ export type EventsInfo = {
   kind: "erc20" | "erc721" | "erc1155";
   events: EnhancedEvent[];
   backfill?: boolean;
+  chainId: number;
 };
 
 export const processEvents = async (info: EventsInfo) => {
   let data: OnChainData | undefined;
   switch (info.kind) {
     case "erc20": {
-      data = await erc20.handleEvents(info.events);
+      data = await erc20.handleEvents(info.events, info.chainId);
       break;
     }
 
@@ -30,6 +31,6 @@ export const processEvents = async (info: EventsInfo) => {
   }
 
   if (data) {
-    await processOnChainData(data, info.backfill);
+    await processOnChainData(info.chainId, data, info.backfill);
   }
 };
