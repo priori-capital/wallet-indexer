@@ -52,7 +52,7 @@ const getUpstreamUSDPrice = async (
 
         await idb.none(
           `
-            INSERT INTO usd_prices (
+            INSERT INTO "usd_prices-${chainId}" (
               currency,
               timestamp,
               value
@@ -117,7 +117,8 @@ const getUpstreamUSDPrice = async (
 
 const getCachedUSDPrice = async (
   currencyAddress: string,
-  timestamp: number
+  timestamp: number,
+  chainId: number
 ): Promise<Price | undefined> =>
   idb
     .oneOrNone(
@@ -125,7 +126,7 @@ const getCachedUSDPrice = async (
         SELECT
           extract('epoch' from usd_prices.timestamp) AS "timestamp",
           usd_prices.value
-        FROM usd_prices
+        FROM "usd_prices-${chainId}" as usd_prices
         WHERE usd_prices.currency = $/currency/
           AND usd_prices.timestamp <= date_trunc('day', to_timestamp($/timestamp/))
         ORDER BY usd_prices.timestamp DESC
@@ -149,7 +150,7 @@ const getCachedUSDPrice = async (
 
 const USD_PRICE_MEMORY_CACHE = new Map<string, Price>();
 
-const getAvailableUSDPrice = async (currencyAddress: string, timestamp: number) => {
+const getAvailableUSDPrice = async (currencyAddress: string, timestamp: number, chainId: number) => {
   // At the moment, we support day-level granularity for prices
   const DAY = 24 * 3600;
 
@@ -157,7 +158,7 @@ const getAvailableUSDPrice = async (currencyAddress: string, timestamp: number) 
   const key = `${currencyAddress}-${normalizedTimestamp}`.toLowerCase();
   if (!USD_PRICE_MEMORY_CACHE.has(key)) {
     // If the price is not available in the memory cache, use any available database cached price
-    let cachedPrice = await getCachedUSDPrice(currencyAddress, timestamp);
+    let cachedPrice = await getCachedUSDPrice(currencyAddress, timestamp, chainId);
     if (
       // If the database cached price is not available
       !cachedPrice ||
@@ -200,11 +201,11 @@ export const getUSDAndNativePrices = async (
   const force =
     config.chainId === 5 && currencyAddress === "0x2f3a40a3db8a7e3d09b0adfefbce4f6f81927557";
   if (getNetworkSettings().coingecko?.networkId || force) {
-    const currencyUSDPrice = await getAvailableUSDPrice(currencyAddress, timestamp);
+    const currencyUSDPrice = await getAvailableUSDPrice(currencyAddress, timestamp, chainId);
 
     let nativeUSDPrice: Price | undefined;
     if (!options?.onlyUSD) {
-      nativeUSDPrice = await getAvailableUSDPrice(AddressZero, timestamp);
+      nativeUSDPrice = await getAvailableUSDPrice(AddressZero, timestamp, chainId);
     }
 
     const currency = await getCurrency(currencyAddress, chainId);

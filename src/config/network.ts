@@ -95,7 +95,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
           await Promise.all([
             idb.none(
               `
-                INSERT INTO currencies (
+                INSERT INTO "currencies-1" (
                   contract,
                   name,
                   symbol,
@@ -117,7 +117,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
         chainId: 1,
       };
     // Goerli
-    case 137: {
+    case 5: {
       return {
         ...defaultNetworkSettings,
         backfillBlockBatchSize: 128,
@@ -187,44 +187,44 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
       };
     }
     // Polygon
-    // case 137: {
-    //   return {
-    //     ...defaultNetworkSettings,
-    //     enableWebSocket: false,
-    //     enableReorgCheck: true,
-    //     realtimeSyncFrequencySeconds: 10,
-    //     realtimeSyncMaxBlockLag: 128,
-    //     backfillBlockBatchSize: 20,
-    //     reorgCheckFrequency: [30],
-    //     coingecko: {
-    //       networkId: "polygon-pos",
-    //     },
-    //     onStartup: async () => {
-    //       // Insert the native currency
-    //       await Promise.all([
-    //         idb.none(
-    //           `
-    //             INSERT INTO "currencies-137" (
-    //               contract,
-    //               name,
-    //               symbol,
-    //               decimals,
-    //               metadata
-    //             ) VALUES (
-    //               '\\x0000000000000000000000000000000000000000',
-    //               'Matic',
-    //               'MATIC',
-    //               18,
-    //               '{"coingeckoCurrencyId": "matic-network"}'
-    //             ) ON CONFLICT DO NOTHING
-    //           `
-    //         ),
-    //       ]);
-    //     },
-    //     rpc: "https://eth-mainnet.g.alchemy.com/v2/",
-    //     ws:"wss://eth-mainnet.g.alchemy.com/v2/"
-    //   };
-    // }
+    case 137: {
+      return {
+        ...defaultNetworkSettings,
+        enableWebSocket: false,
+        enableReorgCheck: true,
+        realtimeSyncFrequencySeconds: 10,
+        realtimeSyncMaxBlockLag: 128,
+        backfillBlockBatchSize: 20,
+        reorgCheckFrequency: [30],
+        coingecko: {
+          networkId: "polygon-pos",
+        },
+        onStartup: async () => {
+          // Insert the native currency
+          await Promise.all([
+            idb.none(
+              `
+                INSERT INTO "currencies-137" (
+                  contract,
+                  name,
+                  symbol,
+                  decimals,
+                  metadata
+                ) VALUES (
+                  '\\x0000000000000000000000000000000000000000',
+                  'Matic',
+                  'MATIC',
+                  18,
+                  '{"coingeckoCurrencyId": "matic-network"}'
+                ) ON CONFLICT DO NOTHING
+              `
+            ),
+          ]);
+        },
+        rpc: "https://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
+        ws: "wss://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
+      };
+    }
     // Default
     default:
       return {

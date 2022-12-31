@@ -33,7 +33,7 @@ export const getCurrency = async (currencyAddress: string, chainId: number): Pro
           currencies.symbol,
           currencies.decimals,
           currencies.metadata
-        FROM currencies
+        FROM "currencies-${chainId}" as currencies
         WHERE currencies.contract = $/contract/
       `,
       {
@@ -84,7 +84,7 @@ export const getCurrency = async (currencyAddress: string, chainId: number): Pro
 
       await idb.none(
         `
-          INSERT INTO currencies (
+          INSERT INTO "currencies-${chainId}" (
             contract,
             name,
             symbol,
