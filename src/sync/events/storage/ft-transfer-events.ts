@@ -58,6 +58,7 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
         "from",
         "to",
         "amount",
+        "chainId"
       ],
       { table: "ft_transfer_events" }
     );
@@ -75,7 +76,8 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
           "timestamp",
           "from",
           "to",
-          "amount"
+          "amount",
+          "chainId"
         ) VALUES ${pgp.helpers.values(transferValues, columns)}
         ON CONFLICT DO NOTHING
         RETURNING

@@ -41,7 +41,8 @@ CREATE TABLE "ft_transfer_events" (
   "timestamp" INT NOT NULL,
   "from" BYTEA NOT NULL,
   "to" BYTEA NOT NULL,
-  "amount" NUMERIC(78, 0) NOT NULL
+  "amount" NUMERIC(78, 0) NOT NULL,
+  "chainId" INT NOT NULL
 );
 
 ALTER TABLE "ft_transfer_events"

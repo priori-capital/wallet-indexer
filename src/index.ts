@@ -4,7 +4,7 @@ dotEnvConfig();
 import "@/common/tracer";
 import "@/jobs/index";
 
-// import { start } from "@/api/index";
+import { start } from "@/api/index";
 import { logger } from "@/common/logger";
 import { config } from "@/config/index";
 import { ethereumNetworks, getNetworkSettings } from "@/config/network";
@@ -25,7 +25,12 @@ const setup = async (chainId: number) => {
 };
 
 // setup().then(() => start());
-ethereumNetworks.forEach((network) => {
-  setup(network.networkId).then(() => console.log("setup service for ", network.name));
-});
+const syncAllNetworks =async () => {
+  const setupAll: any[] = []
+  ethereumNetworks.forEach((network) => {
+    setupAll.push(setup(network.networkId));
+  });
+  await Promise.all(setupAll)
+}
+syncAllNetworks().then(()=>start())
 // setup().then(() => console.log("testing microservices"));

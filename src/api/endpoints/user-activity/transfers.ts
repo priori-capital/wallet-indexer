@@ -4,7 +4,7 @@ import { Request, RouteOptions } from "@hapi/hapi";
 
 import { redb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { buildContinuation, formatEth, fromBuffer, regex, toBuffer } from "@/common/utils";
+import { formatEth, fromBuffer, regex, toBuffer } from "@/common/utils";
 import Joi from "joi";
 
 const version = "v1";
@@ -90,23 +90,23 @@ export const getTransfersV2Options: RouteOptions = {
       baseQuery += ` LIMIT $/limit/`;
       const rawResult = await redb.manyOrNone(baseQuery, query);
 
-      let continuation = null;
-      if (rawResult.length === query.limit) {
-        continuation = buildContinuation(
-          rawResult[rawResult.length - 1].event_timestamp
-          // +
-          // "_" +
-          // rawResult[rawResult.length - 1].log_index +
-          // "_" +
-          // rawResult[rawResult.length - 1].batch_index
-        );
-      }
+      // let continuation = null;
+      // if (rawResult.length === query.limit) {
+      //   continuation = buildContinuation(
+      //     rawResult[rawResult.length - 1].event_timestamp
+      //     // +
+      //     // "_" +
+      //     // rawResult[rawResult.length - 1].log_index +
+      //     // "_" +
+      //     // rawResult[rawResult.length - 1].batch_index
+      //   );
+      // }
 
       const result = rawResult.map((r) => ({
         type: r.type,
         txHash: fromBuffer(r.hash),
         direction: r.direction,
-        token: r.token,
+        token: fromBuffer(r.contract),
         from: fromBuffer(r.from_address),
         destination: fromBuffer(r.to_address),
         amount: String(r.amount),
@@ -116,10 +116,11 @@ export const getTransfersV2Options: RouteOptions = {
         batchIndex: r.metadata.batchIndex,
         timestamp: r.eventTimestamp,
         price: r.price ? formatEth(r.price) : null,
+        chainId: r.chainId
       }));
       return {
         transfers: result,
-        continuation,
+        // continuation,
       };
     } catch (error) {
       logger.error(`get-users-transfers-${version}-handler`, `Handler failure: ${error}`);

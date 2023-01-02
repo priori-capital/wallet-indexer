@@ -19,18 +19,18 @@ export const ethereumNetworks = [
     rpc: "https://eth-mainnet.g.alchemy.com/v2/",
     ws: "wss://eth-mainnet.g.alchemy.com/v2/",
   },
-  // {
-  //   id: 137,
-  //   networkId: 137,
-  //   name: "Polygon",
-  //   decimals: 18,
-  //   color: "#690496",
-  //   symbol: "MATIC",
-  //   historyHost: "https://polygonscan.com/",
-  //   alias: "matic",
-  //   rpc: "https://eth-mainnet.g.alchemy.com/v2/",
-  //   ws:"wss://eth-mainnet.g.alchemy.com/v2/"
-  // }
+  {
+    id: 137,
+    networkId: 137,
+    name: "Polygon",
+    decimals: 18,
+    color: "#690496",
+    symbol: "MATIC",
+    historyHost: "https://polygonscan.com/",
+    alias: "matic",
+    rpc: "https://eth-mainnet.g.alchemy.com/v2/",
+    ws:"wss://eth-mainnet.g.alchemy.com/v2/"
+  }
 ];
 
 export const getNetworkName = (chainId = 1) => {
@@ -223,6 +223,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
         },
         rpc: "https://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
         ws: "wss://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
+        chainId: 137,
       };
     }
     // Default
