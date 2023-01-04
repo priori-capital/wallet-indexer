@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 
 import { idb, pgp } from "@/common/db";
 import { logger } from "@/common/logger";
-import { baseProvider } from "@/common/provider";
+import { getProvider } from "@/common/provider";
 import { redis } from "@/common/redis";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import { config } from "@/config/index";
@@ -28,7 +28,7 @@ if (config.doBackgroundWork) {
   const worker = new Worker(
     QUEUE_NAME,
     async (job) => {
-      const { hash } = job.data;
+      const { hash, chainId } = job.data;
       const limit = 200;
 
       const results = await idb.manyOrNone(
@@ -53,12 +53,13 @@ if (config.doBackgroundWork) {
       });
       for (const { hash, block_timestamp } of results) {
         if (!block_timestamp) {
-          const tx = await baseProvider.getTransaction(fromBuffer(hash));
+          const tx = await getProvider(chainId).getTransaction(fromBuffer(hash));
           if (tx) {
             values.push({
               hash,
               block_number: tx.blockNumber!,
-              block_timestamp: (await syncEventsUtils.fetchBlock(tx.blockNumber!)).timestamp,
+              block_timestamp: (await syncEventsUtils.fetchBlock(tx.blockNumber!, chainId))
+                .timestamp,
             });
           }
         }
@@ -80,7 +81,7 @@ if (config.doBackgroundWork) {
 
       if (results.length >= limit) {
         const lastResult = results[results.length - 1];
-        await addToQueue(fromBuffer(lastResult.hash));
+        await addToQueue(fromBuffer(lastResult.hash), chainId);
       }
     },
     { connection: redis.duplicate(), concurrency: 1 }
@@ -102,6 +103,6 @@ if (config.doBackgroundWork) {
   //   });
 }
 
-export const addToQueue = async (hash: string) => {
-  await queue.add(randomUUID(), { hash });
+export const addToQueue = async (hash: string, chainId: string) => {
+  await queue.add(randomUUID(), { hash, chainId });
 };

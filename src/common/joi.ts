@@ -27,6 +27,7 @@ export const JoiPrice = Joi.object({
 });
 
 export const getJoiAmountObject = async (
+  chainId: number,
   currency: Currency,
   amount: string,
   nativeAmount: string,
@@ -35,7 +36,7 @@ export const getJoiAmountObject = async (
   let usdPrice = usdAmount;
   if (amount && !usdPrice) {
     usdPrice = (
-      await getUSDAndNativePrices(currency.contract, amount, now(), {
+      await getUSDAndNativePrices(currency.contract, amount, now(), chainId, {
         onlyUSD: true,
       })
     ).usdPrice;
@@ -62,9 +63,10 @@ export const getJoiPriceObject = async (
       usdAmount?: string;
     };
   },
-  currencyAddress: string
+  currencyAddress: string,
+  chainId: number
 ) => {
-  const currency = await getCurrency(currencyAddress);
+  const currency = await getCurrency(currencyAddress, chainId);
   return {
     currency: {
       contract: currency.contract,
@@ -73,6 +75,7 @@ export const getJoiPriceObject = async (
       decimals: currency.decimals,
     },
     amount: await getJoiAmountObject(
+      chainId,
       currency,
       prices.gross.amount,
       prices.gross.nativeAmount,
@@ -81,6 +84,7 @@ export const getJoiPriceObject = async (
     netAmount:
       prices.net &&
       (await getJoiAmountObject(
+        chainId,
         currency,
         prices.net.amount,
         prices.net.nativeAmount,
