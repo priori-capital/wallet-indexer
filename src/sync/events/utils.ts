@@ -1,5 +1,6 @@
 import { AddressZero } from "@ethersproject/constants";
 import { getTxTrace } from "@georgeroman/evm-tx-simulator";
+import { TransactionResponse } from "@ethersproject/abstract-provider";
 
 import { getProvider } from "@/common/provider";
 import { bn } from "@/common/utils";
@@ -19,7 +20,7 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
           const block = await getProvider(chainId).getBlockWithTransactions(blockNumber);
 
           // Create transactions array to store
-          const transactions = block.transactions.map((tx) => {
+          const transactions = block.transactions.map((tx: TransactionResponse) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const rawTx = tx.raw as any;
 

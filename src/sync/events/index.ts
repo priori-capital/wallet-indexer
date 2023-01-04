@@ -1,4 +1,4 @@
-import { Filter } from "@ethersproject/abstract-provider";
+import { Filter, Log } from "@ethersproject/abstract-provider";
 import _ from "lodash";
 import pLimit from "p-limit";
 
@@ -89,7 +89,7 @@ export const syncEvents = async (
   const enhancedEvents: EnhancedEvent[] = [];
   await getProvider(chainId)
     .getLogs(eventFilter)
-    .then(async (logs) => {
+    .then(async (logs: Log[]) => {
       const availableEventData = getEventData();
       for (const log of logs) {
         try {

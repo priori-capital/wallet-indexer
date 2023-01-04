@@ -150,7 +150,11 @@ const getCachedUSDPrice = async (
 
 const USD_PRICE_MEMORY_CACHE = new Map<string, Price>();
 
-const getAvailableUSDPrice = async (currencyAddress: string, timestamp: number, chainId: number) => {
+const getAvailableUSDPrice = async (
+  currencyAddress: string,
+  timestamp: number,
+  chainId: number
+) => {
   // At the moment, we support day-level granularity for prices
   const DAY = 24 * 3600;
 

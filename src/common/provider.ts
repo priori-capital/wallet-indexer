@@ -2,12 +2,13 @@ import { StaticJsonRpcProvider, WebSocketProvider } from "@ethersproject/provide
 import Arweave from "arweave";
 
 import { logger } from "@/common/logger";
+import { NetworkSettings } from "@/config/network";
 
 // Use a static provider to avoid redundant `eth_chainId` calls
 // export const baseProvider=(rpc:string, chainId=1) => new StaticJsonRpcProvider(rpc, chainId);
-const providers: any[] = [];
+const providers: { [key: string]: { rpc: StaticJsonRpcProvider } } = {};
 
-export const initiateProviders = (network: any) => {
+export const initiateProviders = (network: NetworkSettings) => {
   providers[network.chainId] = {
     rpc: new StaticJsonRpcProvider(network.rpc, network.chainId),
   };

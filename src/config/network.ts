@@ -29,8 +29,8 @@ export const ethereumNetworks = [
     historyHost: "https://polygonscan.com/",
     alias: "matic",
     rpc: "https://eth-mainnet.g.alchemy.com/v2/",
-    ws:"wss://eth-mainnet.g.alchemy.com/v2/"
-  }
+    ws: "wss://eth-mainnet.g.alchemy.com/v2/",
+  },
 ];
 
 export const getNetworkName = (chainId = 1) => {
@@ -53,7 +53,7 @@ export const getServiceName = (chainId = 1) => {
   return `indexer-${isRailway ? "" : "fc-"}${config.version}-${getNetworkName(chainId)}`;
 };
 // todo: can we initate provider here?
-type NetworkSettings = {
+export type NetworkSettings = {
   enableWebSocket: boolean;
   enableReorgCheck: boolean;
   reorgCheckFrequency: number[];

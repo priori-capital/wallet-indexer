@@ -58,7 +58,7 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
         "from",
         "to",
         "amount",
-        "chainId"
+        "chainId",
       ],
       { table: "ft_transfer_events" }
     );

@@ -25,12 +25,9 @@ const setup = async (chainId: number) => {
 };
 
 // setup().then(() => start());
-const syncAllNetworks =async () => {
-  const setupAll: any[] = []
-  ethereumNetworks.forEach((network) => {
-    setupAll.push(setup(network.networkId));
-  });
-  await Promise.all(setupAll)
-}
-syncAllNetworks().then(()=>start())
+const syncAllNetworks = async () => {
+  const setupAll = ethereumNetworks.map((network) => setup(network.networkId));
+  await Promise.all(setupAll);
+};
+syncAllNetworks().then(() => start());
 // setup().then(() => console.log("testing microservices"));

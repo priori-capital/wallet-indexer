@@ -116,7 +116,7 @@ export const getTransfersV2Options: RouteOptions = {
         batchIndex: r.metadata.batchIndex,
         timestamp: r.eventTimestamp,
         price: r.price ? formatEth(r.price) : null,
-        chainId: r.chainId
+        chainId: r.chainId,
       }));
       return {
         transfers: result,
