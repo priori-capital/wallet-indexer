@@ -6,7 +6,6 @@ import axios from "axios";
 import { idb } from "@/common/db";
 import { logger } from "@/common/logger";
 import { bn, toBuffer } from "@/common/utils";
-import { config } from "@/config/index";
 import { getNetworkSettings } from "@/config/network";
 import { getCurrency } from "@/utils/currencies";
 
@@ -202,8 +201,8 @@ export const getUSDAndNativePrices = async (
   let nativePrice: string | undefined;
 
   // Only try to get pricing data if the network supports it
-  const force =
-    config.chainId === 5 && currencyAddress === "0x2f3a40a3db8a7e3d09b0adfefbce4f6f81927557";
+  const force = false; // TODO: check if main network then make force = true
+  // chainId === 5 && currencyAddress === "0x2f3a40a3db8a7e3d09b0adfefbce4f6f81927557";
   if (getNetworkSettings().coingecko?.networkId || force) {
     const currencyUSDPrice = await getAvailableUSDPrice(currencyAddress, timestamp, chainId);
 
@@ -229,7 +228,7 @@ export const getUSDAndNativePrices = async (
 
   // Make sure to handle the case where the currency is the native one (or the wrapped equivalent)
   if (
-    [Sdk.Common.Addresses.Eth[config.chainId], Sdk.Common.Addresses.Weth[config.chainId]].includes(
+    [Sdk.Common.Addresses.Eth[chainId], Sdk.Common.Addresses.Weth[chainId]].includes(
       currencyAddress
     )
   ) {

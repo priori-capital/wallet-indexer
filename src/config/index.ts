@@ -1,7 +1,11 @@
 export const config = {
   version: String(process.env.VERSION),
   port: Number(process.env.PORT),
-  chainId: Number(process.env.CHAIN_ID),
+
+  rpc1: String(process.env.RPC_1),
+  ws1: String(process.env.WS_1),
+  rpc137: String(process.env.RPC_137),
+  ws137: String(process.env.RPC_137),
 
   adminApiKey: String(process.env.ADMIN_API_KEY),
   bullmqAdminPassword: String(process.env.BULLMQ_ADMIN_PASSWORD),
@@ -12,8 +16,6 @@ export const config = {
     ? String(process.env.ORACLE_PRIVATE_KEY)
     : undefined,
 
-  baseNetworkHttpUrl: String(process.env.BASE_NETWORK_HTTP_URL),
-  baseNetworkWsUrl: String(process.env.BASE_NETWORK_WS_URL),
   traceNetworkHttpUrl: String(
     process.env.TRACE_NETWORK_HTTP_URL ?? process.env.BASE_NETWORK_HTTP_URL
   ),

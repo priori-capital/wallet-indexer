@@ -16,8 +16,6 @@ export const ethereumNetworks = [
     symbol: "ETH",
     historyHost: "https://etherscan.io/",
     alias: "ethereum",
-    rpc: "https://eth-mainnet.g.alchemy.com/v2/",
-    ws: "wss://eth-mainnet.g.alchemy.com/v2/",
   },
   {
     id: 137,
@@ -28,8 +26,6 @@ export const ethereumNetworks = [
     symbol: "MATIC",
     historyHost: "https://polygonscan.com/",
     alias: "matic",
-    rpc: "https://eth-mainnet.g.alchemy.com/v2/",
-    ws: "wss://eth-mainnet.g.alchemy.com/v2/",
   },
 ];
 
@@ -77,9 +73,9 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
     realtimeSyncMaxBlockLag: 16,
     backfillBlockBatchSize: 16,
     reorgCheckFrequency: [1, 5, 10, 30, 60],
-    rpc: "https://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
-    ws: "wss://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
     chainId: 1,
+    rpc: config.rpc1,
+    ws: config.ws1,
   };
 
   switch (chainId) {
@@ -112,80 +108,10 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
             ),
           ]);
         },
-        rpc: "https://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
-        ws: "wss://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
         chainId: 1,
+        rpc: config.rpc1,
+        ws: config.ws1,
       };
-    // Goerli
-    case 5: {
-      return {
-        ...defaultNetworkSettings,
-        backfillBlockBatchSize: 128,
-        onStartup: async () => {
-          // Insert the native currency
-          await Promise.all([
-            idb.none(
-              `
-                INSERT INTO currencies (
-                  contract,
-                  name,
-                  symbol,
-                  decimals,
-                  metadata
-                ) VALUES (
-                  '\\x0000000000000000000000000000000000000000',
-                  'Ether',
-                  'ETH',
-                  18,
-                  '{}'
-                ) ON CONFLICT DO NOTHING
-              `
-            ),
-          ]);
-        },
-        rpc: "https://eth-goerli.g.alchemy.com/v2/45D7qyrzT4Lm7s586NoSQgpTeQeB5AEf",
-        ws: "wss://eth-goerli.g.alchemy.com/v2/45D7qyrzT4Lm7s586NoSQgpTeQeB5AEf",
-        chainId: 137,
-      };
-    }
-    // Optimism
-    case 10: {
-      return {
-        ...defaultNetworkSettings,
-        enableWebSocket: false,
-        enableReorgCheck: false,
-        realtimeSyncFrequencySeconds: 10,
-        realtimeSyncMaxBlockLag: 128,
-        backfillBlockBatchSize: 512,
-        coingecko: {
-          networkId: "optimistic-ethereum",
-        },
-        onStartup: async () => {
-          // Insert the native currency
-          await Promise.all([
-            idb.none(
-              `
-                INSERT INTO "currencies" (
-                  contract,
-                  name,
-                  symbol,
-                  decimals,
-                  metadata
-                ) VALUES (
-                  '\\x0000000000000000000000000000000000000000',
-                  'Ether',
-                  'ETH',
-                  18,
-                  '{"coingeckoCurrencyId": "ethereum", "image": "https://assets.coingecko.com/coins/images/279/large/ethereum.png"}'
-                ) ON CONFLICT DO NOTHING
-              `
-            ),
-          ]);
-        },
-        rpc: "https://eth-mainnet.g.alchemy.com/v2/",
-        ws: "wss://eth-mainnet.g.alchemy.com/v2/",
-      };
-    }
     // Polygon
     case 137: {
       return {
@@ -221,9 +147,9 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
             ),
           ]);
         },
-        rpc: "https://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
-        ws: "wss://eth-mainnet.g.alchemy.com/v2/erYSuGZK8mNfFhMVvUIKAHw08kP6wTq0",
         chainId: 137,
+        rpc: config.rpc137,
+        ws: config.ws137,
       };
     }
     // Default

@@ -1,6 +1,5 @@
-import _ from "lodash";
-import { config } from "@/config/index";
 import { encrypt } from "@/common/utils";
+import _ from "lodash";
 
 export class Assets {
   public static getLocalAssetsLink(assets: string | string[]) {
@@ -8,7 +7,7 @@ export class Assets {
       return undefined;
     }
 
-    const baseUrl = `https://api${config.chainId == 1 ? "" : "-goerli"}.reservoir.tools/assets/v1?`;
+    const baseUrl = `https://api.reservoir.tools/assets/v1?`;
 
     if (_.isArray(assets)) {
       const assetsResult = [];
