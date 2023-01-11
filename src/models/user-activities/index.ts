@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { idb, pgp } from "@/common/db";
-import { toBuffer } from "@/common/utils";
+import { idb, pgp, redb } from "@/common/db";
+import { formatEth, fromBuffer, toBuffer } from "@/common/utils";
+import _ from "lodash";
 
 export class UserActivities {
   public static async addActivities(activities: any[]) {
@@ -52,201 +53,62 @@ export class UserActivities {
 
     await idb.none(query);
   }
+  public static async getActivities(
+    users: string[],
+    createdBefore: null | string = null,
+    limit = 20,
+    sortBy = "eventTimestamp"
+  ) {
+    const sortByColumn = sortBy == "eventTimestamp" ? "event_timestamp" : "created_at";
+    const continuation = "";
+    let usersFilter = "";
+    let i = 0;
+    const values = {
+      limit,
+      createdBefore: sortBy == "eventTimestamp" ? Number(createdBefore) : createdBefore,
+    };
 
-  // public static async getActivities(
-  //   users: string[],
-  //   collections: string[] = [],
-  //   community = "",
-  //   createdBefore: null | string = null,
-  //   types: string[] = [],
-  //   limit = 20,
-  //   sortBy = "eventTimestamp",
-  //   includeMetadata = true,
-  //   includeCriteria = false
-  // ) {
-  //   const sortByColumn = sortBy == "eventTimestamp" ? "event_timestamp" : "created_at";
-  //   let continuation = "";
-  //   let typesFilter = "";
-  //   let metadataQuery = "";
-  //   let collectionFilter = "";
-  //   let communityFilter = "";
+    const addUsersToFilter = (user: string) => {
+      ++i;
+      (values as any)[`user${i}`] = toBuffer(user);
+      usersFilter = `${usersFilter}$/user${i}/, `;
+    };
 
-  //   if (!_.isNull(createdBefore)) {
-  //     continuation = `AND ${sortByColumn} < $/createdBefore/`;
-  //   }
+    users.forEach(addUsersToFilter);
 
-  //   if (!_.isEmpty(types)) {
-  //     typesFilter = `AND type IN ('$/types:raw/')`;
-  //   }
+    usersFilter = `address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))})`;
 
-  //   if (!_.isEmpty(collections)) {
-  //     if (Array.isArray(collections)) {
-  //       collectionFilter = `AND collections.id IN ($/collections:csv/)`;
-  //     } else {
-  //       collectionFilter = `AND collections.id = $/collections/`;
-  //     }
-  //   }
+    const activities: any[] | null = await redb.manyOrNone(
+      `SELECT *
+               FROM user_activities
+               WHERE ${usersFilter}
+               ${continuation}
+               ORDER BY ${sortByColumn} DESC NULLS LAST
+               LIMIT $/limit/`,
+      values
+    );
 
-  //   if (community) {
-  //     communityFilter = "AND collections.community = $/community/";
-  //   }
+    if (activities) {
+      return _.map(activities, (activity) => ({
+        type: activity.type,
+        txHash: fromBuffer(activity.hash),
+        direction: activity.direction,
+        token: fromBuffer(activity.contract),
+        from: fromBuffer(activity.from_address),
+        destination: fromBuffer(activity.to_address),
+        amount: String(activity.amount),
+        account: fromBuffer(activity.address),
+        blockNumber: activity.block,
+        logIndex: activity.metadata.logIndex,
+        batchIndex: activity.metadata.batchIndex,
+        timestamp: activity.eventTimestamp,
+        price: activity.price ? formatEth(activity.price) : null,
+        chainId: activity.chainId,
+      }));
+    }
 
-  //   if (includeMetadata) {
-  //     let orderCriteriaBuildQuery = "json_build_object()";
-  //     let orderMetadataBuildQuery = "json_build_object()";
-
-  //     if (includeCriteria) {
-  //       orderCriteriaBuildQuery = Orders.buildCriteriaQuery(
-  //         "orders",
-  //         "token_set_id",
-  //         includeMetadata
-  //       );
-  //     } else {
-  //       orderMetadataBuildQuery = `
-  //         CASE
-  //           WHEN orders.token_set_id LIKE 'token:%' THEN
-  //             (SELECT
-  //               json_build_object(
-  //                 'kind', 'token',
-  //                 'data', json_build_object(
-  //                   'collectionName', collections.name,
-  //                   'tokenName', tokens.name,
-  //                   'image', tokens.image
-  //                 )
-  //               )
-  //             FROM tokens
-  //             JOIN collections
-  //               ON tokens.collection_id = collections.id
-  //             WHERE tokens.contract = decode(substring(split_part(orders.token_set_id, ':', 2) from 3), 'hex')
-  //               AND tokens.token_id = (split_part(orders.token_set_id, ':', 3)::NUMERIC(78, 0)))
-
-  //           WHEN orders.token_set_id LIKE 'contract:%' THEN
-  //             (SELECT
-  //               json_build_object(
-  //                 'kind', 'collection',
-  //                 'data', json_build_object(
-  //                   'collectionName', collections.name,
-  //                   'image', (collections.metadata ->> 'imageUrl')::TEXT
-  //                 )
-  //               )
-  //             FROM collections
-  //             WHERE collections.id = substring(orders.token_set_id from 10))
-
-  //           WHEN orders.token_set_id LIKE 'range:%' THEN
-  //             (SELECT
-  //               json_build_object(
-  //                 'kind', 'collection',
-  //                 'data', json_build_object(
-  //                   'collectionName', collections.name,
-  //                   'image', (collections.metadata ->> 'imageUrl')::TEXT
-  //                 )
-  //               )
-  //             FROM collections
-  //             WHERE collections.id = substring(orders.token_set_id from 7))
-
-  //           WHEN orders.token_set_id LIKE 'list:%' THEN
-  //             (SELECT
-  //               CASE
-  //                 WHEN token_sets.attribute_id IS NULL THEN
-  //                   (SELECT
-  //                     json_build_object(
-  //                       'kind', 'collection',
-  //                       'data', json_build_object(
-  //                         'collectionName', collections.name,
-  //                         'image', (collections.metadata ->> 'imageUrl')::TEXT
-  //                       )
-  //                     )
-  //                   FROM collections
-  //                   WHERE token_sets.collection_id = collections.id)
-  //                 ELSE
-  //                   (SELECT
-  //                     json_build_object(
-  //                       'kind', 'attribute',
-  //                       'data', json_build_object(
-  //                         'collectionName', collections.name,
-  //                         'attributes', ARRAY[json_build_object('key', attribute_keys.key, 'value', attributes.value)],
-  //                         'image', (collections.metadata ->> 'imageUrl')::TEXT
-  //                       )
-  //                     )
-  //                   FROM attributes
-  //                   JOIN attribute_keys
-  //                   ON attributes.attribute_key_id = attribute_keys.id
-  //                   JOIN collections
-  //                   ON attribute_keys.collection_id = collections.id
-  //                   WHERE token_sets.attribute_id = attributes.id)
-  //               END
-  //             FROM token_sets
-  //             WHERE token_sets.id = orders.token_set_id AND token_sets.schema_hash = orders.token_set_schema_hash)
-  //           ELSE NULL
-  //         END
-  //     `;
-  //     }
-
-  //     metadataQuery = `
-  //            LEFT JOIN LATERAL (
-  //               SELECT name AS "token_name", image AS "token_image"
-  //               FROM tokens
-  //               WHERE user_activities.contract = tokens.contract
-  //               AND user_activities.token_id = tokens.token_id
-  //            ) t ON TRUE
-  //            ${!_.isEmpty(collections) || community ? "" : "LEFT"} JOIN LATERAL (
-  //               SELECT name AS "collection_name", metadata AS "collection_metadata"
-  //               FROM collections
-  //               WHERE user_activities.collection_id = collections.id
-  //               ${collectionFilter}
-  //               ${communityFilter}
-  //            ) c ON TRUE
-  //            LEFT JOIN LATERAL (
-  //               SELECT
-  //                   source_id_int AS "order_source_id_int",
-  //                   side AS "order_side",
-  //                   kind AS "order_kind",
-  //                   (${orderMetadataBuildQuery}) AS "order_metadata",
-  //                   (${orderCriteriaBuildQuery}) AS "order_criteria"
-  //               FROM orders
-  //               WHERE user_activities.order_id = orders.id
-  //            ) o ON TRUE
-  //            `;
-  //   }
-
-  //   const values = {
-  //     limit,
-  //     createdBefore: sortBy == "eventTimestamp" ? Number(createdBefore) : createdBefore,
-  //     types: _.join(types, "','"),
-  //     collections,
-  //     community,
-  //   };
-
-  //   let usersFilter = "";
-  //   let i = 0;
-  //   const addUsersToFilter = (user: string) => {
-  //     ++i;
-  //     (values as any)[`user${i}`] = toBuffer(user);
-  //     usersFilter = `${usersFilter}$/user${i}/, `;
-  //   };
-
-  //   users.forEach(addUsersToFilter);
-
-  //   usersFilter = `address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))})`;
-
-  //   const activities: UserActivitiesEntityParams[] | null = await redb.manyOrNone(
-  //     `SELECT *
-  //            FROM user_activities
-  //            ${metadataQuery}
-  //            WHERE ${usersFilter}
-  //            ${continuation}
-  //            ${typesFilter}
-  //            ORDER BY ${sortByColumn} DESC NULLS LAST
-  //            LIMIT $/limit/`,
-  //     values
-  //   );
-
-  //   if (activities) {
-  //     return _.map(activities, (activity) => new UserActivitiesEntity(activity));
-  //   }
-
-  //   return [];
-  // }
+    return [];
+  }
 
   // public static async deleteByBlockHash(blockHash: string) {
   //   const query = `DELETE FROM user_activities

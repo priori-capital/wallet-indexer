@@ -2,9 +2,9 @@
 
 import { Request, RouteOptions } from "@hapi/hapi";
 
-import { redb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { formatEth, fromBuffer, regex, toBuffer } from "@/common/utils";
+import { regex } from "@/common/utils";
+import { UserActivities } from "@/models/user-activities";
 import Joi from "joi";
 
 const version = "v1";
@@ -64,64 +64,8 @@ export const getTransfersV2Options: RouteOptions = {
   handler: async (request: Request) => {
     const query = request.query as any;
     try {
-      // Associating sales to transfers is done by searching for transfer
-      // and sale events that occurred close to each other. In most cases
-      // we will first have the transfer followed by the sale but we have
-      // some exceptions.
-      let baseQuery = `select * from user_activities ua`;
-      // Filters
-      const conditions: string[] = [];
-      if (query.user) {
-        query.user = toBuffer(query.user);
-        conditions.push(`ua.address = $/user/`);
-      }
-
-      if (conditions.length) {
-        baseQuery += " WHERE " + conditions.map((c) => `(${c})`).join(" AND ");
-      }
-
-      // Sorting
-      baseQuery += `
-        ORDER BY
-          ua.event_timestamp DESC
-      `;
-
-      // Pagination
-      baseQuery += ` LIMIT $/limit/`;
-      const rawResult = await redb.manyOrNone(baseQuery, query);
-
-      // let continuation = null;
-      // if (rawResult.length === query.limit) {
-      //   continuation = buildContinuation(
-      //     rawResult[rawResult.length - 1].event_timestamp
-      //     // +
-      //     // "_" +
-      //     // rawResult[rawResult.length - 1].log_index +
-      //     // "_" +
-      //     // rawResult[rawResult.length - 1].batch_index
-      //   );
-      // }
-
-      const result = rawResult.map((r) => ({
-        type: r.type,
-        txHash: fromBuffer(r.hash),
-        direction: r.direction,
-        token: fromBuffer(r.contract),
-        from: fromBuffer(r.from_address),
-        destination: fromBuffer(r.to_address),
-        amount: String(r.amount),
-        account: fromBuffer(r.address),
-        blockNumber: r.block,
-        logIndex: r.metadata.logIndex,
-        batchIndex: r.metadata.batchIndex,
-        timestamp: r.eventTimestamp,
-        price: r.price ? formatEth(r.price) : null,
-        chainId: r.chainId,
-      }));
-      return {
-        transfers: result,
-        // continuation,
-      };
+      // TODO: map result to JOI object
+      return UserActivities.getActivities([query.user]);
     } catch (error) {
       logger.error(`get-users-transfers-${version}-handler`, `Handler failure: ${error}`);
       throw error;
