@@ -18,7 +18,7 @@ CREATE TABLE user_activities (
     event_timestamp INT,
     chain_id INT,
     created_at timestamp with time zone DEFAULT NOW(),
-    CONSTRAINT user_activities_pk PRIMARY KEY (id)
+    CONSTRAINT user_activities_pk PRIMARY KEY (hash,direction)
 );
 
 CREATE INDEX user_activities_address_event_timestamp_type_index

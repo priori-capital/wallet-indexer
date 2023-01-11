@@ -28,10 +28,10 @@ export const getEventData = (eventDataKinds?: EventDataKind[]) => {
       // erc721.approvalForAll,
       // erc1155.transferSingle,
       // erc1155.transferBatch,
-      weth.approval,
+      // weth.approval,
       weth.transfer,
-      weth.deposit,
-      weth.withdrawal,
+      // weth.deposit,
+      // weth.withdrawal,
     ];
   } else {
     return (
@@ -54,14 +54,14 @@ const internalGetEventData = (kind: EventDataKind): EventData | undefined => {
     //   return erc1155.transferBatch;
     // case "erc1155-transfer-single":
     //   return erc1155.transferSingle;
-    case "erc20-approval":
-      return weth.approval;
+    // case "erc20-approval":
+    //   return weth.approval;
     case "erc20-transfer":
       return weth.transfer;
-    case "weth-deposit":
-      return weth.deposit;
-    case "weth-withdrawal":
-      return weth.withdrawal;
+    // case "weth-deposit":
+    //   return weth.deposit;
+    // case "weth-withdrawal":
+    //   return weth.withdrawal;
     default:
       return undefined;
   }

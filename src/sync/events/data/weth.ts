@@ -1,7 +1,5 @@
 import { Interface } from "@ethersproject/abi";
-import { Common } from "@reservoir0x/sdk";
 
-import { config } from "@/config/index";
 import { EventData } from "@/events-sync/data";
 
 export const transfer: EventData = {
@@ -18,42 +16,42 @@ export const transfer: EventData = {
   ]),
 };
 
-export const approval: EventData = {
-  kind: "erc20-approval",
-  addresses: { [Common.Addresses.Weth[config.chainId]?.toLowerCase()]: true },
-  topic: "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
-  numTopics: 3,
-  abi: new Interface([
-    `event Approval(
-      address indexed owner,
-      address indexed spender,
-      uint256 value
-    )`,
-  ]),
-};
+// export const approval: EventData = {
+//   kind: "erc20-approval",
+//   addresses: { [Common.Addresses.Weth[config.chainId]?.toLowerCase()]: true },
+//   topic: "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+//   numTopics: 3,
+//   abi: new Interface([
+//     `event Approval(
+//       address indexed owner,
+//       address indexed spender,
+//       uint256 value
+//     )`,
+//   ]),
+// };
 
-export const deposit: EventData = {
-  kind: "weth-deposit",
-  addresses: { [Common.Addresses.Weth[config.chainId]?.toLowerCase()]: true },
-  topic: "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c",
-  numTopics: 2,
-  abi: new Interface([
-    `event Deposit(
-      address indexed to,
-      uint256 amount
-    )`,
-  ]),
-};
+// export const deposit: EventData = {
+//   kind: "weth-deposit",
+//   addresses: { [Common.Addresses.Weth[config.chainId]?.toLowerCase()]: true },
+//   topic: "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c",
+//   numTopics: 2,
+//   abi: new Interface([
+//     `event Deposit(
+//       address indexed to,
+//       uint256 amount
+//     )`,
+//   ]),
+// };
 
-export const withdrawal: EventData = {
-  kind: "weth-withdrawal",
-  addresses: { [Common.Addresses.Weth[config.chainId]?.toLowerCase()]: true },
-  topic: "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65",
-  numTopics: 2,
-  abi: new Interface([
-    `event Withdrawal(
-      address indexed from,
-      uint256 amount
-    )`,
-  ]),
-};
+// export const withdrawal: EventData = {
+//   kind: "weth-withdrawal",
+//   addresses: { [Common.Addresses.Weth[config.chainId]?.toLowerCase()]: true },
+//   topic: "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65",
+//   numTopics: 2,
+//   abi: new Interface([
+//     `event Withdrawal(
+//       address indexed from,
+//       uint256 amount
+//     )`,
+//   ]),
+// };
