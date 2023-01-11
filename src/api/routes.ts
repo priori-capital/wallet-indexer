@@ -4,7 +4,13 @@ import { Server } from "@hapi/hapi";
 export const setupRoutes = (server: Server) => {
   server.route({
     method: "GET",
-    path: "/user-transfer-activity",
+    path: "/user-transfer-activities",
     options: userTransfersActivityEndpoints.getTransfersV2Options,
+  });
+
+  server.route({
+    method: "GET",
+    path: "/user-activity-details",
+    options: userTransfersActivityEndpoints.getTransferDetails,
   });
 };

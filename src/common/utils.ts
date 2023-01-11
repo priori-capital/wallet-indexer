@@ -92,4 +92,5 @@ export const regex = {
   fee: /^0x[a-fA-F0-9]{40}:[0-9]+$/,
   number: /^[0-9]+$/,
   unixTimestamp: /^[0-9]{10}$/,
+  txhash: /^0x[a-fA-F0-9]{64}$/,
 };

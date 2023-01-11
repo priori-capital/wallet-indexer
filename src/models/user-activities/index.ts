@@ -53,6 +53,7 @@ export class UserActivities {
 
     await idb.none(query);
   }
+
   public static async getActivities(
     users: string[],
     createdBefore: null | string = null,
@@ -110,30 +111,42 @@ export class UserActivities {
     return [];
   }
 
+  public static async getActivityDetails(txHash: string) {
+    const values = toBuffer(txHash);
+
+    const activities: any | null = await redb.manyOrNone(
+      `SELECT *
+               FROM user_activities
+               WHERE hash = $/values/`,
+      { values }
+    );
+
+    if (activities) {
+      return _.map(activities, (activity) => ({
+        type: activity.type,
+        txHash: fromBuffer(activity.hash),
+        direction: activity.direction,
+        token: fromBuffer(activity.contract),
+        from: fromBuffer(activity.from_address),
+        destination: fromBuffer(activity.to_address),
+        amount: String(activity.amount),
+        account: fromBuffer(activity.address),
+        blockNumber: activity.block,
+        logIndex: activity.metadata.logIndex,
+        batchIndex: activity.metadata.batchIndex,
+        timestamp: activity.eventTimestamp,
+        price: activity.price ? formatEth(activity.price) : null,
+        chainId: activity.chainId,
+      }));
+    }
+
+    return [];
+  }
+
   // public static async deleteByBlockHash(blockHash: string) {
   //   const query = `DELETE FROM user_activities
   //                  WHERE block_hash = $/blockHash/`;
 
   //   return await idb.none(query, { blockHash });
-  // }
-
-  // public static async updateMissingCollectionId(
-  //   contract: string,
-  //   tokenId: string,
-  //   collectionId: string
-  // ) {
-  //   const query = `
-  //           UPDATE user_activities
-  //           SET collection_id = $/collectionId/
-  //           WHERE user_activities.contract = $/contract/
-  //           AND user_activities.token_id = $/tokenId/
-  //           AND user_activities.collection_id IS NULL
-  //       `;
-
-  //   return await idb.none(query, {
-  //     contract: toBuffer(contract),
-  //     tokenId,
-  //     collectionId,
-  //   });
   // }
 }
