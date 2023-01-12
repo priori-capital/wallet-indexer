@@ -1,3 +1,6 @@
+import { createBullBoard } from "@bull-board/api";
+import { BullMQAdapter } from "@bull-board/api/bullMQAdapter";
+import { HapiAdapter } from "@bull-board/hapi";
 import Basic from "@hapi/basic";
 import Hapi from "@hapi/hapi";
 import Inert from "@hapi/inert";
@@ -9,7 +12,7 @@ import { setupRoutes } from "@/api/routes";
 import { logger } from "@/common/logger";
 import { config } from "@/config/index";
 import { getNetworkName } from "@/config/network";
-// import { allJobQueues } from "@/jobs/index";
+import { allJobQueues } from "@/jobs/index";
 // import { ApiKeyManager } from "@/models/api-keys";
 // import { RateLimitRules } from "@/models/rate-limit-rules";
 
@@ -66,23 +69,23 @@ export const start = async (chainId = 1): Promise<void> => {
   });
 
   // Setup the BullMQ monitoring UI
-  // const serverAdapter = new HapiAdapter();
-  // createBullBoard({
-  //   queues: allJobQueues.map((q) => new BullMQAdapter(q)),
-  //   serverAdapter,
-  // });
-  // serverAdapter.setBasePath("/admin/bullmq");
-  // await server.register(
-  //   {
-  //     plugin: serverAdapter.registerPlugin(),
-  //     options: {
-  //       auth: "simple",
-  //     },
-  //   },
-  //   {
-  //     routes: { prefix: "/admin/bullmq" },
-  //   }
-  // );
+  const serverAdapter = new HapiAdapter();
+  createBullBoard({
+    queues: allJobQueues.map((q) => new BullMQAdapter(q)),
+    serverAdapter,
+  });
+  serverAdapter.setBasePath("/admin/bullmq");
+  await server.register(
+    {
+      plugin: serverAdapter.registerPlugin(),
+      options: {
+        auth: "simple",
+      },
+    },
+    {
+      routes: { prefix: "/admin/bullmq" },
+    }
+  );
 
   // Getting rate limit instance will load rate limit rules into memory
   // await RateLimitRules.getInstance();

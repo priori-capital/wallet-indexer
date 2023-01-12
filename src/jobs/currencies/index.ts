@@ -29,6 +29,7 @@ if (config.doBackgroundWork) {
   const worker = new Worker(
     QUEUE_NAME,
     async (job: Job) => {
+      console.log("do background job for currencies");
       const { currency, chainId } = job.data as JobData;
 
       const details = await tryGetCurrencyDetails(currency, chainId);

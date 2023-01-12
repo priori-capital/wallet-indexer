@@ -51,20 +51,26 @@ const getUpstreamUSDPrice = async (
 
         await idb.none(
           `
-            INSERT INTO "usd_prices-${chainId}" (
+            INSERT INTO "usd_prices" (
               currency,
               timestamp,
-              value
+              value,
+              chain_id,
+              coingecko_id
             ) VALUES (
               $/currency/,
               date_trunc('day', to_timestamp($/timestamp/)),
-              $/value/
+              $/value/,
+              $/chainId/,
+              $/coingeckoCurrencyId/
             ) ON CONFLICT DO NOTHING
           `,
           {
             currency: toBuffer(currencyAddress),
             timestamp: truncatedTimestamp,
             value,
+            chainId,
+            coingeckoCurrencyId,
           }
         );
 
@@ -125,15 +131,17 @@ const getCachedUSDPrice = async (
         SELECT
           extract('epoch' from usd_prices.timestamp) AS "timestamp",
           usd_prices.value
-        FROM "usd_prices-${chainId}" as usd_prices
+        FROM "usd_prices" as usd_prices
         WHERE usd_prices.currency = $/currency/
           AND usd_prices.timestamp <= date_trunc('day', to_timestamp($/timestamp/))
+          AND usd_prices.chain_id =$/chainId/
         ORDER BY usd_prices.timestamp DESC
         LIMIT 1
       `,
       {
         currency: toBuffer(currencyAddress),
         timestamp,
+        chainId,
       }
     )
     .then((data) =>
