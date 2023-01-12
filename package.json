@@ -20,7 +20,9 @@
     "format": "prettier --write \"src/**/*.+(js|ts|json)\"",
     "test": "jest --no-watchman",
     "prepare": "husky install",
-    "release": "standard-version"
+    "release": "standard-version",
+    "migration": "node-pg-migrate -m ./src/migrations",
+    "start:dev": "nodemon --inspect src/index.ts"
   },
   "dependencies": {
     "@bull-board/hapi": "4.0.1",

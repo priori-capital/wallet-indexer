@@ -127,7 +127,7 @@ export const tryGetCurrencyDetails = async (currencyAddress: string, chainId: nu
     "function symbol() view returns (string)",
     "function decimals() view returns (uint8)",
   ]);
-
+  console.log("try Get Currency", currencyAddress, chainId, ">>>>>>>>>>");
   const contract = new Contract(currencyAddress, iface, getProvider(chainId));
   const name = await contract.name();
   const symbol = await contract.symbol();

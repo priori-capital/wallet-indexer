@@ -1,9 +1,6 @@
-FROM node:16.13-slim
+FROM node:16
 
-ARG DATABASE_URL
-ARG PORT
-
-EXPOSE ${PORT}
+EXPOSE 3000
 
 WORKDIR /indexer
 ADD . /indexer
