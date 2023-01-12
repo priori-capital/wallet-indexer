@@ -9,7 +9,7 @@
 // import "@/jobs/cache-check";
 // import "@/jobs/collection-updates";
 // import "@/jobs/collections-refresh";
-import "@/jobs/currencies";
+// import "@/jobs/currencies";
 // import "@/jobs/daily-volumes";
 // import "@/jobs/data-export";
 import "@/jobs/events-sync";
@@ -28,7 +28,7 @@ import "@/jobs/events-sync";
 
 // import * as processActivityEvent from "@/jobs/activities/process-activity-event";
 
-import * as currencies from "@/jobs/currencies/index";
+// import * as currencies from "@/jobs/currencies/index";
 
 export const allJobQueues = [
   // fixActivitiesMissingCollection.queue,
@@ -39,7 +39,7 @@ export const allJobQueues = [
   // backfillBlurSales.queue,
   // backfillMints.queue,
   // backCollectionsNonFlaggedFloorAsk.queue,
-  currencies.queue,
+  // currencies.queue,
   // topBidUpdate.queue,
   // collectionsRefresh.queue,
   // collectionsRefreshCache.queue,
