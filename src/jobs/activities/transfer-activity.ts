@@ -12,13 +12,15 @@ export enum ActivityType {
 
 export class TransferActivity {
   public static async handleEvent(data: TransferEventData) {
-    //TODO: fix prices
-    // const [token, price] = await Promise.all([
-    //   getCurrency(data.contract, data.chainId),
-    //   getUSDAndNativePrices(data.contract, data.amount.toString(), data.timestamp, data.chainId, {
+    // const price = await getUSDAndNativePrices(
+    //   data.contract,
+    //   data.amount.toString(),
+    //   data.timestamp,
+    //   data.chainId,
+    //   {
     //     onlyUSD: true,
-    //   }),
-    // ]);
+    //   }
+    // );
 
     const activity = {
       type: data.fromAddress == AddressZero ? ActivityType.mint : ActivityType.transfer,
