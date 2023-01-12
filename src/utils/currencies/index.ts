@@ -7,6 +7,8 @@ import { logger } from "@/common/logger";
 import { getProvider } from "@/common/provider";
 import { toBuffer } from "@/common/utils";
 import { getNetworkSettings } from "@/config/network";
+import * as currenciesQueue from "@/jobs/currencies/index";
+import { storeUSDPrice } from "../prices";
 
 type CurrencyMetadata = {
   coingeckoCurrencyId?: string;
@@ -23,7 +25,11 @@ export type Currency = {
 
 const CURRENCY_MEMORY_CACHE: Map<string, Currency> = new Map<string, Currency>();
 
-export const getCurrency = async (currencyAddress: string, chainId: number): Promise<Currency> => {
+export const getCurrency = async (
+  currencyAddress: string,
+  chainId: number,
+  timestamp?: number
+): Promise<Currency> => {
   if (!CURRENCY_MEMORY_CACHE.has(currencyAddress)) {
     const result = await idb.oneOrNone(
       `
@@ -58,7 +64,8 @@ export const getCurrency = async (currencyAddress: string, chainId: number): Pro
       try {
         ({ name, symbol, decimals, metadata } = await tryGetCurrencyDetails(
           currencyAddress,
-          chainId
+          chainId,
+          timestamp
         ));
       } catch (error) {
         logger.error(
@@ -66,17 +73,8 @@ export const getCurrency = async (currencyAddress: string, chainId: number): Pro
           `Failed to initially fetch ${currencyAddress} currency details: ${error}`
         );
 
-        // if (getNetworkSettings().whitelistedCurrencies.has(currencyAddress)) {
-        //   ({ name, symbol, decimals, metadata } =
-        //     getNetworkSettings().whitelistedCurrencies.get(currencyAddress)!);
-        // } else {
-        // TODO: Although an edge case, we should ensure that when the job
-        // finally succeeds fetching the details of a currency, we also do
-        // update the memory cache (otherwise the cache will be stale).
-
         // Retry fetching the currency details
-        // await currenciesQueue.addToQueue({ currency: currencyAddress, chainId: chainId });
-        // }
+        await currenciesQueue.addToQueue({ currency: currencyAddress, chainId: chainId });
       }
 
       metadata = metadata || {};
@@ -119,23 +117,34 @@ export const getCurrency = async (currencyAddress: string, chainId: number): Pro
   return CURRENCY_MEMORY_CACHE.get(currencyAddress)!;
 };
 
-export const tryGetCurrencyDetails = async (currencyAddress: string, chainId: number) => {
+export const tryGetCurrencyDetails = async (
+  currencyAddress: string,
+  chainId: number,
+  timestamp?: number
+) => {
   // `name`, `symbol` and `decimals` are fetched from on-chain
   const iface = new Interface([
     "function name() view returns (string)",
     "function symbol() view returns (string)",
     "function decimals() view returns (uint8)",
   ]);
-  console.log("try Get Currency", currencyAddress, chainId, ">>>>>>>>>>");
+
   const contract = new Contract(currencyAddress, iface, getProvider(chainId));
   const name = await contract.name();
   const symbol = await contract.symbol();
   const decimals = await contract.decimals();
   const metadata: CurrencyMetadata = {};
+  let usdPrice = 0;
+  const coingeckoNetworkId = getNetworkSettings(chainId).coingecko?.networkId;
 
-  const coingeckoNetworkId = getNetworkSettings().coingecko?.networkId;
   if (coingeckoNetworkId) {
-    const result: { id?: string; image?: { large?: string } } = await axios
+    const result: {
+      id?: string;
+      image?: { large?: string };
+      market_data: {
+        current_price: { [symbol: string]: number };
+      };
+    } = await axios
       .get(
         `https://api.coingecko.com/api/v3/coins/${coingeckoNetworkId}/contract/${currencyAddress}`,
         { timeout: 10 * 1000 }
@@ -146,6 +155,11 @@ export const tryGetCurrencyDetails = async (currencyAddress: string, chainId: nu
     }
     if (result.image?.large) {
       metadata.image = result.image.large;
+    }
+    usdPrice = result?.market_data?.current_price?.["usd"];
+
+    if (metadata.coingeckoCurrencyId && timestamp && usdPrice) {
+      storeUSDPrice(metadata.coingeckoCurrencyId, timestamp, usdPrice);
     }
   }
 

@@ -5,7 +5,7 @@ import axios from "axios";
 
 import { idb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { bn, toBuffer } from "@/common/utils";
+import { bn } from "@/common/utils";
 import { getNetworkSettings } from "@/config/network";
 import { getCurrency } from "@/utils/currencies";
 
@@ -14,9 +14,34 @@ const USD_DECIMALS = 6;
 const NATIVE_UNIT = bn("1000000000000000000");
 
 export type Price = {
-  currency: string;
+  coingeckoCurrencyId: string;
   timestamp: number;
   value: string;
+};
+
+export const storeUSDPrice = async (
+  coingeckoCurrencyId: string,
+  timestamp: number,
+  value: number
+) => {
+  await idb.none(
+    `
+      INSERT INTO "usd_prices" (
+        coingecko_id,
+        timestamp,
+        value
+      ) VALUES (
+        $/coingeckoCurrencyId/,
+        date_trunc('day', to_timestamp($/timestamp/)),
+        $/value/
+      ) ON CONFLICT DO NOTHING
+    `,
+    {
+      coingeckoCurrencyId,
+      timestamp: timestamp,
+      value,
+    }
+  );
 };
 
 const getUpstreamUSDPrice = async (
@@ -28,7 +53,7 @@ const getUpstreamUSDPrice = async (
     const date = new Date(timestamp * 1000);
     const truncatedTimestamp = Math.floor(date.valueOf() / 1000);
 
-    const currency = await getCurrency(currencyAddress, chainId);
+    const currency = await getCurrency(currencyAddress, chainId, truncatedTimestamp);
     const coingeckoCurrencyId = currency?.metadata?.coingeckoCurrencyId;
 
     if (coingeckoCurrencyId) {
@@ -49,67 +74,15 @@ const getUpstreamUSDPrice = async (
       if (usdPrice) {
         const value = parseUnits(usdPrice.toFixed(USD_DECIMALS), USD_DECIMALS).toString();
 
-        await idb.none(
-          `
-            INSERT INTO "usd_prices" (
-              currency,
-              timestamp,
-              value,
-              chain_id,
-              coingecko_id
-            ) VALUES (
-              $/currency/,
-              date_trunc('day', to_timestamp($/timestamp/)),
-              $/value/,
-              $/chainId/,
-              $/coingeckoCurrencyId/
-            ) ON CONFLICT DO NOTHING
-          `,
-          {
-            currency: toBuffer(currencyAddress),
-            timestamp: truncatedTimestamp,
-            value,
-            chainId,
-            coingeckoCurrencyId,
-          }
-        );
+        storeUSDPrice(coingeckoCurrencyId, truncatedTimestamp, usdPrice);
 
         return {
-          currency: currencyAddress,
+          coingeckoCurrencyId: coingeckoCurrencyId,
           timestamp: truncatedTimestamp,
-          value,
+          value: usdPrice.toString(),
         };
       }
     }
-    // else if (getNetworkSettings().whitelistedCurrencies.has(currencyAddress)) {
-    //   //  Whitelisted currencies are 1:1 with USD
-    //   const value = "1";
-
-    //   await idb.none(
-    //     `
-    //         INSERT INTO usd_prices (
-    //           currency,
-    //           timestamp,
-    //           value
-    //         ) VALUES (
-    //           $/currency/,
-    //           date_trunc('day', to_timestamp($/timestamp/)),
-    //           $/value/
-    //         ) ON CONFLICT DO NOTHING
-    //       `,
-    //     {
-    //       currency: toBuffer(currencyAddress),
-    //       timestamp: truncatedTimestamp,
-    //       value,
-    //     }
-    //   );
-
-    //   return {
-    //     currency: currencyAddress,
-    //     timestamp: truncatedTimestamp,
-    //     value,
-    //   };
-    // }
   } catch (error) {
     logger.error(
       "prices",
@@ -121,9 +94,8 @@ const getUpstreamUSDPrice = async (
 };
 
 const getCachedUSDPrice = async (
-  currencyAddress: string,
-  timestamp: number,
-  chainId: number
+  coingeckoCurrencyId: string,
+  timestamp: number
 ): Promise<Price | undefined> =>
   idb
     .oneOrNone(
@@ -132,22 +104,20 @@ const getCachedUSDPrice = async (
           extract('epoch' from usd_prices.timestamp) AS "timestamp",
           usd_prices.value
         FROM "usd_prices" as usd_prices
-        WHERE usd_prices.currency = $/currency/
+        WHERE usd_prices.coingecko_id = $/coingeckoId/
           AND usd_prices.timestamp <= date_trunc('day', to_timestamp($/timestamp/))
-          AND usd_prices.chain_id =$/chainId/
         ORDER BY usd_prices.timestamp DESC
         LIMIT 1
       `,
       {
-        currency: toBuffer(currencyAddress),
+        coingeckoId: coingeckoCurrencyId,
         timestamp,
-        chainId,
       }
     )
     .then((data) =>
       data
         ? {
-            currency: currencyAddress,
+            coingeckoCurrencyId: coingeckoCurrencyId,
             timestamp: data.timestamp,
             value: data.value,
           }
@@ -157,19 +127,15 @@ const getCachedUSDPrice = async (
 
 const USD_PRICE_MEMORY_CACHE = new Map<string, Price>();
 
-const getAvailableUSDPrice = async (
-  currencyAddress: string,
-  timestamp: number,
-  chainId: number
-) => {
+const getAvailableUSDPrice = async (coingeckoCurrencyId: string, timestamp: number) => {
   // At the moment, we support day-level granularity for prices
   const DAY = 24 * 3600;
 
   const normalizedTimestamp = Math.floor(timestamp / DAY);
-  const key = `${currencyAddress}-${normalizedTimestamp}`.toLowerCase();
+  const key = `${coingeckoCurrencyId}-${normalizedTimestamp}`.toLowerCase();
   if (!USD_PRICE_MEMORY_CACHE.has(key)) {
     // If the price is not available in the memory cache, use any available database cached price
-    let cachedPrice = await getCachedUSDPrice(currencyAddress, timestamp, chainId);
+    let cachedPrice = await getCachedUSDPrice(coingeckoCurrencyId, timestamp);
     if (
       // If the database cached price is not available
       !cachedPrice ||
@@ -177,7 +143,7 @@ const getAvailableUSDPrice = async (
       Math.floor(cachedPrice.timestamp / DAY) !== normalizedTimestamp
     ) {
       // Then try to fetch the price from upstream
-      const upstreamPrice = await getUpstreamUSDPrice(currencyAddress, timestamp);
+      const upstreamPrice = await getUpstreamUSDPrice(coingeckoCurrencyId, timestamp);
       if (upstreamPrice) {
         cachedPrice = upstreamPrice;
       }
@@ -208,18 +174,23 @@ export const getUSDAndNativePrices = async (
   let usdPrice: string | undefined;
   let nativePrice: string | undefined;
 
+  const currency = await getCurrency(currencyAddress, chainId, timestamp);
+
   // Only try to get pricing data if the network supports it
   const force = false; // TODO: check if main network then make force = true
   // chainId === 5 && currencyAddress === "0x2f3a40a3db8a7e3d09b0adfefbce4f6f81927557";
   if (getNetworkSettings().coingecko?.networkId || force) {
-    const currencyUSDPrice = await getAvailableUSDPrice(currencyAddress, timestamp, chainId);
+    const currencyUSDPrice = await getAvailableUSDPrice(
+      currency?.metadata?.coingeckoCurrencyId || "ethereum",
+      timestamp
+    );
 
     let nativeUSDPrice: Price | undefined;
+    //TODO: check this later
     if (!options?.onlyUSD) {
-      nativeUSDPrice = await getAvailableUSDPrice(AddressZero, timestamp, chainId);
+      nativeUSDPrice = await getAvailableUSDPrice(AddressZero, timestamp);
     }
 
-    const currency = await getCurrency(currencyAddress, chainId);
     if (currency.decimals && currencyUSDPrice) {
       const currencyUnit = bn(10).pow(currency.decimals);
       usdPrice = bn(price).mul(currencyUSDPrice.value).div(currencyUnit).toString();

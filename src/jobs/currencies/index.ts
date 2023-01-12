@@ -29,13 +29,12 @@ if (config.doBackgroundWork) {
   const worker = new Worker(
     QUEUE_NAME,
     async (job: Job) => {
-      console.log("do background job for currencies");
       const { currency, chainId } = job.data as JobData;
 
       const details = await tryGetCurrencyDetails(currency, chainId);
       await idb.none(
         `
-          UPDATE currencies-${chainId} SET
+          UPDATE "currencies-${chainId}" SET
             name = $/name/,
             symbol = $/symbol/,
             decimals = $/decimals/,
