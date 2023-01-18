@@ -22,7 +22,8 @@
     "prepare": "husky install",
     "release": "standard-version",
     "migration": "node-pg-migrate -m ./src/migrations",
-    "start:dev": "nodemon --inspect src/index.ts"
+    "start:dev": "nodemon --inspect src/index.ts",
+    "seed:currenices": "yarn build; node -r module-alias/register ./dist/scripts/update-currencies.js"
   },
   "dependencies": {
     "@bull-board/hapi": "4.0.1",
