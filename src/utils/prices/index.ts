@@ -1,15 +1,14 @@
 import { AddressZero } from "@ethersproject/constants";
-import { parseUnits } from "@ethersproject/units";
 import * as Sdk from "@reservoir0x/sdk";
 import axios from "axios";
 
 import { idb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { bn, toBuffer } from "@/common/utils";
+import { bn } from "@/common/utils";
 import { getNetworkSettings } from "@/config/network";
 import { getCurrency } from "@/utils/currencies";
 
-const USD_DECIMALS = 6;
+// const USD_DECIMALS = 6;
 // TODO: This should be a per-network setting
 const NATIVE_UNIT = bn("1000000000000000000");
 
@@ -72,7 +71,6 @@ const getUpstreamUSDPrice = async (
 
       const usdPrice = result?.market_data?.current_price?.["usd"];
       if (usdPrice) {
-        const value = parseUnits(usdPrice.toFixed(USD_DECIMALS), USD_DECIMALS).toString();
         storeUSDPrice(coingeckoCurrencyId, truncatedTimestamp, usdPrice);
         return {
           coingeckoCurrencyId: coingeckoCurrencyId,

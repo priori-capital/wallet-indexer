@@ -9,7 +9,7 @@ import moment from "moment";
 import { idb } from "@/common/db";
 
 const fetchAssetMarketPriceInUSD = async () => {
-  const assetsWithUSDPricesURL = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10`;
+  const assetsWithUSDPricesURL = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=400`;
   const assetsWithUSDPrices = await axios
     .get(assetsWithUSDPricesURL, { timeout: 10 * 1000 })
     .then(({ data }): any => data);
