@@ -1,3 +1,4 @@
+import { logger } from "@/common/logger";
 import axios from "axios";
 import fs from "fs";
 import _ from "lodash";
@@ -40,7 +41,7 @@ const fetchCoinsIni = async () => {
     });
     return tokenList;
   } catch (err) {
-    console.error(err);
+    logger.error("process", `fetchCoinsIni: ${err}`);
   }
 };
 

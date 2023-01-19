@@ -5,7 +5,7 @@ import axios from "axios";
 
 import { idb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { bn } from "@/common/utils";
+import { bn, toBuffer } from "@/common/utils";
 import { getNetworkSettings } from "@/config/network";
 import { getCurrency } from "@/utils/currencies";
 
@@ -73,9 +73,7 @@ const getUpstreamUSDPrice = async (
       const usdPrice = result?.market_data?.current_price?.["usd"];
       if (usdPrice) {
         const value = parseUnits(usdPrice.toFixed(USD_DECIMALS), USD_DECIMALS).toString();
-
         storeUSDPrice(coingeckoCurrencyId, truncatedTimestamp, usdPrice);
-
         return {
           coingeckoCurrencyId: coingeckoCurrencyId,
           timestamp: truncatedTimestamp,
