@@ -1,6 +1,6 @@
 -- Up Migration
 
-CREATE TABLE "currencies-1" (
+CREATE TABLE "currencies_1" (
   "contract" BYTEA NOT NULL,
   "name" TEXT,
   "symbol" TEXT,
@@ -8,7 +8,7 @@ CREATE TABLE "currencies-1" (
   "metadata" JSONB
 );
 
-CREATE TABLE "currencies-137" (
+CREATE TABLE "currencies_137" (
   "contract" BYTEA NOT NULL,
   "name" TEXT,
   "symbol" TEXT,
@@ -16,17 +16,17 @@ CREATE TABLE "currencies-137" (
   "metadata" JSONB
 );
 
-ALTER TABLE "currencies-1"
-  ADD CONSTRAINT "currencies-1_pk"
+ALTER TABLE "currencies_1"
+  ADD CONSTRAINT "currencies_1_pk"
   PRIMARY KEY ("contract");
 
-ALTER TABLE "currencies-137"
-  ADD CONSTRAINT "currencies-137_pk"
+ALTER TABLE "currencies_137"
+  ADD CONSTRAINT "currencies_137_pk"
   PRIMARY KEY ("contract");
 
 
 -- Down Migration
 
-DROP TABLE "currencies-1";
-DROP TABLE "currencies-137";
+DROP TABLE "currencies_1";
+DROP TABLE "currencies_137";
 
