@@ -55,13 +55,11 @@ const getUpstreamUSDPrice = async (
               currency,
               timestamp,
               value,
-              chain_id,
               coingecko_id
             ) VALUES (
               $/currency/,
               date_trunc('day', to_timestamp($/timestamp/)),
               $/value/,
-              $/chainId/,
               $/coingeckoCurrencyId/
             ) ON CONFLICT DO NOTHING
           `,
@@ -69,7 +67,6 @@ const getUpstreamUSDPrice = async (
             currency: toBuffer(currencyAddress),
             timestamp: truncatedTimestamp,
             value,
-            chainId,
             coingeckoCurrencyId,
           }
         );
