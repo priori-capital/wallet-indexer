@@ -38,11 +38,12 @@ export const getCurrency = async (
           currencies.symbol,
           currencies.decimals,
           currencies.metadata
-        FROM "currencies-${chainId}" as currencies
-        WHERE currencies.contract = $/contract/
+        FROM "currencies" as currencies
+        WHERE currencies.contract = $/contract/ and currencies.chain_id = $/chainId/
       `,
       {
         contract: toBuffer(currencyAddress),
+        chainId,
       }
     );
 
@@ -59,10 +60,11 @@ export const getCurrency = async (
       let symbol: string | undefined;
       let decimals: number | undefined;
       let metadata: CurrencyMetadata | undefined;
+      let coingeckoId: string | undefined;
 
       // If the currency is not available, then we try to retrieve its details
       try {
-        ({ name, symbol, decimals, metadata } = await tryGetCurrencyDetails(
+        ({ name, symbol, decimals, metadata, coingeckoId } = await tryGetCurrencyDetails(
           currencyAddress,
           chainId,
           timestamp
@@ -81,18 +83,22 @@ export const getCurrency = async (
 
       await idb.none(
         `
-          INSERT INTO "currencies-${chainId}" (
+          INSERT INTO "currencies" (
             contract,
             name,
             symbol,
             decimals,
-            metadata
+            metadata,
+            chain_id,
+            coingecko_id
           ) VALUES (
             $/contract/,
             $/name/,
             $/symbol/,
             $/decimals/,
-            $/metadata:json/
+            $/metadata:json/,
+            $/chainId/,
+            $/coingeckoId/
           ) ON CONFLICT DO NOTHING
         `,
         {
@@ -101,6 +107,8 @@ export const getCurrency = async (
           symbol,
           decimals,
           metadata,
+          chainId,
+          coingeckoId,
         }
       );
 
@@ -168,5 +176,7 @@ export const tryGetCurrencyDetails = async (
     symbol,
     decimals,
     metadata,
+    coingeckoId: coingeckoNetworkId,
+    chainId,
   };
 };

@@ -39,6 +39,8 @@ if (config.doBackgroundWork) {
             symbol = $/symbol/,
             decimals = $/decimals/,
             metadata = $/metadata:json/
+            chain_id = $/chainId/,
+            coingecko_id = $/coingeckoId/
           WHERE contract = $/contract/
         `,
         {

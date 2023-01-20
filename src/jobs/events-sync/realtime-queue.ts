@@ -36,8 +36,8 @@ if (config.doBackgroundWork) {
         // the backfill queue.
         const maxBlocks = getNetworkSettings(chainId).realtimeSyncMaxBlockLag;
 
+        // here we need to give the block number for allowing from where we want to start the indexing
         const headBlock = await getProvider(chainId).getBlockNumber();
-
         // Fetch the last synced blocked
         let localBlock = Number(await redis.get(`${QUEUE_NAME}-chain${chainId}-last-block`));
         if (localBlock >= headBlock) {

@@ -13,4 +13,10 @@ export const setupRoutes = (server: Server) => {
     path: "/user-activity-details",
     options: userTransfersActivityEndpoints.getTransferDetails,
   });
+
+  server.route({
+    method: "GET",
+    path: "/history",
+    options: userTransfersActivityEndpoints.getHistory,
+  });
 };

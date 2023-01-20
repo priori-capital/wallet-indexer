@@ -136,3 +136,12 @@ export const getTransferDetails: RouteOptions = {
     }
   },
 };
+
+export const getHistory: RouteOptions = {
+  description: "Historical token transfer details",
+  notes: "Get recent transfers for a contract or token.",
+  tags: ["api", "Transfers"],
+  handler: () => {
+    // Handler for history
+  },
+};

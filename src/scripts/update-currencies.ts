@@ -23,18 +23,22 @@ const seedAssets = async () => {
         dbrows.map((row) => {
           idb.none(
             `
-                INSERT INTO "currencies-${row.chainId}" (
+                INSERT INTO "currencies" (
                     contract,
                     name,
                     symbol,
                     decimals,
-                    metadata
+                    metadata,
+                    chain_id,
+                    coingecko_id
                 ) VALUES (
                     $/contract/,
                     $/name/,
                     $/symbol/,
                     $/decimals/,
-                    $/metadata:json/
+                    $/metadata:json/,
+                    $/chainId/,
+                    $/coingeckoId/
                 ) ON CONFLICT DO NOTHING
                 `,
             {
@@ -43,6 +47,8 @@ const seedAssets = async () => {
               symbol,
               decimals,
               metadata,
+              chainId: row.chainId,
+              coingeckoId: id,
             }
           );
         })
