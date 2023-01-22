@@ -91,18 +91,22 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
           await Promise.all([
             idb.none(
               `
-                INSERT INTO "currencies-1" (
+                INSERT INTO "currencies" (
                   contract,
                   name,
                   symbol,
                   decimals,
-                  metadata
+                  metadata,
+                  chain_id,
+                  coingecko_id
                 ) VALUES (
                   '\\x0000000000000000000000000000000000000000',
                   'Ether',
                   'ETH',
                   18,
-                  '{"coingeckoCurrencyId": "ethereum", "image": "https://assets.coingecko.com/coins/images/279/large/ethereum.png"}'
+                  '{"coingeckoCurrencyId": "ethereum", "image": "https://assets.coingecko.com/coins/images/279/large/ethereum.png"}',
+                  1,
+                  'ethereum'
                 ) ON CONFLICT DO NOTHING
               `
             ),
@@ -130,18 +134,22 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
           await Promise.all([
             idb.none(
               `
-                INSERT INTO "currencies-137" (
+                INSERT INTO "currencies" (
                   contract,
                   name,
                   symbol,
                   decimals,
-                  metadata
+                  metadata,
+                  chain_id,
+                  coingecko_id
                 ) VALUES (
                   '\\x0000000000000000000000000000000000000000',
                   'Matic',
                   'MATIC',
                   18,
-                  '{"coingeckoCurrencyId": "matic-network"}'
+                  '{"coingeckoCurrencyId": "matic-network"}',
+                  137,
+                  "matic-network"
                 ) ON CONFLICT DO NOTHING
               `
             ),
