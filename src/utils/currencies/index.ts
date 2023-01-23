@@ -7,7 +7,6 @@ import { logger } from "@/common/logger";
 import { getProvider } from "@/common/provider";
 import { toBuffer } from "@/common/utils";
 import { getNetworkSettings } from "@/config/network";
-import * as currenciesQueue from "@/jobs/currencies/index";
 import { storeUSDPrice } from "../prices";
 
 type CurrencyMetadata = {
@@ -76,7 +75,7 @@ export const getCurrency = async (
         );
 
         // Retry fetching the currency details
-        await currenciesQueue.addToQueue({ currency: currencyAddress, chainId: chainId });
+        // await currenciesQueue.addToQueue({ currency: currencyAddress, chainId: chainId });
       }
 
       metadata = metadata || {};

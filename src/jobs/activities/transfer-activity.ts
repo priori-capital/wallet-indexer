@@ -2,7 +2,6 @@
 // import { UserActivitiesEntityInsertParams } from "@/models/user-activities/user-activities-entity";
 
 import { UserActivities } from "@/models/user-activities";
-import { getUSDAndNativePrices } from "@/utils/prices";
 import { AddressZero } from "@ethersproject/constants";
 import _ from "lodash";
 
@@ -13,23 +12,12 @@ export enum ActivityType {
 
 export class TransferActivity {
   public static async handleEvent(data: TransferEventData) {
-    const price = await getUSDAndNativePrices(
-      data.contract,
-      data.amount.toString(),
-      data.timestamp,
-      data.chainId,
-      {
-        onlyUSD: true,
-      }
-    );
-
     const activity = {
       type: data.fromAddress == AddressZero ? ActivityType.mint : ActivityType.transfer,
       hash: data.transactionHash,
       contract: data.contract,
       fromAddress: data.fromAddress,
       toAddress: data.toAddress,
-      price: price.usdPrice,
       amount: data.amount,
       block: data.block,
       blockHash: data.blockHash,
@@ -39,7 +27,6 @@ export class TransferActivity {
         logIndex: data.logIndex,
         batchIndex: data.batchIndex,
       },
-      token: null,
       address: "",
       direction: "",
       chainId: data.chainId,

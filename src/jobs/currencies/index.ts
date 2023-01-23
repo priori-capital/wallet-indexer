@@ -34,7 +34,7 @@ if (config.doBackgroundWork) {
       const details = await tryGetCurrencyDetails(currency, chainId);
       await idb.none(
         `
-          UPDATE "currencies-${chainId}" SET
+          UPDATE "currencies" SET
             name = $/name/,
             symbol = $/symbol/,
             decimals = $/decimals/,

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { idb, pgp, redb } from "@/common/db";
-import { formatEth, fromBuffer, toBuffer } from "@/common/utils";
+import { fromBuffer, toBuffer } from "@/common/utils";
 import _ from "lodash";
 
 export class UserActivities {
@@ -18,12 +18,10 @@ export class UserActivities {
         "address",
         "from_address",
         "to_address",
-        "price",
         "amount",
         "block_hash",
         "block",
         "event_timestamp",
-        "token",
         "metadata",
         "direction",
         "chain_id",
@@ -34,12 +32,10 @@ export class UserActivities {
     const data = activities.map((activity) => ({
       type: activity.type,
       hash: toBuffer(activity.hash),
-      token: activity.token,
       contract: toBuffer(activity.contract),
       address: toBuffer(activity.address),
       from_address: toBuffer(activity.fromAddress),
       to_address: activity.toAddress ? toBuffer(activity.toAddress) : null,
-      price: activity.price,
       amount: activity.amount,
       block: activity.block,
       block_hash: activity.blockHash ? toBuffer(activity.blockHash) : null,
@@ -80,8 +76,9 @@ export class UserActivities {
     usersFilter = `address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))})`;
 
     const activities: any[] | null = await redb.manyOrNone(
-      `SELECT *
-               FROM user_activities
+      `select ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price from user_activities ua
+      right join assets_with_price awp
+      on ua .contract = awp .contract
                WHERE ${usersFilter}
                ${continuation}
                ORDER BY ${sortByColumn} DESC NULLS LAST
@@ -94,17 +91,22 @@ export class UserActivities {
         type: activity.type,
         txHash: fromBuffer(activity.hash),
         direction: activity.direction,
-        token: fromBuffer(activity.contract),
+        token: {
+          name: activity.name,
+          symbol: activity.symbol,
+          decimals: activity.decimals,
+          price: activity.price,
+          image: activity.metadata.image,
+        },
         from: fromBuffer(activity.from_address),
         destination: fromBuffer(activity.to_address),
-        amount: String(activity.amount),
+        amount: activity.formatted_amount,
         account: fromBuffer(activity.address),
         blockNumber: activity.block,
         logIndex: activity.metadata.logIndex,
         batchIndex: activity.metadata.batchIndex,
-        timestamp: activity.eventTimestamp,
-        price: activity.price ? formatEth(activity.price) : null,
-        chainId: activity.chainId,
+        timestamp: activity.event_timestamp,
+        chainId: activity.chain_id,
       }));
     }
 
@@ -115,31 +117,40 @@ export class UserActivities {
     const values = toBuffer(txHash);
 
     const activities: any | null = await redb.manyOrNone(
-      `SELECT *
-               FROM user_activities
-               WHERE hash = $/values/`,
+      `SELECT ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price
+      FROM user_activities ua
+      right join assets_with_price awp
+       on ua.contract = awp .contract
+      WHERE ua.hash = $/values/`,
       { values }
     );
-
     if (activities) {
-      return _.map(activities, (activity) => ({
-        type: activity.type,
-        txHash: fromBuffer(activity.hash),
-        direction: activity.direction,
-        token: fromBuffer(activity.contract),
-        from: fromBuffer(activity.from_address),
-        destination: fromBuffer(activity.to_address),
-        amount: String(activity.amount),
-        account: fromBuffer(activity.address),
-        blockNumber: activity.block,
-        logIndex: activity.metadata.logIndex,
-        batchIndex: activity.metadata.batchIndex,
-        timestamp: activity.eventTimestamp,
-        price: activity.price ? formatEth(activity.price) : null,
-        chainId: activity.chainId,
-      }));
+      const s = _.map(activities, (activity) => {
+        const sp = {
+          type: activity.type,
+          txHash: fromBuffer(activity.hash),
+          direction: activity.direction,
+          token: {
+            name: activity.name,
+            symbol: activity.symbol,
+            decimals: activity.decimals,
+            price: activity.price,
+            image: activity.metadata.image,
+          },
+          from: fromBuffer(activity.from_address),
+          destination: fromBuffer(activity.to_address),
+          amount: activity.formatted_amount,
+          account: fromBuffer(activity.address),
+          blockNumber: activity.block,
+          logIndex: activity.metadata.logIndex,
+          batchIndex: activity.metadata.batchIndex,
+          timestamp: activity.event_timestamp,
+          chainId: activity.chain_id,
+        };
+        return sp;
+      });
+      return s;
     }
-
     return [];
   }
 
