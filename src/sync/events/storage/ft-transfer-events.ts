@@ -83,28 +83,79 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
         RETURNING
           "address",
           ARRAY["from", "to"] AS "owners",
-          ARRAY[-"amount", "amount"] AS "amount_deltas"
+          ARRAY[-"amount", "amount"] AS "amount_deltas",
+          date_trunc('day', to_timestamp(timestamp)) AS tx_date,
+          ARRAY[0, "amount"] as "total_recieves",
+          ARRAY[0, 1] as "receive_counts",
+          ARRAY["amount", 0] as "total_transfers",
+          ARRAY [1, 0] as "transfer_counts"
+      ), ft as (
+        INSERT INTO "ft_balances" (
+          "contract",
+          "owner",
+          "amount"
+        ) (
+          SELECT
+            "y"."address",
+            "y"."owner",
+            SUM("y"."amount_delta")
+          FROM (
+            SELECT
+              "address",
+              unnest("owners") AS "owner",
+              unnest("amount_deltas") AS "amount_delta"
+            FROM "x"
+          ) "y"
+          GROUP BY "y"."address", "y"."owner"
+        )
+        ON CONFLICT ("contract", "owner") DO
+        UPDATE SET "amount" = "ft_balances"."amount" + "excluded"."amount"
+        RETURNING
+          "contract",
+          "owner",
+          "amount" 
       )
-      INSERT INTO "ft_balances" (
-        "contract",
-        "owner",
-        "amount"
+       INSERT INTO "user_activity_view" (
+        "timestamp",
+        "contract_address",
+        "wallet_address",
+        "total_amount",
+        "total_recieve",
+        "receive_count",
+        "total_transfer",
+        "transfer_count",
+        "usd_price"
       ) (
         SELECT
+          "y"."tx_date",
           "y"."address",
           "y"."owner",
-          SUM("y"."amount_delta")
+          SUM("y"."amount_delta") + SUM(ft.amount),
+          SUM("y"."total_recieve"),
+          SUM("y"."receive_count"),
+          SUM("y"."total_transfer"),
+          SUM("y"."transfer_count"),
+          0
         FROM (
           SELECT
             "address",
             unnest("owners") AS "owner",
-            unnest("amount_deltas") AS "amount_delta"
+            unnest("amount_deltas") AS "amount_delta",
+            "tx_date",
+            unnest("total_recieves") as "total_recieve",
+            unnest("receive_counts") as "receive_count",
+            unnest("total_transfers") as "total_transfer",
+            unnest("transfer_counts") as "transfer_count"
           FROM "x"
-        ) "y"
-        GROUP BY "y"."address", "y"."owner"
+        ) "y" LEFT join ft on y.address = ft.contract and y.owner = ft."owner"
+        GROUP BY "y"."tx_date", "y"."address", "y"."owner"
       )
-      ON CONFLICT ("contract", "owner") DO
-      UPDATE SET "amount" = "ft_balances"."amount" + "excluded"."amount"
+      ON CONFLICT ("timestamp", "contract_address", "wallet_address") DO
+      UPDATE SET "total_amount" = "user_activity_view"."total_amount" + "excluded"."total_amount",
+      "total_recieve" = "user_activity_view"."total_recieve" + "excluded"."total_recieve",
+      "receive_count" = "user_activity_view"."receive_count" + "excluded"."receive_count",
+      "total_transfer" = "user_activity_view"."total_transfer" + "excluded"."total_transfer",
+      "transfer_count" = "user_activity_view"."transfer_count" + "excluded"."transfer_count"
     `);
   }
 

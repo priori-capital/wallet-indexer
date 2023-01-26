@@ -24,7 +24,8 @@
     "migration": "node-pg-migrate -m ./src/migrations",
     "start:dev": "nodemon --inspect src/index.ts",
     "seed:currencies": "yarn build; node -r module-alias/register ./dist/scripts/update-currencies.js",
-    "seed:usd-prices": "yarn build; node -r module-alias/register ./dist/scripts/update-usd-prices.js"
+    "seed:usd-prices": "yarn build; node -r module-alias/register ./dist/scripts/update-usd-prices.js",
+    "seed:backfill-usd-prices": "yarn build; node -r module-alias/register ./dist/scripts/backfill-usd-price.js"
   },
   "dependencies": {
     "@bull-board/hapi": "4.0.1",
