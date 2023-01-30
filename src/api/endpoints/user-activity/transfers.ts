@@ -143,5 +143,6 @@ export const getHistory: RouteOptions = {
   tags: ["api", "Transfers"],
   handler: () => {
     // Handler for history
+    return [];
   },
 };
