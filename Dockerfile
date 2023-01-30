@@ -1,12 +1,12 @@
 FROM node:16
 
-EXPOSE 3000
 
 WORKDIR /indexer
 ADD . /indexer
 RUN yarn install
 RUN yarn build
-RUN yarn seed:currencies
-RUN yarn yarn seed:usd-prices
 
-CMD yarn start
+RUN ["chmod", "+x", "./start.sh"]
+EXPOSE 3000
+
+CMD ["/bin/bash","-c","./start.sh"]
