@@ -17,16 +17,16 @@ export const ethereumNetworks = [
     historyHost: "https://etherscan.io/",
     alias: "ethereum",
   },
-  // {
-  //   id: 137,
-  //   networkId: 137,
-  //   name: "Polygon",
-  //   decimals: 18,
-  //   color: "#690496",
-  //   symbol: "MATIC",
-  //   historyHost: "https://polygonscan.com/",
-  //   alias: "matic",
-  // },
+  {
+    id: 137,
+    networkId: 137,
+    name: "Polygon",
+    decimals: 18,
+    color: "#690496",
+    symbol: "MATIC",
+    historyHost: "https://polygonscan.com/",
+    alias: "matic",
+  },
 ];
 
 export const getNetworkName = (chainId = 1) => {
