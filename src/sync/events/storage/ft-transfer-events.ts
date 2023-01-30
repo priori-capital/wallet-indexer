@@ -130,7 +130,7 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
           "y"."tx_date",
           "y"."address",
           "y"."owner",
-          SUM("y"."amount_delta") + SUM(ft.amount),
+          SUM(ft.amount),
           SUM("y"."total_recieve"),
           SUM("y"."receive_count"),
           SUM("y"."total_transfer"),
