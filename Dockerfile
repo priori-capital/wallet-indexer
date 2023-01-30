@@ -6,4 +6,7 @@ WORKDIR /indexer
 ADD . /indexer
 RUN yarn install
 RUN yarn build
+RUN yarn seed:currencies
+RUN yarn yarn seed:usd-prices
+
 CMD yarn start
