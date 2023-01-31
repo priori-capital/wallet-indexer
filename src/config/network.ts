@@ -149,7 +149,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
                   18,
                   '{"coingeckoCurrencyId": "matic-network"}',
                   137,
-                  "matic-network"
+                  'matic-network'
                 ) ON CONFLICT DO NOTHING
               `
             ),
