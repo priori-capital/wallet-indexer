@@ -120,7 +120,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
     case 137: {
       return {
         ...defaultNetworkSettings,
-        enableWebSocket: false,
+        enableWebSocket: true,
         enableReorgCheck: true,
         realtimeSyncFrequencySeconds: 10,
         realtimeSyncMaxBlockLag: 128,

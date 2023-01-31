@@ -17,8 +17,8 @@ export type BaseEventParams = {
 export const parseEvent = async (
   log: Log,
   blocksCache: Map<string, blocksModel.Block>,
-  batchIndex = 1,
-  chainId = 1
+  chainId = 1,
+  batchIndex = 1
 ): Promise<BaseEventParams> => {
   const address = log.address.toLowerCase();
   const block = log.blockNumber;

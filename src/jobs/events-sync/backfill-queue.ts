@@ -31,7 +31,10 @@ if (config.doBackgroundWork && config.doEventsSyncBackfill) {
     async (job: Job) => {
       const { chainId, fromBlock, toBlock, backfill, syncDetails } = job.data;
       try {
-        logger.info(QUEUE_NAME, `Events backfill syncing block range [${fromBlock}, ${toBlock}]`);
+        logger.info(
+          QUEUE_NAME,
+          `Events backfill syncing block range [${fromBlock}, ${toBlock}] for chainId ${chainId}`
+        );
 
         await syncEvents(chainId, fromBlock, toBlock, { backfill, syncDetails });
       } catch (error) {

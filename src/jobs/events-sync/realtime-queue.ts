@@ -54,7 +54,7 @@ if (config.doBackgroundWork) {
         const fromBlock = Math.max(localBlock, headBlock - maxBlocks + 1);
         logger.info(
           QUEUE_NAME,
-          `Events realtime syncing for chain ${chainId} for  block range [${fromBlock}, ${headBlock}]`
+          `Events realtime syncing for chain ${chainId} for  block range [${fromBlock}, ${headBlock}] for chainId ${chainId}`
         );
 
         await syncEvents(chainId, fromBlock, headBlock);
