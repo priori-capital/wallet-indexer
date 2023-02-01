@@ -33,7 +33,6 @@ const backfillUsdPrice = async () => {
   for (const result of results) {
     try {
       const data: any[] = await getCoinHistory(result.coingecko_id);
-      console.log(data.length, ">>>>>>>>", result);
       const usdPrices = data.map((x) => ({
         coingecko_id: result.coingecko_id,
         timestamp: getTime(x[0] / 1000),

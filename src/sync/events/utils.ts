@@ -18,7 +18,6 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
           return blocks[0];
         } else {
           const block = await getProvider(chainId).getBlockWithTransactions(blockNumber);
-
           // Create transactions array to store
           const transactions = block.transactions.map((tx: TransactionResponse) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,7 +40,6 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
               gasFee,
             };
           });
-
           // Save all transactions within the block
           await saveTransactions(chainId, transactions);
 
