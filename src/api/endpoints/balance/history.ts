@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { redb } from "@/common/db";
 import { addDays, fromBuffer, getDaysDifference, regex, toBuffer } from "@/common/utils";
-import { RouteOptions, Request } from "@hapi/hapi";
+import { Request, RouteOptions } from "@hapi/hapi";
 import Joi from "joi";
 
 interface HistoryQuery {

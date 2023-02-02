@@ -22,6 +22,7 @@
     "prepare": "husky install",
     "release": "standard-version",
     "migration": "node-pg-migrate -m ./src/migrations",
+    "korso-migrate": "node ./node_modules/node-pg-migrate/bin/node-pg-migrate -m ./src/korso-migrations --migration-file-language sql --no-check-order",
     "start:dev": "nodemon --inspect src/index.ts",
     "seed:currencies": "yarn build; node -r module-alias/register ./dist/scripts/update-currencies.js",
     "seed:usd-prices": "yarn build; node -r module-alias/register ./dist/scripts/update-usd-prices.js",

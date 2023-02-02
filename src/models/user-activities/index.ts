@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { idb, kdb, pgp, redb } from "@/common/db";
+import { idb, pgp, redb } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import _ from "lodash";
 
@@ -9,7 +9,19 @@ export class UserActivities {
     if (!activities.length) {
       return;
     }
+    // const schema = config.korsoSchema || 'public'
+    // const [query, kquery] = await Promise.all([
+    //   this.prepareActivityColumnWithSchema(activities, schema),
+    //   this.prepareActivityColumnWithSchema(activities)
+    // ])
+    const query = await this.prepareActivityColumnWithSchema(activities);
 
+    await idb.none(query);
+
+    // await Promise.all([idb.none(query), kdb.none(kquery)]);
+  }
+
+  private static async prepareActivityColumnWithSchema(activities: any[], schema = "public") {
     const columns = new pgp.helpers.ColumnSet(
       [
         "hash",
@@ -24,9 +36,8 @@ export class UserActivities {
         "metadata",
         "chain_id",
       ],
-      { table: "user_activities" }
+      { table: { table: "user_activities", schema: schema } }
     );
-
     const data = activities.map((activity) => ({
       type: activity.type,
       hash: toBuffer(activity.hash),
@@ -44,8 +55,7 @@ export class UserActivities {
     }));
 
     const query = pgp.helpers.insert(data, columns) + " ON CONFLICT DO NOTHING";
-
-    await Promise.all(idb.none(query), kdb.none(query));
+    return query;
   }
 
   public static async getActivities(
@@ -75,7 +85,7 @@ export class UserActivities {
 
     const activities: any[] | null = await redb.manyOrNone(
       `select ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price from user_activities ua
-      right join assets_with_price awp
+      left join assets_with_price awp
       on ua .contract = awp .contract
                WHERE ${usersFilter}
                ${continuation}
