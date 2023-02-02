@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { idb, pgp, redb } from "@/common/db";
+import { idb, kdb, pgp, redb } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import _ from "lodash";
 
@@ -45,7 +45,7 @@ export class UserActivities {
 
     const query = pgp.helpers.insert(data, columns) + " ON CONFLICT DO NOTHING";
 
-    await idb.none(query);
+    await Promise.all(idb.none(query), kdb.none(query));
   }
 
   public static async getActivities(
