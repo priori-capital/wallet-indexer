@@ -1,4 +1,5 @@
 import { idb, pgp } from "@/common/db";
+import { logger } from "@/common/logger";
 import { toBuffer } from "@/common/utils";
 import { BaseEventParams } from "@/events-sync/parser";
 import * as ftTransfersWriteBuffer from "@/jobs/events-sync/write-buffers/ft-transfers";
@@ -25,46 +26,59 @@ type DbEvent = {
   chainId: number;
 };
 
-export const addEvents = async (events: Event[], backfill: boolean, chainId: number) => {
+const wait = () => new Promise((r) => setTimeout(r, 500));
+
+export const addEvents = async (events: Event[], backfill: boolean, chainId: number, retry = 0) => {
   const transferValues: DbEvent[] = [];
-  for (const event of events) {
-    transferValues.push({
-      address: toBuffer(event.baseEventParams.address),
-      block: event.baseEventParams.block,
-      block_hash: toBuffer(event.baseEventParams.blockHash),
-      tx_hash: toBuffer(event.baseEventParams.txHash),
-      tx_index: event.baseEventParams.txIndex,
-      log_index: event.baseEventParams.logIndex,
-      timestamp: event.baseEventParams.timestamp,
-      from: toBuffer(event.from),
-      to: toBuffer(event.to),
-      amount: event.amount,
-      chainId: chainId,
+  try {
+    events.sort((a, b) => {
+      if (a.baseEventParams.address < b.baseEventParams.address) {
+        return -1;
+      }
+      if (a.baseEventParams.address > b.baseEventParams.address) {
+        return 1;
+      }
+      return 0;
     });
-  }
+    for (const event of events) {
+      transferValues.push({
+        address: toBuffer(event.baseEventParams.address),
+        block: event.baseEventParams.block,
+        block_hash: toBuffer(event.baseEventParams.blockHash),
+        tx_hash: toBuffer(event.baseEventParams.txHash),
+        tx_index: event.baseEventParams.txIndex,
+        log_index: event.baseEventParams.logIndex,
+        timestamp: event.baseEventParams.timestamp,
+        from: toBuffer(event.from),
+        to: toBuffer(event.to),
+        amount: event.amount,
+        chainId: chainId,
+      });
+    }
 
-  const queries: string[] = [];
+    // transferValues.sort((a, b) => Buffer.compare(a.address, b.address));
+    const queries: string[] = [];
 
-  if (transferValues.length) {
-    const columns = new pgp.helpers.ColumnSet(
-      [
-        "address",
-        "block",
-        "block_hash",
-        "tx_hash",
-        "tx_index",
-        "log_index",
-        "timestamp",
-        "from",
-        "to",
-        "amount",
-        "chainId",
-      ],
-      { table: "ft_transfer_events" }
-    );
+    if (transferValues.length) {
+      const columns = new pgp.helpers.ColumnSet(
+        [
+          "address",
+          "block",
+          "block_hash",
+          "tx_hash",
+          "tx_index",
+          "log_index",
+          "timestamp",
+          "from",
+          "to",
+          "amount",
+          "chainId",
+        ],
+        { table: "ft_transfer_events" }
+      );
 
-    // Atomically insert the transfer events and update balances
-    queries.push(`
+      // Atomically insert the transfer events and update balances
+      queries.push(`
       WITH "x" AS (
         INSERT INTO "ft_transfer_events" (
           "address",
@@ -88,34 +102,39 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
           ARRAY[0, "amount"] as "total_recieves",
           ARRAY[0, 1] as "receive_counts",
           ARRAY["amount", 0] as "total_transfers",
-          ARRAY [1, 0] as "transfer_counts"
+          ARRAY [1, 0] as "transfer_counts",
+          "chainId"
       ), ft as (
         INSERT INTO "ft_balances" (
           "contract",
           "owner",
-          "amount"
+          "amount",
+          "chain_id"
         ) (
           SELECT
             "y"."address",
             "y"."owner",
-            SUM("y"."amount_delta")
+            SUM("y"."amount_delta"),
+            "y"."chainId"
           FROM (
             SELECT
               "address",
               unnest("owners") AS "owner",
-              unnest("amount_deltas") AS "amount_delta"
+              unnest("amount_deltas") AS "amount_delta",
+              "chainId"
             FROM "x"
           ) "y"
-          GROUP BY "y"."address", "y"."owner"
+          GROUP BY "y"."address", "y"."owner", "y"."chainId"
         )
-        ON CONFLICT ("contract", "owner") DO
+        ON CONFLICT ("contract", "owner", "chain_id") DO
         UPDATE SET "amount" = "ft_balances"."amount" + "excluded"."amount"
         RETURNING
           "contract",
           "owner",
-          "amount" 
+          "amount",
+          "chain_id"
       )
-       INSERT INTO "user_activity_view" (
+      INSERT INTO "user_activity_view" (
         "timestamp",
         "contract_address",
         "wallet_address",
@@ -157,18 +176,31 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
       "total_transfer" = "user_activity_view"."total_transfer" + "excluded"."total_transfer",
       "transfer_count" = "user_activity_view"."transfer_count" + "excluded"."transfer_count"
     `);
-  }
+    }
 
-  if (queries.length) {
-    if (backfill) {
-      // When backfilling, use the write buffer to avoid deadlocks
-      await ftTransfersWriteBuffer.addToQueue(pgp.helpers.concat(queries));
+    if (queries.length) {
+      if (backfill) {
+        // When backfilling, use the write buffer to avoid deadlocks
+        await ftTransfersWriteBuffer.addToQueue(pgp.helpers.concat(queries));
+      } else {
+        // Otherwise write directly since there might be jobs that depend
+        // on the events to have been written to the database at the time
+        // they get to run and we have no way to easily enforce this when
+        // using the write buffer.
+        await idb.none(pgp.helpers.concat(queries));
+      }
+    }
+    logger.info("ft-events-deadlock", `succedssfull completiom free_chain_id:${chainId}`);
+  } catch (err) {
+    await wait();
+    logger.error(
+      "ft-events-deadlock",
+      `${err} >>>>>>>>>>>/\n  >>>>>>>>>>/\n deadlock_id:${chainId}`
+    );
+    if (retry < 3) {
+      await addEvents(events, backfill, chainId, retry + 1);
     } else {
-      // Otherwise write directly since there might be jobs that depend
-      // on the events to have been written to the database at the time
-      // they get to run and we have no way to easily enforce this when
-      // using the write buffer.
-      await idb.none(pgp.helpers.concat(queries));
+      throw err;
     }
   }
 };

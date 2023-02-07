@@ -9,6 +9,44 @@ interface HistoryQuery {
   endDate: Date;
 }
 
+interface HistoryObject {
+  timestamp: Date;
+  contract: string;
+  wallet: string;
+  totalRecieve: number;
+  recieveCount: number;
+  totalTransfer: number;
+  transferCount: number;
+  totalAmount: number;
+  usdPrice: number;
+}
+
+class History {
+  private timestamp = new Date();
+  private contract = "";
+  private wallet = "";
+  private totalRecieve = 0;
+  private recieveCount = 0;
+  private totalTransfer = 0;
+  private transferCount = 0;
+  private totalAmount = 0;
+  private usdPrice = 0;
+  public get getHistory() {
+    return this;
+  }
+  public set setHistory(data: HistoryObject) {
+    this.timestamp = data.timestamp ?? this.timestamp;
+    this.contract = data.contract ?? this.contract;
+    this.wallet = data.wallet ?? this.wallet;
+    this.totalRecieve = data.totalRecieve ?? this.totalRecieve;
+    this.recieveCount = data.recieveCount ?? this.recieveCount;
+    this.totalTransfer = data.totalTransfer ?? this.totalTransfer;
+    this.transferCount = data.transferCount ?? this.transferCount;
+    this.totalAmount = data.totalAmount ?? this.totalAmount;
+    this.usdPrice = data.usdPrice ?? this.usdPrice;
+  }
+}
+
 export const getHistory: RouteOptions = {
   description: "Historical token transfer details",
   notes: "Get historic data for specific date for any wallet.",
@@ -43,7 +81,37 @@ export const getHistory: RouteOptions = {
       }
     );
     const data = transformHistory(history);
-    return data;
+    const result = [];
+    const historyObject = new History();
+    const startDate = query.startDate;
+    for (let i = 0, j = 0; i < days; ) {
+      const dayDifference = getDaysDifference({
+        startDate: data[j].timestamp,
+        endDate: addDays(startDate, i),
+      });
+      if (dayDifference < 0) {
+        for (let k = 0; k < dayDifference; i++) {
+          result.push({
+            ...historyObject.getHistory,
+            timeStamp: addDays(query.startDate, k),
+          });
+        }
+        i += Math.abs(dayDifference);
+      } else if (dayDifference > 0) {
+        history.setHistory = data[j++];
+        // for (let k = 0; k < dayDifference; i++) {
+        //   result.push({
+        //     ...historyObject.getHistory,
+        //     timeStamp: addDays(query.startDate, k),
+        //   });
+        // }
+      } else {
+        result.push(data[j]);
+        history.setHistory = data[j++];
+        i++;
+      }
+    }
+    return result;
   },
 };
 
@@ -53,7 +121,7 @@ const getDaysDifference = (query: Omit<HistoryQuery, "address">) => {
   return Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
 };
 
-const transformHistory = (data: any) =>
+const transformHistory = (data: any): HistoryObject[] =>
   data.map((x: any) => ({
     timestamp: x.timestamp,
     contract: fromBuffer(x.contract_address),
@@ -75,3 +143,9 @@ const defaultDayData = (data: { timestamp: Date; contract: string; wallet: strin
   totalAmount: 0,
   usdPrice: 0,
 });
+
+const addDays = (date: Date, days: number) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};

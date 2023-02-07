@@ -41,12 +41,13 @@ ALTER TABLE "nft_balances" SET (autovacuum_analyze_threshold = 5000);
 CREATE TABLE "ft_balances" (
   "contract" BYTEA NOT NULL,
   "owner" BYTEA NOT NULL,
-  "amount" NUMERIC(78, 0) NOT NULL
+  "amount" NUMERIC(78, 0) NOT NULL,
+  "chain_id" numeric NOT NULL
 );
 
 ALTER TABLE "ft_balances"
   ADD CONSTRAINT "ft_balances_pk"
-  PRIMARY KEY ("contract", "owner");
+  PRIMARY KEY ("contract", "owner", "chain_id");
 
 -- https://www.lob.com/blog/supercharge-your-postgresql-performance
 -- https://klotzandrew.com/blog/posgres-per-table-autovacuum-management
