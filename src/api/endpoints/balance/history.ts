@@ -9,6 +9,13 @@ interface HistoryQuery {
   endDate: Date;
 }
 
+interface RawHistoryObject {
+  timestamp: Date;
+  wallet_address: Buffer;
+  total_amount: number;
+  usd_price: number;
+}
+
 interface HistoryObject {
   timestamp: Date;
   wallet: string;
@@ -55,7 +62,7 @@ export const getHistory: RouteOptions = {
     const query = request.query as HistoryQuery;
     const days = getDaysDifference(query);
     const address = toBuffer(query.address);
-    const history: any | null = await redb.manyOrNone(
+    const history: RawHistoryObject[] | null = await redb.manyOrNone(
       `select SUM(y.total_amount) total_amount, SUM(y.usd_price) usd_price, y.wallet_address, y.timestamp from (
         select uav2.timestamp, uav2.wallet_address, total_amount/power(10, awp.decimals) as total_amount, awp.price * total_amount/power(10, awp.decimals) as usd_price
         from user_activity_view uav2 right join assets_with_price awp on uav2.contract_address = awp.contract and uav2."timestamp" <= awp."timestamp" where uav2."timestamp" 
@@ -110,8 +117,8 @@ export const getHistory: RouteOptions = {
   },
 };
 
-const transformHistory = (data: any): HistoryObject[] =>
-  data.map((x: any) => ({
+const transformHistory = (data: RawHistoryObject[]): HistoryObject[] =>
+  data.map((x: RawHistoryObject) => ({
     timestamp: x.timestamp,
     wallet: fromBuffer(x.wallet_address),
     totalAmount: x.total_amount,
