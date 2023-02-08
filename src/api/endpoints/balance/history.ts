@@ -31,8 +31,18 @@ class History {
   private transferCount = 0;
   private totalAmount = 0;
   private usdPrice = 0;
-  public get getHistory() {
-    return this;
+  public get getHistory(): HistoryObject {
+    return {
+      timestamp: this.timestamp,
+      contract: this.contract,
+      wallet: this.wallet,
+      totalRecieve: this.totalRecieve,
+      recieveCount: this.recieveCount,
+      totalTransfer: this.totalTransfer,
+      transferCount: this.transferCount,
+      totalAmount: this.totalAmount,
+      usdPrice: this.usdPrice,
+    };
   }
   public set setHistory(data: HistoryObject) {
     this.timestamp = data.timestamp ?? this.timestamp;
@@ -66,7 +76,7 @@ export const getHistory: RouteOptions = {
     const days = getDaysDifference(query);
     const address = toBuffer(query.address);
     const history: any | null = await redb.manyOrNone(
-      `select uav2.contract_address, uav2.wallet_address,  uav2.total_recieve/power(10, awp.decimals) as total_recieve,
+      `select uav2.timestamp, uav2.contract_address, uav2.wallet_address,  uav2.total_recieve/power(10, awp.decimals) as total_recieve,
       total_transfer/power(10, awp.decimals) as total_transfer, total_amount/power(10, awp.decimals) as total_amount, awp."name" "contractName",
       awp.coingecko_id as "coingeckoId", transfer_count, receive_count, awp.price as usd_price  
       from user_activity_view uav2 right join assets_with_price awp on uav2.contract_address = awp.contract and uav2."timestamp" <= awp."timestamp" where uav2."timestamp" 
@@ -81,34 +91,40 @@ export const getHistory: RouteOptions = {
       }
     );
     const data = transformHistory(history);
-    const result = [];
+    const result: HistoryObject[] = [];
     const historyObject = new History();
+    historyObject.setHistory = data[0];
     const startDate = query.startDate;
-    for (let i = 0, j = 0; i < days; ) {
+    for (let i = 0, j = 0; j < data.length; ) {
+      const selectedDate = addDays(startDate, i);
       const dayDifference = getDaysDifference({
         startDate: data[j].timestamp,
-        endDate: addDays(startDate, i),
+        endDate: selectedDate,
       });
       if (dayDifference < 0) {
-        for (let k = 0; k < dayDifference; i++) {
+        for (let k = 0; k < Math.abs(dayDifference); k++) {
           result.push({
-            ...historyObject.getHistory,
-            timeStamp: addDays(query.startDate, k),
+            ...(historyObject.getHistory as HistoryObject),
+            timestamp: addDays(selectedDate, k),
           });
         }
         i += Math.abs(dayDifference);
       } else if (dayDifference > 0) {
-        history.setHistory = data[j++];
-        // for (let k = 0; k < dayDifference; i++) {
-        //   result.push({
-        //     ...historyObject.getHistory,
-        //     timeStamp: addDays(query.startDate, k),
-        //   });
-        // }
+        historyObject.setHistory = data[j++];
       } else {
         result.push(data[j]);
-        history.setHistory = data[j++];
+        historyObject.setHistory = data[j++];
         i++;
+      }
+    }
+    if (result.length < days) {
+      const dayDifference = days - result.length;
+      const lastDayHistory = result[result.length - 1];
+      for (let i = 0; i < dayDifference; i++) {
+        result.push({
+          ...lastDayHistory,
+          timestamp: addDays(lastDayHistory.timestamp, i + 1),
+        });
       }
     }
     return result;
