@@ -94,3 +94,15 @@ export const regex = {
   unixTimestamp: /^[0-9]{10}$/,
   txhash: /^0x[a-fA-F0-9]{64}$/,
 };
+
+export const addDays = (date: Date, days: number) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};
+
+export const getDaysDifference = (query: { startDate: Date; endDate: Date }) => {
+  const startDate = new Date(query.startDate);
+  const endDate = new Date(query.endDate);
+  return Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 3600 * 24));
+};
