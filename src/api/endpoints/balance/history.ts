@@ -65,10 +65,10 @@ export const getHistory: RouteOptions = {
     const history: RawHistoryObject[] | null = await redb.manyOrNone(
       `select SUM(y.total_amount) total_amount, SUM(y.usd_price) usd_price, y.wallet_address, y.timestamp from (
         select uav2.timestamp, uav2.wallet_address, total_amount/power(10, awp.decimals) as total_amount, awp.price * total_amount/power(10, awp.decimals) as usd_price
-        from user_activity_view uav2 right join assets_with_price awp on uav2.contract_address = awp.contract and uav2."timestamp" <= awp."timestamp" where uav2."timestamp" 
+        from user_activity_view uav2 right join assets_with_price awp on uav2.contract_address = awp.contract and uav2."timestamp" <= awp."timestamp" where uav2."timestamp"
         in (select distinct uav.timestamp from user_activity_view uav
-        where wallet_address = $/address/ and timestamp <= $/endDate/ 
-        order by uav.timestamp limit $/limit/) 
+        where wallet_address = $/address/ and timestamp <= $/endDate/
+        order by uav.timestamp limit $/limit/)
         and wallet_address = $/address/ order by awp.timestamp desc, uav2.timestamp asc) y group by y.wallet_address, y.timestamp order by y.timestamp`,
       {
         address,
@@ -76,7 +76,9 @@ export const getHistory: RouteOptions = {
         limit: days,
       }
     );
+
     const data = transformHistory(history);
+    if (!data.length) return zeroBalanceHistory(query, days);
     const result: HistoryObject[] = [];
     const historyObject = new History();
     historyObject.setHistory = data[0];
@@ -103,10 +105,10 @@ export const getHistory: RouteOptions = {
         i++;
       }
     }
-    if (result.length < days) {
+    if (result.length < days + 1) {
       const dayDifference = days - result.length;
       const lastDayHistory = result[result.length - 1];
-      for (let i = 0; i < dayDifference; i++) {
+      for (let i = 0; i <= dayDifference; i++) {
         result.push({
           ...lastDayHistory,
           timestamp: addDays(lastDayHistory.timestamp, i + 1),
@@ -117,10 +119,25 @@ export const getHistory: RouteOptions = {
   },
 };
 
-const transformHistory = (data: RawHistoryObject[]): HistoryObject[] =>
-  data.map((x: RawHistoryObject) => ({
-    timestamp: x.timestamp,
-    wallet: fromBuffer(x.wallet_address),
-    totalAmount: x.total_amount,
-    usdPrice: x.usd_price,
-  }));
+const transformHistory = (data: RawHistoryObject[] | null): HistoryObject[] =>
+  (data ?? [])?.map((x: RawHistoryObject) => {
+    return {
+      timestamp: x.timestamp,
+      wallet: x.wallet_address ? fromBuffer(x.wallet_address) : "",
+      totalAmount: x.total_amount,
+      usdPrice: x.usd_price,
+    };
+  });
+
+const zeroBalanceHistory = (query: HistoryQuery, days: number): HistoryObject[] => {
+  const result = [];
+  for (let i = 0; i <= days; i++) {
+    result.push({
+      timestamp: addDays(query.startDate, i),
+      wallet: query.address,
+      totalAmount: 0,
+      usdPrice: 0,
+    });
+  }
+  return result;
+};

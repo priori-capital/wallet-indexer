@@ -50,7 +50,7 @@ export const getBalance: RouteOptions = {
       select SUM(amount) sum_amount, owner, contract from ft_balances fb  
       where "owner" = $/address/
       group by "owner" , "contract" order by SUM(amount) desc) y
-      right join assets_with_price awp on y.contract = awp.contract where owner is not null `,
+      inner join (SELECT DISTINCT ON ("contract") * FROM  assets_with_price ORDER  BY contract , "timestamp") awp on y.contract = awp.contract where owner is not null `,
       {
         address,
       }

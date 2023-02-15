@@ -12,7 +12,7 @@ const wait = async (time: number) => new Promise((r) => setTimeout(r, time));
 const getCoinHistory = async (id: string) =>
   axios
     .get(
-      `https://api.coingecko.com/api/v3/coins/${id}/market_chart/range?vs_currency=usd&from=1420070400&to=1674644510`
+      `https://api.coingecko.com/api/v3/coins/${id}/market_chart/range?vs_currency=usd&from=1676389269&to=1676475669`
     )
     .then((res: any) => res.data?.prices);
 

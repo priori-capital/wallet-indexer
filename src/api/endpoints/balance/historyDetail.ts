@@ -14,11 +14,15 @@ interface RawHistoryObject {
   contract_address: Buffer;
   wallet_address: Buffer;
   total_recieve: number;
-  recieve_count: number;
+  receive_count: number;
   total_transfer: number;
   transfer_count: number;
   total_amount: number;
+  total_value: number;
   usd_price: number;
+  chain_id: number;
+  coingecko_id: string;
+  symbol: string;
 }
 interface HistoryObject {
   timestamp: Date;
@@ -29,7 +33,11 @@ interface HistoryObject {
   totalTransfer: number;
   transferCount: number;
   totalAmount: number;
+  totalValue: number;
   usdPrice: number;
+  chainId: number;
+  coingeckoId: string;
+  symbol: string;
 }
 
 export const getHistoryDetails: RouteOptions = {
@@ -51,16 +59,17 @@ export const getHistoryDetails: RouteOptions = {
     const days = getDaysDifference(query);
     const address = toBuffer(query.address);
     const history: RawHistoryObject[] | null = await redb.manyOrNone(
-      `select uav2.timestamp, uav2.contract_address, uav2.wallet_address,  uav2.total_recieve/power(10, awp.decimals) as total_recieve,
-        total_transfer/power(10, awp.decimals) as total_transfer, total_amount/power(10, awp.decimals) as total_amount, awp."name" "contractName",
-        awp.coingecko_id as "coingeckoId", transfer_count, receive_count, awp.price as usd_price
-        from user_activity_view uav2 right join assets_with_price awp on uav2.contract_address = awp.contract and uav2."timestamp" <= awp."timestamp" where uav2."timestamp" 
-        in (select distinct uav.timestamp from user_activity_view uav
-        where wallet_address = $/address/ and timestamp <= $/endDate/ 
-        order by uav.timestamp limit $/limit/) 
-        and wallet_address = $/address/ order by awp.timestamp desc, uav2.timestamp asc`,
+      `select uav2.contract_address, uav2.wallet_address,  SUM(uav2.total_recieve/power(10, awp.decimals)) as total_recieve,
+        SUM(total_transfer/power(10, awp.decimals)) as total_transfer, SUM(total_amount/power(10, awp.decimals)) as total_amount, SUM(awp.price*total_amount/power(10, awp.decimals)) as total_value,
+        awp.coingecko_id as "coingecko_id", SUM(transfer_count) as transfer_count, SUM(receive_count) as receive_count, awp.chain_id, max(awp.symbol) as symbol
+        from user_activity_view uav2 inner join (SELECT DISTINCT ON ("contract") *
+        FROM assets_with_price ORDER  BY contract , "timestamp") awp on uav2.contract_address = awp.contract
+        where wallet_address = $/address/
+        group by uav2.wallet_address, awp.chain_id, uav2.contract_address, awp.coingecko_id
+        `,
       {
         address,
+        startDate: query.startDate,
         endDate: query.endDate,
         limit: days,
       }
@@ -77,9 +86,13 @@ const transformDetails = (data: RawHistoryObject[]): HistoryObject[] =>
     contract: fromBuffer(x.contract_address),
     wallet: fromBuffer(x.wallet_address),
     totalRecieve: x.total_recieve,
-    recieveCount: x.recieve_count,
+    recieveCount: x.receive_count,
     totalTransfer: x.total_transfer,
     transferCount: x.transfer_count,
     totalAmount: x.total_amount,
+    totalValue: x.total_value,
     usdPrice: x.usd_price,
+    chainId: x.chain_id,
+    coingeckoId: x.coingecko_id,
+    symbol: x.symbol,
   }));

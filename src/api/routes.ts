@@ -2,6 +2,7 @@ import * as userTransfersActivityEndpoints from "@/api/endpoints/user-activity/t
 import { getHistory } from "@/api/endpoints/balance/history";
 import { Server } from "@hapi/hapi";
 import { getHistoryDetails } from "./endpoints/balance/historyDetail";
+import { getBalance } from "./endpoints/balance/totalbalance";
 
 export const setupRoutes = (server: Server) => {
   server.route({
@@ -26,5 +27,11 @@ export const setupRoutes = (server: Server) => {
     method: "GET",
     path: "/history-details",
     options: getHistoryDetails,
+  });
+
+  server.route({
+    method: "GET",
+    path: "/balance",
+    options: getBalance,
   });
 };
