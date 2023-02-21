@@ -3,6 +3,7 @@ import { getHistory } from "@/api/endpoints/balance/history";
 import { Server } from "@hapi/hapi";
 import { getHistoryDetails } from "./endpoints/balance/historyDetail";
 import { getBalance } from "./endpoints/balance/totalbalance";
+import { getAssetsDetails } from "./endpoints/balance/assetDetail";
 
 export const setupRoutes = (server: Server) => {
   server.route({
@@ -33,5 +34,11 @@ export const setupRoutes = (server: Server) => {
     method: "GET",
     path: "/balance",
     options: getBalance,
+  });
+
+  server.route({
+    method: "GET",
+    path: "/assets",
+    options: getAssetsDetails,
   });
 };
