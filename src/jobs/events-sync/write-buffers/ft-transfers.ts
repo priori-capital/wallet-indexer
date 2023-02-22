@@ -31,7 +31,14 @@ if (config.doBackgroundWork) {
       const { query } = job.data;
 
       try {
-        await idb.none(query);
+        idb
+          .tx("ft-transfers-tx", async (t) => {
+            await idb.none(query);
+          })
+          .then((data) => data)
+          .catch((err) => {
+            throw err;
+          });
       } catch (error) {
         logger.error(QUEUE_NAME, `Failed flushing ft transfer events to the database: ${error}`);
         throw error;

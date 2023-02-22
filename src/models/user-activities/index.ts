@@ -15,7 +15,6 @@ export class UserActivities {
         "hash",
         "type",
         "contract",
-        "address",
         "from_address",
         "to_address",
         "amount",
@@ -23,7 +22,6 @@ export class UserActivities {
         "block",
         "event_timestamp",
         "metadata",
-        "direction",
         "chain_id",
       ],
       { table: "user_activities" }
@@ -33,7 +31,7 @@ export class UserActivities {
       type: activity.type,
       hash: toBuffer(activity.hash),
       contract: toBuffer(activity.contract),
-      address: toBuffer(activity.address),
+      // address: toBuffer(activity.address),
       from_address: toBuffer(activity.fromAddress),
       to_address: activity.toAddress ? toBuffer(activity.toAddress) : null,
       amount: activity.amount,
@@ -41,7 +39,7 @@ export class UserActivities {
       block_hash: activity.blockHash ? toBuffer(activity.blockHash) : null,
       event_timestamp: activity.eventTimestamp,
       metadata: activity.metadata,
-      direction: activity.direction,
+      // direction: activity.direction,
       chain_id: activity.chainId,
     }));
 
@@ -90,7 +88,6 @@ export class UserActivities {
       return _.map(activities, (activity) => ({
         type: activity.type,
         txHash: fromBuffer(activity.hash),
-        direction: activity.direction,
         token: {
           name: activity.name,
           symbol: activity.symbol,
@@ -101,7 +98,6 @@ export class UserActivities {
         from: fromBuffer(activity.from_address),
         destination: fromBuffer(activity.to_address),
         amount: activity.formatted_amount,
-        account: fromBuffer(activity.address),
         blockNumber: activity.block,
         logIndex: activity.metadata.logIndex,
         batchIndex: activity.metadata.batchIndex,
@@ -129,7 +125,6 @@ export class UserActivities {
         const sp = {
           type: activity.type,
           txHash: fromBuffer(activity.hash),
-          direction: activity.direction,
           token: {
             name: activity.name,
             symbol: activity.symbol,
@@ -140,7 +135,6 @@ export class UserActivities {
           from: fromBuffer(activity.from_address),
           destination: fromBuffer(activity.to_address),
           amount: activity.formatted_amount,
-          account: fromBuffer(activity.address),
           blockNumber: activity.block,
           logIndex: activity.metadata.logIndex,
           batchIndex: activity.metadata.batchIndex,
