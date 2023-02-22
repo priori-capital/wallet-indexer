@@ -37,6 +37,7 @@ export const config = {
   disableRealtimeMetadataRefresh: Boolean(Number(process.env.DISABLE_REALTIME_METADATA_REFRESH)),
 
   databaseUrl: String(process.env.DATABASE_URL),
+  databaseSSL: Boolean(process.env.DATABASE_SSL),
   readReplicaDatabaseUrl: String(process.env.READ_REPLICA_DATABASE_URL || process.env.DATABASE_URL),
   writeReplicaDatabaseUrl: String(
     process.env.WRITE_REPLICA_DATABASE_URL || process.env.DATABASE_URL
