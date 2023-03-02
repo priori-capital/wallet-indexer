@@ -26,7 +26,7 @@ type DbEvent = {
   chainId: number;
 };
 
-const wait = () => new Promise((r) => setTimeout(r, 500));
+const wait = () => new Promise((r) => setTimeout(r, 2000));
 
 export const addEvents = async (events: Event[], backfill: boolean, chainId: number, retry = 0) => {
   const transferValues: DbEvent[] = [];
@@ -195,9 +195,9 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
     await wait();
     logger.error(
       "ft-events-deadlock",
-      `${err} >>>>>>>>>>>/\n  >>>>>>>>>>/\n deadlock_id:${chainId}`
+      `${err} >>>>>>>>>>>/\n  >>>>>>>>>>/\n deadlock_id:${chainId} :: ${retry}`
     );
-    if (retry < 3) {
+    if (retry < 10) {
       await addEvents(events, backfill, chainId, retry + 1);
     } else {
       throw err;

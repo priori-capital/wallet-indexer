@@ -10,8 +10,7 @@ if (config.databaseSSL) {
 }
 // Database connection for external public-facing APIs
 export const edb1 = pgp({
-  connectionString:
-    "postgres://postgres:fS3IHKK82grxeF4X7bMQ@indexer-db.cpzqu7zonmga.ap-south-1.rds.amazonaws.com:5432/indexer",
+  connectionString: config.databaseUrl,
   keepAlive: true,
   max: 60,
   connectionTimeoutMillis: 10 * 1000,
