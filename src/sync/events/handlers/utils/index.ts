@@ -6,6 +6,7 @@ import { BaseEventParams } from "@/events-sync/parser";
 import * as es from "@/events-sync/storage";
 
 import * as processActivityEvent from "@/jobs/activities/process-activity-event";
+import { isValidAsset } from "@/utils/currencies";
 // import * as fillUpdates from "@/jobs/fill-updates/queue";
 // import * as orderUpdatesById from "@/jobs/order-updates/by-id-queue";
 // import * as orderUpdatesByMaker from "@/jobs/order-updates/by-maker-queue";
@@ -39,6 +40,9 @@ export const processOnChainData = async (
   data: OnChainData,
   backfill?: boolean
 ) => {
+  const ftTransferEvents = data.ftTransferEvents?.filter((event) =>
+    isValidAsset(event?.baseEventParams?.address, event.chainId)
+  );
   // Post-process fill events
   // const allFillEvents = concat(data.fillEvents, data.fillEventsPartial, data.fillEventsOnChain);
   // if (!backfill) {
@@ -62,7 +66,7 @@ export const processOnChainData = async (
     // es.bulkCancels.addEvents(data.bulkCancelEvents ?? []),
     // es.nonceCancels.addEvents(data.nonceCancelEvents ?? []),
     // es.nftApprovals.addEvents(data.nftApprovalEvents ?? []),
-    es.ftTransfers.addEvents(data.ftTransferEvents ?? [], Boolean(backfill), chainId),
+    es.ftTransfers.addEvents(ftTransferEvents ?? [], Boolean(backfill), chainId),
     // es.nftTransfers.addEvents(data.nftTransferEvents ?? [], Boolean(backfill)),
   ]);
 
@@ -88,7 +92,7 @@ export const processOnChainData = async (
   // TODO: Is this the best place to handle activities?
 
   // Process transfer activities
-  const transferActivityInfos: processActivityEvent.EventInfo[] = (data.ftTransferEvents ?? []).map(
+  const transferActivityInfos: processActivityEvent.EventInfo[] = (ftTransferEvents ?? []).map(
     (event) => ({
       context: [
         processActivityEvent.EventKind.erc20TransferEvent,
