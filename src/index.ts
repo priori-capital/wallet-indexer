@@ -9,6 +9,7 @@ import { logger } from "@/common/logger";
 import { config } from "@/config/index";
 import { ethereumNetworks, getNetworkSettings } from "@/config/network";
 import { initiateProviders } from "./common/provider";
+import { getAssetsList, prepareAssetsList } from "./utils/currencies";
 
 process.on("unhandledRejection", (error) => {
   logger.error("process", `Unhandled rejection: ${error}`);
@@ -25,6 +26,7 @@ const setup = async (chainId: number) => {
 };
 
 const syncAllNetworks = async () => {
+  await prepareAssetsList();
   const setupAll = ethereumNetworks.map((network) => setup(network.networkId));
   await Promise.all(setupAll);
 };

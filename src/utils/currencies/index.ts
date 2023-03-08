@@ -2,10 +2,10 @@ import { Interface } from "@ethersproject/abi";
 import { Contract } from "@ethersproject/contracts";
 import axios from "axios";
 
-import { idb } from "@/common/db";
+import { idb, redb } from "@/common/db";
 import { logger } from "@/common/logger";
 import { getProvider } from "@/common/provider";
-import { toBuffer } from "@/common/utils";
+import { fromBuffer, toBuffer } from "@/common/utils";
 import { getNetworkSettings } from "@/config/network";
 import { storeUSDPrice } from "../prices";
 
@@ -178,4 +178,25 @@ export const tryGetCurrencyDetails = async (
     coingeckoId: coingeckoNetworkId,
     chainId,
   };
+};
+
+let assets: { [key: string]: string[] } = {};
+
+export const prepareAssetsList = async () => {
+  const rawAssets = await redb.many(
+    `select distinct on (contract) contract, chain_id as "chainId" from currencies c ORDER BY contract, chain_id;`
+  );
+  assets = rawAssets.reduce((result, asset) => {
+    const data: string = fromBuffer(asset.contract);
+    if (result[asset.chainId]) result[asset.chainId].push(data);
+    else result[asset.chainId] = [data];
+    return result;
+  }, {});
+};
+
+export const getAssetsList = (chainId: number) => assets[chainId];
+
+export const isValidAsset = (address: string, chainId: number) => {
+  if (!address || !chainId) return false;
+  return getAssetsList(chainId)?.includes(address);
 };
