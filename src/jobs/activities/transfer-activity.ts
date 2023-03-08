@@ -27,26 +27,24 @@ export class TransferActivity {
         logIndex: data.logIndex,
         batchIndex: data.batchIndex,
       },
-      address: "",
-      direction: "",
       chainId: data.chainId,
     };
 
     const userActivities = [];
 
     // One record for the user to address
-    const toUserActivity = _.clone(activity);
-    toUserActivity.address = data.toAddress;
-    toUserActivity.direction = "incoming";
-    userActivities.push(toUserActivity);
+    // const toUserActivity = _.clone(activity);
+    // toUserActivity.address = data.toAddress;
+    // toUserActivity.direction = "incoming";
+    userActivities.push(activity);
 
-    if (data.fromAddress != AddressZero) {
-      // One record for the user from address if not a mint event
-      const fromUserActivity = _.clone(activity);
-      fromUserActivity.address = data.fromAddress;
-      fromUserActivity.direction = "outgoing";
-      userActivities.push(fromUserActivity);
-    }
+    // if (data.fromAddress != AddressZero) {
+    //   // One record for the user from address if not a mint event
+    //   const fromUserActivity = _.clone(activity);
+    //   fromUserActivity.address = data.fromAddress;
+    //   fromUserActivity.direction = "outgoing";
+    //   userActivities.push(fromUserActivity);
+    // }
 
     await Promise.all([UserActivities.addActivities(userActivities)]);
   }

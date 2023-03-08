@@ -125,7 +125,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
         realtimeSyncFrequencySeconds: 10,
         realtimeSyncMaxBlockLag: 128,
         backfillBlockBatchSize: 20,
-        reorgCheckFrequency: [30],
+        reorgCheckFrequency: [1, 5, 10, 30, 60],
         coingecko: {
           networkId: "polygon-pos",
         },
