@@ -42,7 +42,6 @@ export class UserActivities {
       type: activity.type,
       hash: toBuffer(activity.hash),
       contract: toBuffer(activity.contract),
-      // address: toBuffer(activity.address),
       from_address: toBuffer(activity.fromAddress),
       to_address: activity.toAddress ? toBuffer(activity.toAddress) : null,
       amount: activity.amount,
@@ -50,7 +49,6 @@ export class UserActivities {
       block_hash: activity.blockHash ? toBuffer(activity.blockHash) : null,
       event_timestamp: activity.eventTimestamp,
       metadata: activity.metadata,
-      // direction: activity.direction,
       chain_id: activity.chainId,
     }));
 
