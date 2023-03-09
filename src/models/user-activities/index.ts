@@ -63,7 +63,7 @@ export class UserActivities {
     sortBy = "eventTimestamp"
   ) {
     const sortByColumn = sortBy == "eventTimestamp" ? "event_timestamp" : "created_at";
-    const continuation = "";
+    // const continuation = "";
     let usersFilter = "";
     let i = 0;
     const values = {
@@ -79,18 +79,23 @@ export class UserActivities {
 
     users.forEach(addUsersToFilter);
 
-    usersFilter = `address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))})`;
+    usersFilter = `from_address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))}) or to_address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))})`;
+    const s = `select ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price from user_activities ua
+    left join assets_with_price awp
+    on ua .contract = awp .contract
+             WHERE ${usersFilter}
+             ORDER BY ${sortByColumn} DESC NULLS LAST
+             LIMIT $/limit/`
 
-    const activities: any[] | null = await redb.manyOrNone(
-      `select ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price from user_activities ua
-      left join assets_with_price awp
-      on ua .contract = awp .contract
-               WHERE ${usersFilter}
-               ${continuation}
-               ORDER BY ${sortByColumn} DESC NULLS LAST
-               LIMIT $/limit/`,
-      values
-    );
+    let activities: any[] | null = []
+    try{
+      activities = await redb.manyOrNone(
+        s,
+        values
+      );
+    }catch(error){
+      console.log('err', error)
+    }
 
     if (activities) {
       return _.map(activities, (activity) => ({
@@ -101,14 +106,14 @@ export class UserActivities {
           symbol: activity.symbol,
           decimals: activity.decimals,
           price: activity.price,
-          image: activity.metadata.image,
+          image: activity.metadata?.image || null,
         },
         from: fromBuffer(activity.from_address),
         destination: fromBuffer(activity.to_address),
         amount: activity.formatted_amount,
         blockNumber: activity.block,
-        logIndex: activity.metadata.logIndex,
-        batchIndex: activity.metadata.batchIndex,
+        logIndex: activity.metadata?.logIndex || null,
+        batchIndex: activity.metadata?.batchIndex || null,
         timestamp: activity.event_timestamp,
         chainId: activity.chain_id,
       }));
