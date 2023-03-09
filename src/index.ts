@@ -9,7 +9,7 @@ import { logger } from "@/common/logger";
 import { config } from "@/config/index";
 import { ethereumNetworks, getNetworkSettings } from "@/config/network";
 import { initiateProviders } from "./common/provider";
-import { getAssetsList, prepareAssetsList } from "./utils/currencies";
+import { prepareAssetsList } from "./utils/currencies";
 
 process.on("unhandledRejection", (error) => {
   logger.error("process", `Unhandled rejection: ${error}`);

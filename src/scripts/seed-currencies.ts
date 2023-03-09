@@ -7,6 +7,7 @@ const fetchCoinsIni = async () => {
   try {
     const url = `https://api.coingecko.com/api/v3/coins/list?include_platform=true`;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tokenList: any[] = [];
     const allTokens = await axios.get(url, { timeout: 10 * 1000 }).then((data) => data);
 
@@ -53,9 +54,11 @@ const fetchUniswapTokenList = async () => {
 
 fetchCoinsIni()
   .then(async (res) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const erc20List: any[] = [];
     const unilist = await fetchUniswapTokenList();
     res?.forEach((token) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const addressExists = _.find(unilist, (item: any) => {
         return item?.address?.toLowerCase() === token?.ethereum?.toLowerCase();
       });
@@ -69,6 +72,6 @@ fetchCoinsIni()
       if (error) throw error;
     });
   })
-  .catch((error) => {
+  .catch(() => {
     process.exit(1);
   });

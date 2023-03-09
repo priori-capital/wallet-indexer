@@ -3,7 +3,6 @@
 
 import { UserActivities } from "@/models/user-activities";
 import { AddressZero } from "@ethersproject/constants";
-import _ from "lodash";
 
 export enum ActivityType {
   transfer = "transfer",

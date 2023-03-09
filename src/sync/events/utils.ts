@@ -9,7 +9,7 @@ import { getTransactionLogs, saveTransactionLogs } from "@/models/transaction-lo
 import { getTransactionTrace, saveTransactionTrace } from "@/models/transaction-traces";
 import { getTransaction, saveTransaction, saveTransactions } from "@/models/transactions";
 import * as es from "@/events-sync/storage";
-import { processOnChainData } from "./handlers/utils";
+import { triggerProcessActivityEvent } from "./handlers/utils";
 
 interface ITransactionResponse extends TransactionResponse {
   transactionIndex: number;
@@ -23,7 +23,7 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
         if (blocks.length && !force) {
           return blocks[0];
         } else {
-          const onChainTransaction: es.ftTransfers.Event[] = [];
+          const nativeTokenTransaction: es.ftTransfers.Event[] = [];
           const block = await getProvider(chainId).getBlockWithTransactions(blockNumber);
           // Create transactions array to store
           const transactions = (block.transactions as ITransactionResponse[]).map(
@@ -35,7 +35,7 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
               const gasUsed = rawTx?.gas ? bn(rawTx.gas).toString() : undefined;
               const gasFee = gasPrice && gasUsed ? bn(gasPrice).mul(gasUsed).toString() : undefined;
               if (!bn(tx.value).isZero()) {
-                onChainTransaction.push({
+                nativeTokenTransaction.push({
                   from: tx.from.toLowerCase(),
                   to: (tx.to || AddressZero).toLowerCase(),
                   amount: tx.value.toString(),
@@ -69,7 +69,7 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
           // Save all transactions within the block
           await saveTransactions(chainId, transactions);
 
-          await processOnChainData(chainId, { ftTransferEvents: onChainTransaction });
+          await triggerProcessActivityEvent(nativeTokenTransaction, chainId);
 
           return saveBlock(chainId, {
             number: block.number,

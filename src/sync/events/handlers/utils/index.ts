@@ -91,6 +91,13 @@ export const processOnChainData = async (
 
   // TODO: Is this the best place to handle activities?
 
+  await triggerProcessActivityEvent(ftTransferEvents ?? [], chainId);
+};
+
+export const triggerProcessActivityEvent = async (
+  ftTransferEvents: es.ftTransfers.Event[],
+  chainId: number
+) => {
   // Process transfer activities
   const transferActivityInfos: processActivityEvent.EventInfo[] = (ftTransferEvents ?? []).map(
     (event) => ({
@@ -112,7 +119,7 @@ export const processOnChainData = async (
         blockHash: event.baseEventParams.blockHash,
         block: event.baseEventParams.block,
         timestamp: event.baseEventParams.timestamp,
-        chainId: chainId,
+        chainId,
       },
     })
   );

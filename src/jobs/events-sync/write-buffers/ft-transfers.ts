@@ -32,7 +32,7 @@ if (config.doBackgroundWork) {
 
       try {
         idb
-          .tx("ft-transfers-tx", async (t) => {
+          .tx("ft-transfers-tx", async () => {
             await idb.none(query);
           })
           .then((data) => data)
