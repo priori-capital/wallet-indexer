@@ -8,6 +8,12 @@ import { getBlocks, saveBlock } from "@/models/blocks";
 import { getTransactionLogs, saveTransactionLogs } from "@/models/transaction-logs";
 import { getTransactionTrace, saveTransactionTrace } from "@/models/transaction-traces";
 import { getTransaction, saveTransaction, saveTransactions } from "@/models/transactions";
+import * as es from "@/events-sync/storage";
+import { processOnChainData } from "./handlers/utils";
+
+interface ITransactionResponse extends TransactionResponse {
+  transactionIndex: number;
+}
 
 export const fetchBlock = async (chainId: number, blockNumber: number, force = false) => {
   return (
@@ -17,31 +23,53 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
         if (blocks.length && !force) {
           return blocks[0];
         } else {
+          const onChainTransaction: es.ftTransfers.Event[] = [];
           const block = await getProvider(chainId).getBlockWithTransactions(blockNumber);
           // Create transactions array to store
-          const transactions = block.transactions.map((tx: TransactionResponse) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const rawTx = tx.raw as any;
+          const transactions = (block.transactions as ITransactionResponse[]).map(
+            (tx: ITransactionResponse) => {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const rawTx = tx.raw as any;
 
-            const gasPrice = tx.gasPrice?.toString();
-            const gasUsed = rawTx?.gas ? bn(rawTx.gas).toString() : undefined;
-            const gasFee = gasPrice && gasUsed ? bn(gasPrice).mul(gasUsed).toString() : undefined;
-
-            return {
-              hash: tx.hash.toLowerCase(),
-              from: tx.from.toLowerCase(),
-              to: (tx.to || AddressZero).toLowerCase(),
-              value: tx.value.toString(),
-              data: tx.data.toLowerCase(),
-              blockNumber: block.number,
-              blockTimestamp: block.timestamp,
-              gasPrice,
-              gasUsed,
-              gasFee,
-            };
-          });
+              const gasPrice = tx.gasPrice?.toString();
+              const gasUsed = rawTx?.gas ? bn(rawTx.gas).toString() : undefined;
+              const gasFee = gasPrice && gasUsed ? bn(gasPrice).mul(gasUsed).toString() : undefined;
+              if (!bn(tx.value).isZero()) {
+                onChainTransaction.push({
+                  from: tx.from.toLowerCase(),
+                  to: (tx.to || AddressZero).toLowerCase(),
+                  amount: tx.value.toString(),
+                  baseEventParams: {
+                    address: "0x00",
+                    block: block.number,
+                    blockHash: block.hash,
+                    txHash: tx.hash.toLowerCase(),
+                    txIndex: tx?.transactionIndex,
+                    timestamp: block.timestamp,
+                    logIndex: 0,
+                    batchIndex: 1,
+                  },
+                  chainId,
+                });
+              }
+              return {
+                hash: tx.hash.toLowerCase(),
+                from: tx.from.toLowerCase(),
+                to: (tx.to || AddressZero).toLowerCase(),
+                value: tx.value.toString(),
+                data: tx.data.toLowerCase(),
+                blockNumber: block.number,
+                blockTimestamp: block.timestamp,
+                gasPrice,
+                gasUsed,
+                gasFee,
+              };
+            }
+          );
           // Save all transactions within the block
           await saveTransactions(chainId, transactions);
+
+          await processOnChainData(chainId, { ftTransferEvents: onChainTransaction });
 
           return saveBlock(chainId, {
             number: block.number,

@@ -100,7 +100,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
                   chain_id,
                   coingecko_id
                 ) VALUES (
-                  '\\x0000000000000000000000000000000000000000',
+                  '\\x00',
                   'Ether',
                   'ETH',
                   18,
@@ -143,7 +143,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
                   chain_id,
                   coingecko_id
                 ) VALUES (
-                  '\\x0000000000000000000000000000000000000000',
+                  '\\x00',
                   'Matic',
                   'MATIC',
                   18,
