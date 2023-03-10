@@ -36,9 +36,12 @@ if (config.doBackgroundWork) {
         case EventKind.erc20TransferEvent:
           await TransferActivity.handleEvent(data as TransferEventData);
           break;
+        case EventKind.nativeTransferEvent:
+          await TransferActivity.handleEvent(data as TransferEventData);
+          break;
       }
     },
-    { connection: redis.duplicate(), concurrency: 15 }
+    { connection: redis.duplicate(), concurrency: 50 }
   );
 
   worker.on("error", (error) => {
@@ -48,10 +51,11 @@ if (config.doBackgroundWork) {
 
 export enum EventKind {
   erc20TransferEvent = "erc20TransferEvent",
+  nativeTransferEvent = "nativeTransferEvent",
 }
 
 export type EventInfo = {
-  kind: EventKind.erc20TransferEvent;
+  kind: EventKind;
   data: TransferEventData;
   context?: string;
 };

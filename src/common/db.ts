@@ -4,6 +4,7 @@ import { config } from "@/config/index";
 
 export const pgp = PgPromise();
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const dbConfig: any = {};
 if (config.databaseSSL) {
   dbConfig.ssl = { rejectUnauthorized: false };

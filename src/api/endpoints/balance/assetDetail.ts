@@ -1,5 +1,5 @@
 import { redb } from "@/common/db";
-import { fromBuffer, getDaysDifference, regex, toBuffer } from "@/common/utils";
+import { fromBuffer, regex, toBuffer } from "@/common/utils";
 import { RouteOptions, Request } from "@hapi/hapi";
 import Joi from "joi";
 
@@ -20,6 +20,7 @@ interface RawAssetObject {
   decimals: number;
   symbol: string;
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata: any;
 }
 interface AssetObject {
@@ -34,6 +35,7 @@ interface AssetObject {
   decimals: number;
   symbol: string;
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metaData: any;
 }
 

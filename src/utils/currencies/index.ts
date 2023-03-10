@@ -183,9 +183,7 @@ export const tryGetCurrencyDetails = async (
 let assets: { [key: string]: string[] } = {};
 
 export const prepareAssetsList = async () => {
-  const rawAssets = await redb.many(
-    `select distinct on (contract) contract, chain_id as "chainId" from currencies c ORDER BY contract, chain_id;`
-  );
+  const rawAssets = await redb.many(`select contract, chain_id as "chainId" from currencies c;`);
   assets = rawAssets.reduce((result, asset) => {
     const data: string = fromBuffer(asset.contract);
     if (result[asset.chainId]) result[asset.chainId].push(data);
