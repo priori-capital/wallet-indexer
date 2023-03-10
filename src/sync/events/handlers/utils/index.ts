@@ -96,18 +96,19 @@ export const processOnChainData = async (
 
 export const triggerProcessActivityEvent = async (
   ftTransferEvents: es.ftTransfers.Event[],
-  chainId: number
+  chainId: number,
+  kind = processActivityEvent.EventKind.erc20TransferEvent
 ) => {
   // Process transfer activities
   const transferActivityInfos: processActivityEvent.EventInfo[] = (ftTransferEvents ?? []).map(
     (event) => ({
       context: [
-        processActivityEvent.EventKind.erc20TransferEvent,
+        kind,
         event.baseEventParams.txHash,
         event.baseEventParams.logIndex,
         event.baseEventParams.batchIndex,
       ].join(":"),
-      kind: processActivityEvent.EventKind.erc20TransferEvent,
+      kind,
       data: {
         contract: event.baseEventParams.address,
         fromAddress: event.from,

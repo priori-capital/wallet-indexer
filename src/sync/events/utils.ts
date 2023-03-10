@@ -10,6 +10,7 @@ import { getTransactionTrace, saveTransactionTrace } from "@/models/transaction-
 import { getTransaction, saveTransaction, saveTransactions } from "@/models/transactions";
 import * as es from "@/events-sync/storage";
 import { triggerProcessActivityEvent } from "./handlers/utils";
+import { EventKind } from "@/jobs/activities/process-activity-event";
 
 interface ITransactionResponse extends TransactionResponse {
   transactionIndex: number;
@@ -69,7 +70,11 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
           // Save all transactions within the block
           await saveTransactions(chainId, transactions);
 
-          await triggerProcessActivityEvent(nativeTokenTransaction, chainId);
+          await triggerProcessActivityEvent(
+            nativeTokenTransaction,
+            chainId,
+            EventKind.nativeTransferEvent
+          );
 
           return saveBlock(chainId, {
             number: block.number,
