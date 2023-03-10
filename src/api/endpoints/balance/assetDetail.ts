@@ -27,8 +27,8 @@ interface AssetObject {
   timestamp: Date;
   contract: string;
   wallet: string;
-  totalUnit: number;
-  totalValue: number;
+  balance: number;
+  balanceInUsd: number;
   usdPrice: number;
   chainId: number;
   coingeckoId: string;
@@ -98,8 +98,8 @@ const transformDetails = (data: RawAssetObject[]): AssetObject[] =>
     timestamp: x.timestamp,
     contract: fromBuffer(x.contract),
     wallet: fromBuffer(x.owner),
-    totalUnit: x.total_unit,
-    totalValue: x.total_value,
+    balance: x.total_unit,
+    balanceInUsd: x.total_value,
     usdPrice: x.price,
     chainId: x.chain_id,
     coingeckoId: x.coingecko_id,
