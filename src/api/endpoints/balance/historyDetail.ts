@@ -62,7 +62,7 @@ export const getHistoryDetails: RouteOptions = {
       `select uav2.contract_address, uav2.wallet_address,  SUM(uav2.total_recieve/power(10, awp.decimals)) as total_recieve,
         SUM(total_transfer/power(10, awp.decimals)) as total_transfer, SUM(total_amount/power(10, awp.decimals)) as total_amount, SUM(awp.price*total_amount/power(10, awp.decimals)) as total_value,
         awp.coingecko_id as "coingecko_id", SUM(transfer_count) as transfer_count, SUM(receive_count) as receive_count, awp.chain_id, max(awp.symbol) as symbol
-        from user_activity_view uav2 inner join (SELECT DISTINCT ON ("contract") *
+        from user_aggregated_transactions_details uav2 inner join (SELECT DISTINCT ON ("contract") *
         FROM assets_with_price ORDER  BY contract , "timestamp") awp on uav2.contract_address = awp.contract
         where wallet_address = $/address/
         group by uav2.wallet_address, awp.chain_id, uav2.contract_address, awp.coingecko_id

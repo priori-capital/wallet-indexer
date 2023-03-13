@@ -33,8 +33,8 @@ const main = async () => {
   id = await getNextId("activities");
   await updateSequence("activities_id_seq", id);
 
-  id = await getNextId("user_activities");
-  await updateSequence("user_activities_id_seq", id);
+  id = await getNextId("user_transactions");
+  await updateSequence("user_transactions_id_seq", id);
 };
 
 async function getNextId(table: string) {

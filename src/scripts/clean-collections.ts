@@ -200,12 +200,12 @@ const main = async () => {
 
     // Update the user activities
     const updateUserActivitiesQuery = `
-      UPDATE user_activities
+      UPDATE user_transactions
       SET collection_id = (
         SELECT collection_id
         FROM tokens
-        WHERE contract = user_activities.contract
-        AND token_id = user_activities.token_id
+        WHERE contract = user_transactions.contract
+        AND token_id = user_transactions.token_id
       )
       WHERE collection_id = $/collection/
     `;

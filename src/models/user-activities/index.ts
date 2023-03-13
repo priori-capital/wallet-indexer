@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { idb, pgp, redb } from "@/common/db";
+import { logger } from "@/common/logger";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import _ from "lodash";
 
@@ -36,7 +37,7 @@ export class UserActivities {
         "metadata",
         "chain_id",
       ],
-      { table: { table: "user_activities", schema: schema } }
+      { table: { table: "user_transactions", schema: schema } }
     );
     const data = activities.map((activity) => ({
       type: activity.type,
@@ -79,22 +80,22 @@ export class UserActivities {
 
     users.forEach(addUsersToFilter);
 
-    usersFilter = `from_address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))}) or to_address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))})`;
-    const s = `select ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price from user_activities ua
+    usersFilter = `from_address IN (${usersFilter.substring(
+      0,
+      usersFilter.lastIndexOf(", ")
+    )}) or to_address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))})`;
+    const s = `select ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price from user_transactions ua
     left join assets_with_price awp
     on ua .contract = awp .contract
              WHERE ${usersFilter}
              ORDER BY ${sortByColumn} DESC NULLS LAST
-             LIMIT $/limit/`
+             LIMIT $/limit/`;
 
-    let activities: any[] | null = []
-    try{
-      activities = await redb.manyOrNone(
-        s,
-        values
-      );
-    }catch(error){
-      console.log('err', error)
+    let activities: any[] | null = [];
+    try {
+      activities = await redb.manyOrNone(s, values);
+    } catch (error) {
+      logger.error("get-user-activity", error);
     }
 
     if (activities) {
@@ -127,7 +128,7 @@ export class UserActivities {
 
     const activities: any | null = await redb.manyOrNone(
       `SELECT ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price
-      FROM user_activities ua
+      FROM user_transactions ua
       right join assets_with_price awp
        on ua.contract = awp .contract
       WHERE ua.hash = $/values/`,
@@ -162,7 +163,7 @@ export class UserActivities {
   }
 
   // public static async deleteByBlockHash(blockHash: string) {
-  //   const query = `DELETE FROM user_activities
+  //   const query = `DELETE FROM user_transactions
   //                  WHERE block_hash = $/blockHash/`;
 
   //   return await idb.none(query, { blockHash });
