@@ -22,7 +22,6 @@ export class TransferActivity {
       blockHash: data.blockHash,
       eventTimestamp: data.timestamp,
       metadata: {
-        transactionHash: data.transactionHash,
         logIndex: data.logIndex,
         batchIndex: data.batchIndex,
       },

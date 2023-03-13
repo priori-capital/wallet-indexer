@@ -1,4 +1,5 @@
-import { createLogger, format, transports } from "winston";
+import winston, { createLogger, transports } from "winston";
+import winstoner from "@newrelic/winston-enricher";
 import { getServiceName } from "@/config/network";
 
 import { networkInterfaces } from "os";
@@ -22,15 +23,18 @@ for (const name of Object.keys(nets)) {
 
 const log = (level: "error" | "info" | "warn") => {
   const service = getServiceName();
-
+  const nrWinston = winstoner(winston);
   const logger = createLogger({
+    levels: {
+      fatal: 0,
+      error: 1,
+      warn: 2,
+      info: 3,
+      trace: 4,
+      debug: 5,
+    },
     exitOnError: false,
-    format: format.combine(
-      format.timestamp({
-        format: "YYYY-MM-DD HH:mm:ss",
-      }),
-      format.json()
-    ),
+    format: nrWinston(),
     transports: [
       process.env.DATADOG_API_KEY
         ? new transports.Http({
@@ -39,7 +43,7 @@ const log = (level: "error" | "info" | "warn") => {
             ssl: true,
           })
         : // Fallback to logging to standard output
-          new transports.Console(),
+          new winston.transports.Console(),
     ],
   });
 
