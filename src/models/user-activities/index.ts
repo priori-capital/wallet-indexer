@@ -94,8 +94,8 @@ export class UserActivities {
     let activities: any[] | null = [];
     try {
       activities = await redb.manyOrNone(s, values);
-    } catch (error) {
-      logger.error("get-user-activity", error);
+    } catch (error: any) {
+      logger.error("get-user-activity", error.message);
     }
 
     if (activities) {
