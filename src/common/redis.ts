@@ -63,3 +63,8 @@ export const releaseLock = async (name: string) => {
 export const getLockExpiration = async (name: string) => {
   return await redis.ttl(name);
 };
+
+export const syncRedis = new Redis(config.syncRedisUrl, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+});
