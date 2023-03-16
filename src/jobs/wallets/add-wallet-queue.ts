@@ -2,6 +2,7 @@ import { syncRedis } from "@/common/redis";
 import { Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
+import { cache, updateWalletCache } from "@/utils/in-memory-cache";
 
 const QUEUE_NAME = "add-wallet-queue";
 
@@ -18,21 +19,24 @@ export const queue = new Queue(QUEUE_NAME, {
 });
 new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
 
-// BACKGROUND WORKER ONLY
-// if (1 === 1) {
-const worker = new Worker(
-  QUEUE_NAME,
-  async (job: any) => {
-    try {
-      logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
-    } catch (error) {
-      logger.error(QUEUE_NAME, `${error}`);
-      throw error;
-    }
-  },
-  { connection: syncRedis.duplicate(), concurrency: 1 }
-);
-worker.on("error", (error) => {
-  logger.error(QUEUE_NAME, `Worker errored: ${error}`);
-});
-// }
+console.log(config.syncPacman, ">>>>>>");
+
+if (config.syncPacman) {
+  const worker = new Worker(
+    QUEUE_NAME,
+    async (job: any) => {
+      try {
+        const { address } = job.data;
+        logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
+        await updateWalletCache(address);
+      } catch (error) {
+        logger.error(QUEUE_NAME, `${error}`);
+        throw error;
+      }
+    },
+    { connection: syncRedis.duplicate(), concurrency: 1 }
+  );
+  worker.on("error", (error) => {
+    logger.error(QUEUE_NAME, `Worker errored: ${error}`);
+  });
+}

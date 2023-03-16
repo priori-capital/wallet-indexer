@@ -1,3 +1,7 @@
+import { idb } from "@/common/db";
+
+const PACMAN_WALLETS = "pacman-wallets";
+
 const inMemoryCache = () => {
   const cache: Map<string, unknown> = new Map<string, unknown>();
   return {
@@ -12,16 +16,37 @@ const inMemoryCache = () => {
 
 export const cache = inMemoryCache();
 
-export const updateWalletCache = (address: string) => {
-  const walletExists: string[] = cache.get("pacman-wallets");
+export const updateWalletCache = async (address: string) => {
+  await saveWallet(address);
+  const walletExists: string[] = cache.get(PACMAN_WALLETS);
   if (walletExists) {
     walletExists.push(address);
-    cache.set("pacman-wallets", walletExists);
+    cache.set(PACMAN_WALLETS, walletExists);
   } else {
-    cache.set("pacman-wallets", [address]);
+    cache.set(PACMAN_WALLETS, [address]);
   }
 };
 
-export const getCacheWallets = (): string[] => {
-  return cache.get("pacman-wallets") ?? [];
+export const getCacheWallets = async (): Promise<string[]> => {
+  let wallets: string[] = cache.get(PACMAN_WALLETS);
+  if (!wallets) {
+    wallets = await idb.many("select address from pacman_wallets");
+  }
+  return wallets ?? [];
+};
+
+export const saveWallet = async (address: string) => {
+  return idb.none(
+    `
+      INSERT INTO pacman_wallets (
+        address
+      ) VALUES (
+        $/address/
+      )
+      ON CONFLICT DO NOTHING
+    `,
+    {
+      address,
+    }
+  );
 };
