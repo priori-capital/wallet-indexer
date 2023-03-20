@@ -55,6 +55,8 @@ export const config = {
   doEventsSyncBackfill: Boolean(Number(process.env.DO_EVENTS_SYNC_BACKFILL)),
   disableOrders: Boolean(Number(process.env.DISABLE_ORDERS)),
 
+  shouldProcessTransactionReceipts: Boolean(Number(process.env.PROCESS_TRANSACTION_RECEIPTS)),
+
   maxTokenSetSize: 100000,
 
   awsAccessKeyId: String(process.env.AWS_ACCESS_KEY_ID),
