@@ -1,6 +1,7 @@
 import { idb, pgp } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import _ from "lodash";
+import { TransactionReceipt } from "@ethersproject/abstract-provider";
 
 export type Transaction = {
   hash: string;
@@ -13,6 +14,7 @@ export type Transaction = {
   gasPrice?: string;
   gasUsed?: string;
   gasFee?: string;
+  nonce?: number;
 };
 
 /**
@@ -69,57 +71,72 @@ export const saveTransaction = async (chainId: number, transaction: Transaction)
  * Store batch transactions and return nothing
  * @param transactions
  */
-export const saveTransactions = async (chainId: number, transactions: Transaction[]) => {
+export const saveTransactions = async (
+  chainId: number,
+  transactions: Transaction[],
+  receipts?: TransactionReceipt[]
+) => {
   if (_.isEmpty(transactions)) {
     return;
   }
 
-  const columns = new pgp.helpers.ColumnSet(
-    [
-      "hash",
-      "from",
-      "to",
-      "value",
-      "data",
-      "block_number",
-      "block_timestamp",
-      "gas_price",
-      "gas_used",
-      "gas_fee",
-    ],
-    { table: `transactions_${chainId}` }
-  );
+  const shouldParseReceipts = Array.isArray(receipts) && receipts.length;
 
-  const transactionsValues = _.map(transactions, (transaction) => ({
-    hash: toBuffer(transaction.hash),
-    from: toBuffer(transaction.from),
-    to: toBuffer(transaction.to),
-    value: transaction.value,
-    data: toBuffer(transaction.data),
-    block_number: transaction.blockNumber,
-    block_timestamp: transaction.blockTimestamp,
-    gas_price: transaction.gasPrice,
-    gas_used: transaction.gasUsed,
-    gas_fee: transaction.gasFee,
-  }));
+  const columnset = [
+    "hash",
+    "from",
+    "to",
+    "value",
+    "data",
+    "block_number",
+    "block_timestamp",
+    "gas_price",
+    "gas_used",
+    "gas_fee",
+  ];
 
-  await idb.none(
-    `
-      INSERT INTO transactions_${chainId} (
-        hash,
-        "from",
-        "to",
-        value,
-        data,
-        block_number,
-        block_timestamp,
-        gas_price,
-        gas_used,
-        gas_fee
-      ) VALUES ${pgp.helpers.values(transactionsValues, columns)}
+  const receiptBasedColumns = ["nonce", "status"];
+
+  if (shouldParseReceipts) {
+    columnset.push(...receiptBasedColumns);
+  }
+
+  const columns = new pgp.helpers.ColumnSet(columnset, { table: `transactions_${chainId}` });
+
+  const transactionsValues = _.map(transactions, (transaction, index) => {
+    const txnObject: Record<string, any> = {
+      hash: toBuffer(transaction.hash),
+      from: toBuffer(transaction.from),
+      to: toBuffer(transaction.to),
+      value: transaction.value,
+      data: toBuffer(transaction.data),
+      block_number: transaction.blockNumber,
+      block_timestamp: transaction.blockTimestamp,
+      gas_price: transaction.gasPrice,
+      gas_used: transaction.gasUsed,
+      gas_fee: transaction.gasFee,
+      nonce: transaction.nonce,
+      status: 1,
+    };
+
+    if (shouldParseReceipts) {
+      txnObject.status = receipts[index]?.status;
+    }
+
+    return txnObject;
+  });
+
+  const fieldNamesPart = columnset.map((i) => `"${i}"`).join(", ");
+
+  const query = `
+      INSERT INTO transactions_${chainId} (${fieldNamesPart}) VALUES ${pgp.helpers.values(
+    transactionsValues,
+    columns
+  )}
       ON CONFLICT DO NOTHING
-    `
-  );
+    `;
+
+  await idb.none(query);
 };
 
 export const getTransaction = async (

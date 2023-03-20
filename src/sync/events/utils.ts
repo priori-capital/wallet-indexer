@@ -1,7 +1,8 @@
 import { AddressZero } from "@ethersproject/constants";
 import { getTxTrace } from "@georgeroman/evm-tx-simulator";
-import { TransactionResponse } from "@ethersproject/abstract-provider";
+import { TransactionResponse, TransactionReceipt } from "@ethersproject/abstract-provider";
 
+import { config } from "@/config/index";
 import { getProvider } from "@/common/provider";
 import { bn } from "@/common/utils";
 import { getBlocks, saveBlock } from "@/models/blocks";
@@ -26,6 +27,7 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
         } else {
           const nativeTokenTransaction: es.ftTransfers.Event[] = [];
           const block = await getProvider(chainId).getBlockWithTransactions(blockNumber);
+
           // Create transactions array to store
           const transactions = (block.transactions as ITransactionResponse[]).map(
             (tx: ITransactionResponse) => {
@@ -33,8 +35,13 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
               const rawTx = tx.raw as any;
 
               const gasPrice = tx.gasPrice?.toString();
-              const gasUsed = rawTx?.gas ? bn(rawTx.gas).toString() : undefined;
+              const gasLimit = tx.gasLimit?.toString();
+
+              let gasUsed = rawTx?.gas ? bn(rawTx.gas).toString() : undefined;
+              if (!gasUsed) gasUsed = gasLimit;
+
               const gasFee = gasPrice && gasUsed ? bn(gasPrice).mul(gasUsed).toString() : undefined;
+
               if (!bn(tx.value).isZero()) {
                 nativeTokenTransaction.push({
                   from: tx.from.toLowerCase(),
@@ -46,9 +53,11 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
                     blockHash: block.hash,
                     txHash: tx.hash.toLowerCase(),
                     txIndex: tx?.transactionIndex,
+                    txNonce: tx.nonce,
                     timestamp: block.timestamp,
                     logIndex: 0,
                     batchIndex: 1,
+                    txStatus: 1,
                   },
                   chainId,
                 });
@@ -64,11 +73,23 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
                 gasPrice,
                 gasUsed,
                 gasFee,
+                gasLimit,
+                nonce: 1,
               };
             }
           );
+
+          const receipts: TransactionReceipt[] = [];
+
+          if (config.shouldProcessTransactionReceipts) {
+            for await (const tx of block.transactions) {
+              const receipt = await getProvider(chainId).getTransactionReceipt(tx.hash);
+              receipts.push(receipt);
+            }
+          }
+
           // Save all transactions within the block
-          await saveTransactions(chainId, transactions);
+          await saveTransactions(chainId, transactions, receipts);
 
           await triggerProcessActivityEvent(
             nativeTokenTransaction,
