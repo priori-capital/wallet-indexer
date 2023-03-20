@@ -3,6 +3,8 @@ import { fromBuffer, toBuffer } from "@/common/utils";
 import _ from "lodash";
 import { TransactionReceipt } from "@ethersproject/abstract-provider";
 
+export type TransactionStatus = 0 | 1;
+
 export type Transaction = {
   hash: string;
   from: string;
@@ -15,6 +17,7 @@ export type Transaction = {
   gasUsed?: string;
   gasFee?: string;
   nonce?: number;
+  status?: TransactionStatus;
 };
 
 /**

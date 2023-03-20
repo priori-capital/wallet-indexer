@@ -2,8 +2,7 @@ import { Log } from "@ethersproject/abstract-provider";
 
 import * as syncEventsUtils from "@/events-sync/utils";
 import * as blocksModel from "@/models/blocks";
-
-export type TransactionStatus = 0 | 1;
+import { TransactionStatus } from "@/models/transactions";
 
 export type BaseEventParams = {
   address: string;
