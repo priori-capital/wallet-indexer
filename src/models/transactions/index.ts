@@ -85,7 +85,7 @@ export const saveTransactions = async (
 
   const shouldParseReceipts = Array.isArray(receipts) && receipts.length;
 
-  const columnset = [
+  const columns = [
     "hash",
     "from",
     "to",
@@ -101,10 +101,10 @@ export const saveTransactions = async (
   const receiptBasedColumns = ["nonce", "status"];
 
   if (shouldParseReceipts) {
-    columnset.push(...receiptBasedColumns);
+    columns.push(...receiptBasedColumns);
   }
 
-  const columns = new pgp.helpers.ColumnSet(columnset, { table: `transactions_${chainId}` });
+  const columnset = new pgp.helpers.ColumnSet(columns, { table: `transactions_${chainId}` });
 
   const transactionsValues = _.map(transactions, (transaction, index) => {
     const txnObject: Record<string, any> = {
@@ -129,12 +129,12 @@ export const saveTransactions = async (
     return txnObject;
   });
 
-  const fieldNamesPart = columnset.map((i) => `"${i}"`).join(", ");
+  const fieldNamesPart = columns.map((i) => `"${i}"`).join(", ");
 
   const query = `
       INSERT INTO transactions_${chainId} (${fieldNamesPart}) VALUES ${pgp.helpers.values(
     transactionsValues,
-    columns
+    columnset
   )}
       ON CONFLICT DO NOTHING
     `;
