@@ -3,6 +3,7 @@ import { Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
 import { cache, updateWalletCache } from "@/utils/in-memory-cache";
+import { addToQueue } from "./fetch-history-queue";
 
 const QUEUE_NAME = "add-wallet-queue";
 
@@ -19,8 +20,6 @@ export const queue = new Queue(QUEUE_NAME, {
 });
 new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
 
-console.log(config.syncPacman, ">>>>>>");
-
 if (config.syncPacman) {
   const worker = new Worker(
     QUEUE_NAME,
@@ -29,6 +28,7 @@ if (config.syncPacman) {
         const { address } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         await updateWalletCache(address);
+        await addToQueue(address);
       } catch (error) {
         logger.error(QUEUE_NAME, `${error}`);
         throw error;

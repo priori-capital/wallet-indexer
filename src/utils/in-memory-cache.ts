@@ -1,4 +1,4 @@
-import { idb } from "@/common/db";
+import { idb, redb } from "@/common/db";
 
 const PACMAN_WALLETS = "pacman-wallets";
 
@@ -18,19 +18,21 @@ export const cache = inMemoryCache();
 
 export const updateWalletCache = async (address: string) => {
   await saveWallet(address);
-  const walletExists: string[] = cache.get(PACMAN_WALLETS);
+  const walletExists: Set<string> = cache.get(PACMAN_WALLETS);
   if (walletExists) {
-    walletExists.push(address);
+    walletExists.add(address);
     cache.set(PACMAN_WALLETS, walletExists);
   } else {
-    cache.set(PACMAN_WALLETS, [address]);
+    const set = new Set();
+    set.add(address);
+    cache.set(PACMAN_WALLETS, set);
   }
 };
 
 export const getCacheWallets = async (): Promise<string[]> => {
   let wallets: string[] = cache.get(PACMAN_WALLETS);
   if (!wallets) {
-    wallets = await idb.many("select address from pacman_wallets");
+    wallets = await redb.manyOrNone("select address from pacman_wallets");
   }
   return wallets ?? [];
 };
