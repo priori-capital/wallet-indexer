@@ -2,7 +2,7 @@ import { syncRedis } from "@/common/redis";
 import { Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
-import { cache, updateWalletCache } from "@/utils/in-memory-cache";
+import { updateWalletCache } from "@/utils/in-memory-cache";
 import { addToQueue } from "./fetch-history-queue";
 
 const QUEUE_NAME = "add-wallet-queue";

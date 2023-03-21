@@ -1,6 +1,7 @@
 -- Up Migration
 CREATE TABLE "pacman_wallets" (
   "address" VARCHAR NOT NULL,
+  "status" smallint DEFAULT 1,
   "created_at" timestamp with time zone DEFAULT NOW()
 );
 
