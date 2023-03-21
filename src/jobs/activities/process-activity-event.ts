@@ -8,6 +8,7 @@ import { logger } from "@/common/logger";
 import { redis } from "@/common/redis";
 import { config } from "@/config/index";
 import { TransferActivity, TransferEventData } from "@/jobs/activities/transfer-activity";
+import { WalletActivityTracking } from "@/jobs/activities/wallet-activity-tracking";
 
 const QUEUE_NAME = "process-activity-event-queue";
 
@@ -40,6 +41,8 @@ if (config.doBackgroundWork) {
           await TransferActivity.handleEvent(data as TransferEventData);
           break;
       }
+
+      await WalletActivityTracking.handleEvent(data as TransferEventData);
     },
     { connection: redis.duplicate(), concurrency: 50 }
   );
