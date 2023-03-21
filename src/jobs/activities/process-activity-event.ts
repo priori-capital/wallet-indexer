@@ -17,7 +17,8 @@ export const queue = new Queue(QUEUE_NAME, {
   defaultJobOptions: {
     attempts: 10,
     removeOnComplete: 100,
-    removeOnFail: 50000,
+    // TODO: Set to true after fallback mechanism is added to repo
+    removeOnFail: false,
     backoff: {
       type: "fixed",
       delay: 5000,
