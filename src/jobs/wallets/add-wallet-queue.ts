@@ -2,7 +2,7 @@ import { syncRedis } from "@/common/redis";
 import { Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
-import { cache, updateWalletCache } from "@/utils/in-memory-cache";
+import { updateWalletCache } from "@/utils/in-memory-cache";
 
 const QUEUE_NAME = "add-wallet-queue";
 
@@ -18,8 +18,6 @@ export const queue = new Queue(QUEUE_NAME, {
   },
 });
 new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
-
-console.log(config.syncPacman, ">>>>>>");
 
 if (config.syncPacman) {
   const worker = new Worker(
