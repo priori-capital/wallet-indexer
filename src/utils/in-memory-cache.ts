@@ -1,6 +1,6 @@
 import { idb } from "@/common/db";
 
-const PACMAN_WALLETS = "pacman-wallets";
+const TRACKED_WALLETS = "pacman-wallets";
 
 const inMemoryCache = () => {
   const cache: Map<string, unknown> = new Map<string, unknown>();
@@ -18,17 +18,17 @@ export const cache = inMemoryCache();
 
 export const updateWalletCache = async (address: string) => {
   await saveWallet(address);
-  const walletExists: Record<string, boolean> = cache.get(PACMAN_WALLETS);
+  const walletExists = cache.get<Record<string, boolean>>(TRACKED_WALLETS);
   if (walletExists) {
     walletExists[address] = true;
-    cache.set(PACMAN_WALLETS, walletExists);
+    cache.set(TRACKED_WALLETS, walletExists);
   } else {
-    cache.set(PACMAN_WALLETS, { [address]: true });
+    cache.set(TRACKED_WALLETS, { [address]: true });
   }
 };
 
 export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
-  const wallets = cache.get<Record<string, boolean>>(PACMAN_WALLETS);
+  const wallets = cache.get<Record<string, boolean>>(TRACKED_WALLETS);
 
   if (wallets) return wallets;
 
@@ -46,7 +46,7 @@ export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
 export const saveWallet = async (address: string) => {
   return idb.none(
     `
-      INSERT INTO pacman_wallets (
+      INSERT INTO tracked_wallets (
         address
       ) VALUES (
         $/address/
