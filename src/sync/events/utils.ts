@@ -39,7 +39,7 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
               const gasUsed = rawTx?.gas ? bn(rawTx.gas).toString() : undefined;
 
               const gas = gasUsed ?? gasLimit;
-              const gasFee = gasPrice && gasUsed ? bn(gasPrice).mul(gas).toString() : undefined;
+              const gasFee = gasPrice && gas ? bn(gasPrice).mul(gas).toString() : undefined;
 
               if (!bn(tx.value).isZero()) {
                 nativeTokenTransaction.push({
