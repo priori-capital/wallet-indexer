@@ -15,6 +15,7 @@ export type Transaction = {
   blockTimestamp: number;
   gasPrice?: string;
   gasUsed?: string;
+  gasLimit?: string;
   gasFee?: string;
   nonce?: number;
   status?: TransactionStatus;
@@ -95,19 +96,15 @@ export const saveTransactions = async (
     "block_timestamp",
     "gas_price",
     "gas_used",
+    "gas_limit",
     "gas_fee",
+    "nonce",
   ];
 
-  const receiptBasedColumns = ["nonce", "status"];
-
-  if (shouldParseReceipts) {
-    columns.push(...receiptBasedColumns);
-  }
-
-  const columnset = new pgp.helpers.ColumnSet(columns, { table: `transactions_${chainId}` });
+  const receiptBasedColumns = ["status"];
 
   const transactionsValues = _.map(transactions, (transaction, index) => {
-    const txnObject: Record<string, any> = {
+    const txnObject: Record<string, unknown> = {
       hash: toBuffer(transaction.hash),
       from: toBuffer(transaction.from),
       to: toBuffer(transaction.to),
@@ -117,9 +114,9 @@ export const saveTransactions = async (
       block_timestamp: transaction.blockTimestamp,
       gas_price: transaction.gasPrice,
       gas_used: transaction.gasUsed,
+      gas_limit: transaction.gasLimit,
       gas_fee: transaction.gasFee,
       nonce: transaction.nonce,
-      status: 1,
     };
 
     if (shouldParseReceipts) {
@@ -130,6 +127,12 @@ export const saveTransactions = async (
   });
 
   const fieldNamesPart = columns.map((i) => `"${i}"`).join(", ");
+
+  if (shouldParseReceipts) {
+    columns.push(...receiptBasedColumns);
+  }
+
+  const columnset = new pgp.helpers.ColumnSet(columns, { table: `transactions_${chainId}` });
 
   const query = `
       INSERT INTO transactions_${chainId} (${fieldNamesPart}) VALUES ${pgp.helpers.values(

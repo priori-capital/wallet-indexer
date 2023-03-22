@@ -36,11 +36,10 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
 
               const gasPrice = tx.gasPrice?.toString();
               const gasLimit = tx.gasLimit?.toString();
+              const gasUsed = rawTx?.gas ? bn(rawTx.gas).toString() : undefined;
 
-              let gasUsed = rawTx?.gas ? bn(rawTx.gas).toString() : undefined;
-              if (!gasUsed) gasUsed = gasLimit;
-
-              const gasFee = gasPrice && gasUsed ? bn(gasPrice).mul(gasUsed).toString() : undefined;
+              const gas = gasUsed ?? gasLimit;
+              const gasFee = gasPrice && gasUsed ? bn(gasPrice).mul(gas).toString() : undefined;
 
               if (!bn(tx.value).isZero()) {
                 nativeTokenTransaction.push({
@@ -74,7 +73,7 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
                 gasUsed,
                 gasFee,
                 gasLimit,
-                nonce: 1,
+                nonce: tx.nonce,
               };
             }
           );
