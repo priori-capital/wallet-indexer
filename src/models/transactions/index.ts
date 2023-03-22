@@ -126,13 +126,13 @@ export const saveTransactions = async (
     return txnObject;
   });
 
-  const fieldNamesPart = columns.map((i) => `"${i}"`).join(", ");
-
   if (shouldParseReceipts) {
     columns.push(...receiptBasedColumns);
   }
 
   const columnset = new pgp.helpers.ColumnSet(columns, { table: `transactions_${chainId}` });
+
+  const fieldNamesPart = columns.map((i) => `"${i}"`).join(", ");
 
   const query = `
       INSERT INTO transactions_${chainId} (${fieldNamesPart}) VALUES ${pgp.helpers.values(
