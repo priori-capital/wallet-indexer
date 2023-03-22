@@ -5,7 +5,7 @@ const PACMAN_WALLETS = "pacman-wallets";
 const inMemoryCache = () => {
   const cache: Map<string, unknown> = new Map<string, unknown>();
   return {
-    get: function (key: string): any {
+    get: function (key: string): unknown {
       return cache.get(key);
     },
     set: function (key: string, val: unknown) {
@@ -30,7 +30,8 @@ export const updateWalletCache = async (address: string) => {
 export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
   let wallets: string[] = cache.get(PACMAN_WALLETS);
   if (!wallets) {
-    wallets = await idb.many("select address from pacman_wallets where status = 1");
+    wallets = await idb.manyOrNone("select address from pacman_wallets where status = 1");
+    // wallets = await idb.many("select address from pacman_wallets where status = 1");
   }
   return (
     wallets.reduce((acc: Record<string, boolean>, address) => {
