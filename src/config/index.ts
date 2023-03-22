@@ -39,9 +39,7 @@ export const config = {
   databaseUrl: String(process.env.DATABASE_URL),
   databaseSSL: Boolean(Number(process.env.DATABASE_SSL)),
   readReplicaDatabaseUrl: String(process.env.READ_REPLICA_DATABASE_URL || process.env.DATABASE_URL),
-  korsoReplicaDatabaseUrl: String(
-    process.env.KORSO_REPLICA_DATABASE_URL || process.env.DATABASE_URL
-  ),
+
   writeReplicaDatabaseUrl: String(
     process.env.WRITE_REPLICA_DATABASE_URL || process.env.DATABASE_URL
   ),

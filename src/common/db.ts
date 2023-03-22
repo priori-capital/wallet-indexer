@@ -69,17 +69,6 @@ export const ridb = pgp({
   ...dbConfig,
 });
 
-// Database connection to store replica in another db DB
-export const kdb = pgp({
-  connectionString: config.korsoReplicaDatabaseUrl,
-  keepAlive: true,
-  max: 60,
-  connectionTimeoutMillis: 30 * 1000,
-  query_timeout: 5 * 60 * 1000,
-  statement_timeout: 5 * 60 * 1000,
-  allowExitOnIdle: true,
-});
-
 // Common types
 
 export type PgPromiseQuery = {
