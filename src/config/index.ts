@@ -80,4 +80,8 @@ export const config = {
   cipherSecret: String(process.env.CIPHER_SECRET),
 
   slackApiKeyWebhookUrl: String(process.env.SLACK_API_KEY_WEBHOOK_URL),
+
+  syncRedisUrl: String(process.env.SYNC_REDIS_URL),
+
+  syncPacman: Boolean(Number(process.env.SYNC_PACMAN)),
 };
