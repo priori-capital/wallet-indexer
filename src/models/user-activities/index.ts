@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { idb, pgp, redb } from "@/common/db";
+import { logger } from "@/common/logger";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import _ from "lodash";
 
@@ -9,7 +10,19 @@ export class UserActivities {
     if (!activities.length) {
       return;
     }
+    // const schema = config.korsoSchema || 'public'
+    // const [query, kquery] = await Promise.all([
+    //   this.prepareActivityColumnWithSchema(activities, schema),
+    //   this.prepareActivityColumnWithSchema(activities)
+    // ])
+    const query = await this.prepareActivityColumnWithSchema(activities);
 
+    await idb.none(query);
+
+    // await Promise.all([idb.none(query), kdb.none(kquery)]);
+  }
+
+  private static async prepareActivityColumnWithSchema(activities: any[], schema = "public") {
     const columns = new pgp.helpers.ColumnSet(
       [
         "hash",
@@ -24,14 +37,12 @@ export class UserActivities {
         "metadata",
         "chain_id",
       ],
-      { table: "user_activities" }
+      { table: { table: "user_transactions", schema: schema } }
     );
-
     const data = activities.map((activity) => ({
       type: activity.type,
       hash: toBuffer(activity.hash),
       contract: toBuffer(activity.contract),
-      // address: toBuffer(activity.address),
       from_address: toBuffer(activity.fromAddress),
       to_address: activity.toAddress ? toBuffer(activity.toAddress) : null,
       amount: activity.amount,
@@ -39,13 +50,11 @@ export class UserActivities {
       block_hash: activity.blockHash ? toBuffer(activity.blockHash) : null,
       event_timestamp: activity.eventTimestamp,
       metadata: activity.metadata,
-      // direction: activity.direction,
       chain_id: activity.chainId,
     }));
 
     const query = pgp.helpers.insert(data, columns) + " ON CONFLICT DO NOTHING";
-
-    await idb.none(query);
+    return query;
   }
 
   public static async getActivities(
@@ -55,7 +64,7 @@ export class UserActivities {
     sortBy = "eventTimestamp"
   ) {
     const sortByColumn = sortBy == "eventTimestamp" ? "event_timestamp" : "created_at";
-    const continuation = "";
+    // const continuation = "";
     let usersFilter = "";
     let i = 0;
     const values = {
@@ -71,18 +80,23 @@ export class UserActivities {
 
     users.forEach(addUsersToFilter);
 
-    usersFilter = `address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))})`;
+    usersFilter = `from_address IN (${usersFilter.substring(
+      0,
+      usersFilter.lastIndexOf(", ")
+    )}) or to_address IN (${usersFilter.substring(0, usersFilter.lastIndexOf(", "))})`;
+    const s = `select ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price from user_transactions ua
+    left join assets_with_price awp
+    on ua .contract = awp .contract
+             WHERE ${usersFilter}
+             ORDER BY ${sortByColumn} DESC NULLS LAST
+             LIMIT $/limit/`;
 
-    const activities: any[] | null = await redb.manyOrNone(
-      `select ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price from user_activities ua
-      right join assets_with_price awp
-      on ua .contract = awp .contract
-               WHERE ${usersFilter}
-               ${continuation}
-               ORDER BY ${sortByColumn} DESC NULLS LAST
-               LIMIT $/limit/`,
-      values
-    );
+    let activities: any[] | null = [];
+    try {
+      activities = await redb.manyOrNone(s, values);
+    } catch (error: any) {
+      logger.error("get-user-activity", error.message);
+    }
 
     if (activities) {
       return _.map(activities, (activity) => ({
@@ -93,14 +107,14 @@ export class UserActivities {
           symbol: activity.symbol,
           decimals: activity.decimals,
           price: activity.price,
-          image: activity.metadata.image,
+          image: activity.metadata?.image || null,
         },
         from: fromBuffer(activity.from_address),
         destination: fromBuffer(activity.to_address),
         amount: activity.formatted_amount,
         blockNumber: activity.block,
-        logIndex: activity.metadata.logIndex,
-        batchIndex: activity.metadata.batchIndex,
+        logIndex: activity.metadata?.logIndex || null,
+        batchIndex: activity.metadata?.batchIndex || null,
         timestamp: activity.event_timestamp,
         chainId: activity.chain_id,
       }));
@@ -114,7 +128,7 @@ export class UserActivities {
 
     const activities: any | null = await redb.manyOrNone(
       `SELECT ua.*, ua.amount/power(10, awp.decimals) as formatted_amount, awp."name", awp.symbol, awp.decimals, awp.metadata, awp.price
-      FROM user_activities ua
+      FROM user_transactions ua
       right join assets_with_price awp
        on ua.contract = awp .contract
       WHERE ua.hash = $/values/`,
@@ -149,7 +163,7 @@ export class UserActivities {
   }
 
   // public static async deleteByBlockHash(blockHash: string) {
-  //   const query = `DELETE FROM user_activities
+  //   const query = `DELETE FROM user_transactions
   //                  WHERE block_hash = $/blockHash/`;
 
   //   return await idb.none(query, { blockHash });

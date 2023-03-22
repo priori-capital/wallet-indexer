@@ -123,8 +123,8 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
         enableWebSocket: true,
         enableReorgCheck: true,
         realtimeSyncFrequencySeconds: 10,
-        realtimeSyncMaxBlockLag: 128,
-        backfillBlockBatchSize: 20,
+        realtimeSyncMaxBlockLag: 16,
+        backfillBlockBatchSize: 16,
         reorgCheckFrequency: [1, 5, 10, 30, 60],
         coingecko: {
           networkId: "polygon-pos",

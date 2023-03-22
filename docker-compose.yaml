@@ -5,7 +5,7 @@ services:
     image: postgres:13.2
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=postgres
     networks:
       - local
     ports:
@@ -13,7 +13,7 @@ services:
 
   redis:
     image: redis:6.2.2
-    command: sh -c "redis-server --requirepass password"
+    command: sh -c "redis-server --requirepass password123"
     networks:
       - local
     ports:

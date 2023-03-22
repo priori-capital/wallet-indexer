@@ -134,7 +134,7 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
           "amount",
           "chain_id"
       )
-      INSERT INTO "user_activity_view" (
+      INSERT INTO "user_aggregated_transactions_details" (
         "timestamp",
         "contract_address",
         "wallet_address",
@@ -170,11 +170,11 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
         GROUP BY "y"."tx_date", "y"."address", "y"."owner"
       )
       ON CONFLICT ("timestamp", "contract_address", "wallet_address") DO
-      UPDATE SET "total_amount" = "user_activity_view"."total_amount" + "excluded"."total_amount",
-      "total_recieve" = "user_activity_view"."total_recieve" + "excluded"."total_recieve",
-      "receive_count" = "user_activity_view"."receive_count" + "excluded"."receive_count",
-      "total_transfer" = "user_activity_view"."total_transfer" + "excluded"."total_transfer",
-      "transfer_count" = "user_activity_view"."transfer_count" + "excluded"."transfer_count"
+      UPDATE SET "total_amount" = "user_aggregated_transactions_details"."total_amount" + "excluded"."total_amount",
+      "total_recieve" = "user_aggregated_transactions_details"."total_recieve" + "excluded"."total_recieve",
+      "receive_count" = "user_aggregated_transactions_details"."receive_count" + "excluded"."receive_count",
+      "total_transfer" = "user_aggregated_transactions_details"."total_transfer" + "excluded"."total_transfer",
+      "transfer_count" = "user_aggregated_transactions_details"."transfer_count" + "excluded"."transfer_count"
     `);
     }
 

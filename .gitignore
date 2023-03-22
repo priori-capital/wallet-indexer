@@ -18,3 +18,5 @@ postgres/
 .idea
 .yarnclean
 coverage/
+
+newrelic_agent.log

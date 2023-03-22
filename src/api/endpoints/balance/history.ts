@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { redb } from "@/common/db";
 import { addDays, fromBuffer, getDaysDifference, regex, toBuffer } from "@/common/utils";
-import { RouteOptions, Request } from "@hapi/hapi";
+import { Request, RouteOptions } from "@hapi/hapi";
 import Joi from "joi";
 
 interface HistoryQuery {
@@ -65,8 +67,8 @@ export const getHistory: RouteOptions = {
     const history: RawHistoryObject[] | null = await redb.manyOrNone(
       `select SUM(y.total_amount) total_amount, SUM(y.usd_price) usd_price, y.wallet_address, y.timestamp from (
         select uav2.timestamp, uav2.wallet_address, total_amount/power(10, awp.decimals) as total_amount, awp.price * total_amount/power(10, awp.decimals) as usd_price
-        from user_activity_view uav2 right join assets_with_price awp on uav2.contract_address = awp.contract and uav2."timestamp" <= awp."timestamp" where uav2."timestamp"
-        in (select distinct uav.timestamp from user_activity_view uav
+        from user_aggregated_transactions_details uav2 right join assets_with_price awp on uav2.contract_address = awp.contract and uav2."timestamp" <= awp."timestamp" where uav2."timestamp"
+        in (select distinct uav.timestamp from user_aggregated_transactions_details uav
         where wallet_address = $/address/ and timestamp <= $/endDate/
         order by uav.timestamp limit $/limit/)
         and wallet_address = $/address/ order by awp.timestamp desc, uav2.timestamp asc) y group by y.wallet_address, y.timestamp order by y.timestamp`,

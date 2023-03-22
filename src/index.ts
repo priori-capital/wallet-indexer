@@ -1,5 +1,6 @@
 import { config as dotEnvConfig } from "dotenv";
 dotEnvConfig();
+require("newrelic");
 
 import "@/common/tracer";
 import "@/jobs/index";

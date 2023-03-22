@@ -10,7 +10,7 @@ CREATE TABLE user_activities (
     from_address BYTEA,
     to_address BYTEA,
     amount NUMERIC(78),
-    metadata JSONB,
+    metadata text,
     block_hash BYTEA,
     block INT,
     event_timestamp INT,
