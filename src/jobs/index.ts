@@ -29,6 +29,7 @@ import "@/jobs/events-sync";
 // import * as processActivityEvent from "@/jobs/activities/process-activity-event";
 
 import * as currencies from "@/jobs/currencies/index";
+import "@/jobs/wallets/add-wallet-queue";
 
 export const allJobQueues = [
   // fixActivitiesMissingCollection.queue,
