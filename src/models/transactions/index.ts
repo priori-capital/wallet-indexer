@@ -145,17 +145,21 @@ export const saveTransactions = async (
   await idb.none(query);
 };
 
-export const getTransaction = async (
-  chainId: number,
-  hash: string
-): Promise<Pick<Transaction, "hash" | "from" | "to" | "value" | "data">> => {
+export const getTransaction = async (chainId: number, hash: string): Promise<Transaction> => {
   const result = await idb.oneOrNone(
     `
       SELECT
         transactions.from,
         transactions.to,
         transactions.value,
-        transactions.data
+        transactions.data,
+        transactions.block_number,
+        transactions.block_timestamp,
+        transactions.gas_used,
+        transactions.gas_limit,
+        transactions.gas_price,
+        transactions.gas_fee,
+        transactions.status
       FROM transactions_${chainId} as transactions
       WHERE transactions.hash = $/hash/
     `,
@@ -168,5 +172,12 @@ export const getTransaction = async (
     to: fromBuffer(result.to),
     value: result.value,
     data: fromBuffer(result.data),
+    blockNumber: result.block_number,
+    blockTimestamp: result.block_timestamp,
+    gasUsed: result.gas_used,
+    gasLimit: result.gas_limit,
+    gasPrice: result.gas_price,
+    gasFee: result.gas_fee,
+    status: result.status,
   };
 };
