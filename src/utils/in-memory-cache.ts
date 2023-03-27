@@ -32,7 +32,7 @@ export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
 
   if (wallets) return wallets;
 
-  const trackedWallets = await idb.manyOrNone(
+  const trackedWallets = await redb.manyOrNone(
     "select address from tracked_wallets where status = 1"
   );
   return (

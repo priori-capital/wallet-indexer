@@ -1,5 +1,5 @@
 import { syncRedis } from "@/common/redis";
-import { Queue, QueueScheduler, Worker } from "bullmq";
+import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
 import { redb } from "@/common/db";
@@ -27,13 +27,13 @@ new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
 if (config.syncPacman) {
   const worker = new Worker(
     QUEUE_NAME,
-    async (job: any) => {
+    async (job: Job) => {
       try {
         const { address, workspaceId } = job.data;
         const isWalletCached = await isCachedWallet(address);
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         const limit = ROW_COUNT;
-        const totalCount: number = await redb.one(
+        const { count: totalCount }: { count: number } = await redb.one(
           `select count(*) from user_transactions ut
               where ut.hash in 
               (select ut2.hash from user_transactions ut2
@@ -43,11 +43,11 @@ if (config.syncPacman) {
             address: toBuffer(address),
           }
         );
-        const totalBatch = Math.ceil(totalCount / ROW_COUNT);
 
-        let batch = 0,
+        const totalBatch = Math.ceil(totalCount / ROW_COUNT);
+        let batch = 1,
           skip = 0;
-        while (totalBatch <= batch) {
+        while (batch <= totalBatch) {
           const userActivities: walletHistoryQueue.IRawUserTransaction[] = await redb.manyOrNone(
             `select * from user_transactions ut
               where ut.hash in 
@@ -64,7 +64,7 @@ if (config.syncPacman) {
           );
           await walletHistoryQueue.addToQueue({
             address,
-            batch: ++batch,
+            batch,
             totalBatch,
             transactions: userActivities.map((activity) => ({
               ...activity,
@@ -77,12 +77,14 @@ if (config.syncPacman) {
             workspaceId,
             isWalletCached,
           });
+          logger.info(QUEUE_NAME, `History Queue ${batch} out of ${totalBatch} sent successfully`);
 
           if (userActivities?.length === ROW_COUNT) {
             skip += ROW_COUNT;
           } else {
             break;
           }
+          batch++;
         }
       } catch (error) {
         logger.error(QUEUE_NAME, `${error}`);

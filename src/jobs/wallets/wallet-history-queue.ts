@@ -1,7 +1,6 @@
 import { syncRedis } from "@/common/redis";
 import { Queue, QueueScheduler } from "bullmq";
 import { logger } from "@/common/logger";
-import { randomUUID } from "crypto";
 
 const QUEUE_NAME = "wallet-history-queue";
 
