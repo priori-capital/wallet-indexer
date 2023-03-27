@@ -1,6 +1,9 @@
 import { idb, pgp } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import _ from "lodash";
+import { TransactionReceipt } from "@ethersproject/abstract-provider";
+
+export type TransactionStatus = 0 | 1;
 
 export type Transaction = {
   hash: string;
@@ -12,7 +15,10 @@ export type Transaction = {
   blockTimestamp: number;
   gasPrice?: string;
   gasUsed?: string;
+  gasLimit?: string;
   gasFee?: string;
+  nonce?: number;
+  status?: TransactionStatus;
 };
 
 /**
@@ -69,70 +75,91 @@ export const saveTransaction = async (chainId: number, transaction: Transaction)
  * Store batch transactions and return nothing
  * @param transactions
  */
-export const saveTransactions = async (chainId: number, transactions: Transaction[]) => {
+export const saveTransactions = async (
+  chainId: number,
+  transactions: Transaction[],
+  receipts?: TransactionReceipt[]
+) => {
   if (_.isEmpty(transactions)) {
     return;
   }
 
-  const columns = new pgp.helpers.ColumnSet(
-    [
-      "hash",
-      "from",
-      "to",
-      "value",
-      "data",
-      "block_number",
-      "block_timestamp",
-      "gas_price",
-      "gas_used",
-      "gas_fee",
-    ],
-    { table: `transactions_${chainId}` }
-  );
+  const shouldParseReceipts = Array.isArray(receipts) && receipts.length;
 
-  const transactionsValues = _.map(transactions, (transaction) => ({
-    hash: toBuffer(transaction.hash),
-    from: toBuffer(transaction.from),
-    to: toBuffer(transaction.to),
-    value: transaction.value,
-    data: toBuffer(transaction.data),
-    block_number: transaction.blockNumber,
-    block_timestamp: transaction.blockTimestamp,
-    gas_price: transaction.gasPrice,
-    gas_used: transaction.gasUsed,
-    gas_fee: transaction.gasFee,
-  }));
+  const columns = [
+    "hash",
+    "from",
+    "to",
+    "value",
+    "data",
+    "block_number",
+    "block_timestamp",
+    "gas_price",
+    "gas_used",
+    "gas_limit",
+    "gas_fee",
+    "nonce",
+  ];
 
-  await idb.none(
-    `
-      INSERT INTO transactions_${chainId} (
-        hash,
-        "from",
-        "to",
-        value,
-        data,
-        block_number,
-        block_timestamp,
-        gas_price,
-        gas_used,
-        gas_fee
-      ) VALUES ${pgp.helpers.values(transactionsValues, columns)}
+  const receiptBasedColumns = ["status"];
+
+  const transactionsValues = _.map(transactions, (transaction, index) => {
+    const txnObject: Record<string, unknown> = {
+      hash: toBuffer(transaction.hash),
+      from: toBuffer(transaction.from),
+      to: toBuffer(transaction.to),
+      value: transaction.value,
+      data: toBuffer(transaction.data),
+      block_number: transaction.blockNumber,
+      block_timestamp: transaction.blockTimestamp,
+      gas_price: transaction.gasPrice,
+      gas_used: transaction.gasUsed,
+      gas_limit: transaction.gasLimit,
+      gas_fee: transaction.gasFee,
+      nonce: transaction.nonce,
+    };
+
+    if (shouldParseReceipts) {
+      txnObject.status = receipts[index]?.status;
+    }
+
+    return txnObject;
+  });
+
+  if (shouldParseReceipts) {
+    columns.push(...receiptBasedColumns);
+  }
+
+  const columnset = new pgp.helpers.ColumnSet(columns, { table: `transactions_${chainId}` });
+
+  const fieldNamesPart = columns.map((i) => `"${i}"`).join(", ");
+
+  const query = `
+      INSERT INTO transactions_${chainId} (${fieldNamesPart}) VALUES ${pgp.helpers.values(
+    transactionsValues,
+    columnset
+  )}
       ON CONFLICT DO NOTHING
-    `
-  );
+    `;
+
+  await idb.none(query);
 };
 
-export const getTransaction = async (
-  chainId: number,
-  hash: string
-): Promise<Pick<Transaction, "hash" | "from" | "to" | "value" | "data">> => {
+export const getTransaction = async (chainId: number, hash: string): Promise<Transaction> => {
   const result = await idb.oneOrNone(
     `
       SELECT
         transactions.from,
         transactions.to,
         transactions.value,
-        transactions.data
+        transactions.data,
+        transactions.block_number,
+        transactions.block_timestamp,
+        transactions.gas_used,
+        transactions.gas_limit,
+        transactions.gas_price,
+        transactions.gas_fee,
+        transactions.status
       FROM transactions_${chainId} as transactions
       WHERE transactions.hash = $/hash/
     `,
@@ -145,5 +172,12 @@ export const getTransaction = async (
     to: fromBuffer(result.to),
     value: result.value,
     data: fromBuffer(result.data),
+    blockNumber: result.block_number,
+    blockTimestamp: result.block_timestamp,
+    gasUsed: result.gas_used,
+    gasLimit: result.gas_limit,
+    gasPrice: result.gas_price,
+    gasFee: result.gas_fee,
+    status: result.status,
   };
 };

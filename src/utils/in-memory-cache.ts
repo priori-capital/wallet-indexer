@@ -29,9 +29,12 @@ export const updateWalletCache = async (address: string) => {
 
 export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
   const wallets = cache.get<Record<string, boolean>>(TRACKED_WALLETS);
+
   if (wallets) return wallets;
 
-  const trackedWallets = await idb.many("select address from tracked_wallets where status = 1");
+  const trackedWallets = await idb.manyOrNone(
+    "select address from tracked_wallets where status = 1"
+  );
   return (
     trackedWallets.reduce((acc: Record<string, boolean>, address) => {
       acc[address] = true;
@@ -57,9 +60,13 @@ export const saveWallet = async (address: string) => {
 };
 
 export const isCachedWallet = async (address: string) => {
-  const cachedWallets: Record<string, boolean> = await getCacheWallets();
+  try {
+    const cachedWallets: Record<string, boolean> = await getCacheWallets();
 
-  if (!cachedWallets || !cachedWallets[address]) return false;
+    if (!cachedWallets || !cachedWallets[address]) return false;
 
-  return true;
+    return true;
+  } catch (err) {
+    return false;
+  }
 };
