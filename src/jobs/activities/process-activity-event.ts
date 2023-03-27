@@ -8,6 +8,7 @@ import { logger } from "@/common/logger";
 import { redis } from "@/common/redis";
 import { config } from "@/config/index";
 import { TransferActivity, TransferEventData } from "@/jobs/activities/transfer-activity";
+import { WalletActivityTracking } from "@/jobs/activities/wallet-activity-tracking";
 
 const QUEUE_NAME = "process-activity-event-queue";
 
@@ -16,7 +17,8 @@ export const queue = new Queue(QUEUE_NAME, {
   defaultJobOptions: {
     attempts: 10,
     removeOnComplete: 100,
-    removeOnFail: 50000,
+    // TODO: Set to true after fallback mechanism is added to repo
+    removeOnFail: false,
     backoff: {
       type: "fixed",
       delay: 5000,
@@ -40,6 +42,8 @@ if (config.doBackgroundWork) {
           await TransferActivity.handleEvent(data as TransferEventData);
           break;
       }
+
+      await WalletActivityTracking.handleEvent(data as TransferEventData);
     },
     { connection: redis.duplicate(), concurrency: 50 }
   );

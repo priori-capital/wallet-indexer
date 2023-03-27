@@ -1,5 +1,5 @@
 import { syncRedis } from "@/common/redis";
-import { Queue, QueueScheduler, Worker } from "bullmq";
+import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
 import { updateWalletCache } from "@/utils/in-memory-cache";
@@ -23,7 +23,7 @@ new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
 if (config.syncPacman) {
   const worker = new Worker(
     QUEUE_NAME,
-    async (job: any) => {
+    async (job: Job) => {
       try {
         const { address, workspaceId } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
