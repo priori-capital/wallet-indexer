@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 
 const QUEUE_NAME = "wallet-history-queue";
 
-export interface IUserTransaction {
+export interface IRawUserTransaction {
   hash: Buffer;
   type: string;
   contract: Buffer;
@@ -17,6 +17,23 @@ export interface IUserTransaction {
     BatchIndex: number;
   };
   block_hash: Buffer;
+  block: number;
+  event_timestamp: number;
+  chain_id: number;
+  created_at: Date;
+}
+export interface IUserTransaction {
+  hash: string;
+  type: string;
+  contract: string;
+  from_address: string;
+  to_address: string;
+  amount: number;
+  metadata: {
+    logIndex: number;
+    BatchIndex: number;
+  };
+  block_hash: string;
   block: number;
   event_timestamp: number;
   chain_id: number;
@@ -41,6 +58,8 @@ export const addToQueue = async (data: {
   batch: number;
   totalBatch: number;
   transactions: IUserTransaction[];
+  workspaceId: string;
+  isWalletCached: boolean;
 }) => {
   logger.info(QUEUE_NAME, `Added Batch #${data.batch} of transction to queue for ${data.address}`);
   await queue.add("wallet-history-job", data);

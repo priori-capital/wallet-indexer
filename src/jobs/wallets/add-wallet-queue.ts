@@ -25,10 +25,10 @@ if (config.syncPacman) {
     QUEUE_NAME,
     async (job: any) => {
       try {
-        const { address } = job.data;
+        const { address, workspaceId } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         await updateWalletCache(address);
-        await addToQueue(address);
+        await addToQueue(address, workspaceId);
       } catch (error) {
         logger.error(QUEUE_NAME, `${error}`);
         throw error;

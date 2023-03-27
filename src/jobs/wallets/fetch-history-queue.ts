@@ -3,9 +3,10 @@ import { Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
 import { redb } from "@/common/db";
-import { toBuffer } from "@/common/utils";
+import { fromBuffer, toBuffer } from "@/common/utils";
 import { randomUUID } from "crypto";
 import * as walletHistoryQueue from "./wallet-history-queue";
+import { isCachedWallet } from "@/utils/in-memory-cache";
 
 const QUEUE_NAME = "fetch-history-queue";
 const ROW_COUNT = 100;
@@ -28,28 +29,31 @@ if (config.syncPacman) {
     QUEUE_NAME,
     async (job: any) => {
       try {
-        const { address } = job.data;
+        const { address, workspaceId } = job.data;
+        const isWalletCached = await isCachedWallet(address);
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         const limit = ROW_COUNT;
         const totalCount: number = await redb.one(
           `select count(*) from user_transactions ut
-          WHERE from_address = $/address/ or to_address = $/address/
+              where ut.hash in 
+              (select ut2.hash from user_transactions ut2
+              WHERE from_address = $/address/ or to_address = $/address/)
           `,
           {
             address: toBuffer(address),
           }
         );
-        console.log(totalCount, "checking totalCount of address >>>>>>>>>>>>>");
+        const totalBatch = Math.ceil(totalCount / ROW_COUNT);
+
         let batch = 0,
           skip = 0;
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const userActivities: walletHistoryQueue.IUserTransaction[] = await redb.manyOrNone(
+        while (totalBatch <= batch) {
+          const userActivities: walletHistoryQueue.IRawUserTransaction[] = await redb.manyOrNone(
             `select * from user_transactions ut
               where ut.hash in 
               (select ut2.hash from user_transactions ut2
               WHERE from_address = $/address/ or to_address = $/address/)
-              group by ut.hash ORDER BY event_timestamp ASC
+              ORDER BY event_timestamp ASC
               LIMIT $/limit/
               OFFSET $/skip/`,
             {
@@ -61,10 +65,19 @@ if (config.syncPacman) {
           await walletHistoryQueue.addToQueue({
             address,
             batch: ++batch,
-            totalBatch: Math.ceil(totalCount / ROW_COUNT),
-            transactions: userActivities,
+            totalBatch,
+            transactions: userActivities.map((activity) => ({
+              ...activity,
+              hash: fromBuffer(activity.hash),
+              contract: fromBuffer(activity.contract),
+              from_address: fromBuffer(activity.from_address),
+              to_address: fromBuffer(activity.to_address),
+              block_hash: fromBuffer(activity.block_hash),
+            })),
+            workspaceId,
+            isWalletCached,
           });
-          console.log("added to the queue of history queue >>>>>>>>>>>>", batch, totalCount);
+
           if (userActivities?.length === ROW_COUNT) {
             skip += ROW_COUNT;
           } else {
@@ -83,6 +96,6 @@ if (config.syncPacman) {
   });
 }
 
-export const addToQueue = async (address: number) => {
-  await queue.add(randomUUID(), { address });
+export const addToQueue = async (address: number, workspaceId: string) => {
+  await queue.add(randomUUID(), { address, workspaceId });
 };
