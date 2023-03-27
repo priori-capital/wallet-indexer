@@ -39,6 +39,7 @@ new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
 export const addToQueue = async (data: {
   address: string;
   batch: number;
+  totalBatch: number;
   transactions: IUserTransaction[];
 }) => {
   logger.info(QUEUE_NAME, `Added Batch #${data.batch} of transction to queue for ${data.address}`);

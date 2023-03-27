@@ -31,16 +31,27 @@ if (config.syncPacman) {
         const { address } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         const limit = ROW_COUNT;
+        const totalCount: number = await redb.one(
+          `select count(*) from user_transactions ut
+          WHERE from_address = $/address/ or to_address = $/address/
+          `,
+          {
+            address: toBuffer(address),
+          }
+        );
+        console.log(totalCount, "checking totalCount of address >>>>>>>>>>>>>");
         let batch = 0,
           skip = 0;
         // eslint-disable-next-line no-constant-condition
         while (true) {
           const userActivities: walletHistoryQueue.IUserTransaction[] = await redb.manyOrNone(
-            `select * from user_transactions ua
-             WHERE from_address = $/address/ or to_address = $/address/
-             ORDER BY created_at ASC
-             LIMIT $/limit/
-             OFFSET $/skip/`,
+            `select * from user_transactions ut
+              where ut.hash in 
+              (select ut2.hash from user_transactions ut2
+              WHERE from_address = $/address/ or to_address = $/address/)
+              group by ut.hash ORDER BY event_timestamp ASC
+              LIMIT $/limit/
+              OFFSET $/skip/`,
             {
               limit,
               skip,
@@ -50,8 +61,10 @@ if (config.syncPacman) {
           await walletHistoryQueue.addToQueue({
             address,
             batch: ++batch,
+            totalBatch: Math.ceil(totalCount / ROW_COUNT),
             transactions: userActivities,
           });
+          console.log("added to the queue of history queue >>>>>>>>>>>>", batch, totalCount);
           if (userActivities?.length === ROW_COUNT) {
             skip += ROW_COUNT;
           } else {
