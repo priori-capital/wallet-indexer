@@ -1,4 +1,4 @@
-import { idb } from "@/common/db";
+import { idb, redb } from "@/common/db";
 
 const TRACKED_WALLETS = "pacman-wallets";
 
@@ -32,7 +32,7 @@ export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
 
   if (wallets) return wallets;
 
-  const trackedWallets = await idb.manyOrNone(
+  const trackedWallets = await redb.manyOrNone(
     "select address from tracked_wallets where status = 1"
   );
   return (

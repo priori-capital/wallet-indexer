@@ -3,6 +3,7 @@ import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
 import { updateWalletCache } from "@/utils/in-memory-cache";
+import { addToQueue } from "./fetch-history-queue";
 
 const QUEUE_NAME = "add-wallet-queue";
 
@@ -24,9 +25,10 @@ if (config.syncPacman) {
     QUEUE_NAME,
     async (job: Job) => {
       try {
-        const { address } = job.data;
+        const { address, workspaceId } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         await updateWalletCache(address);
+        await addToQueue(address, workspaceId);
       } catch (error) {
         logger.error(QUEUE_NAME, `${error}`);
         throw error;
