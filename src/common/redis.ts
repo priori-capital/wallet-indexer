@@ -70,11 +70,13 @@ const syncRedisConfig: RedisOptions = {
 };
 
 if (config.syncRedisTls === true) {
-  syncRedisConfig.tls = {
-    host: config.syncRedisHost,
-    port: config.syncRedisPort,
-    checkServerIdentity: () => undefined,
-  };
+  syncRedisConfig.tls = {};
 }
 
+console.log(syncRedisConfig, ">>>>>>>>>>>>>");
 export const syncRedis = new Redis(config.syncRedisUrl, syncRedisConfig);
+
+syncRedis
+  .ping()
+  .then(() => console.log("pinging on sync redis >>>>>>>>"))
+  .catch(() => console.error("Error in ping syncerror >>>>>>>>>"));
