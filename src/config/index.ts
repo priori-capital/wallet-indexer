@@ -83,5 +83,10 @@ export const config = {
 
   syncRedisUrl: String(process.env.SYNC_REDIS_URL),
 
+  syncRedisHost: String(process.env.SYNC_REDIS_HOST),
+  syncRedisPort: Number(process.env.SYNC_REDIS_PORT),
+  syncRedisPassword: String(process.env.SYNC_REDIS_PASSWORD),
+  syncRedisTls: Boolean(Number(process.env.SYNC_REDIS_TLS)),
+
   syncPacman: Boolean(Number(process.env.SYNC_PACMAN)),
 };

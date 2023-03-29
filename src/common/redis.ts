@@ -1,4 +1,4 @@
-import { BulkJobOptions } from "bullmq";
+import { BulkJobOptions, RedisOptions } from "bullmq";
 import { randomUUID } from "crypto";
 import Redis from "ioredis";
 import Redlock from "redlock";
@@ -64,7 +64,16 @@ export const getLockExpiration = async (name: string) => {
   return await redis.ttl(name);
 };
 
-export const syncRedis = new Redis(config.syncRedisUrl, {
+const syncRedisConfig: RedisOptions = {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
-});
+};
+
+if (config.syncRedisTls === true) {
+  syncRedisConfig.tls = {
+    host: config.syncRedisHost,
+    port: config.syncRedisPort,
+  };
+}
+
+export const syncRedis = new Redis(config.syncRedisUrl, syncRedisConfig);
