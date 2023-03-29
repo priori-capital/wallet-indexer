@@ -1,5 +1,6 @@
 import { idb, redb } from "@/common/db";
 import { logger } from "@/common/logger";
+import { isEmpty } from "lodash";
 
 const TRACKED_WALLETS = "pacman-wallets";
 
@@ -20,6 +21,7 @@ export const cache = inMemoryCache();
 export const updateWalletCache = async (address: string) => {
   logger.info("saving-wallet", `${address} getting to save in DB`);
   await saveWallet(address);
+  logger.info("saving-wallet", `${address} after saving in DB`);
   const walletExists = cache.get<Record<string, boolean>>(TRACKED_WALLETS);
   if (walletExists) {
     walletExists[address] = true;
@@ -32,11 +34,12 @@ export const updateWalletCache = async (address: string) => {
 export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
   const wallets = cache.get<Record<string, boolean>>(TRACKED_WALLETS);
 
-  if (wallets) return wallets;
+  if (!isEmpty(wallets)) return wallets;
 
   const trackedWallets = await redb.manyOrNone(
     "select address from tracked_wallets where status = 1"
   );
+  logger.info("save-wallet-address", `got this wallets from db ${trackedWallets?.length}`);
   return (
     trackedWallets.reduce((acc: Record<string, boolean>, address) => {
       acc[address] = true;
@@ -46,8 +49,9 @@ export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
 };
 
 export const saveWallet = async (address: string) => {
+  logger.info("save-wallet-address", `${address} adding to tracked wallet`);
   try {
-    return idb.none(
+    await idb.none(
       `
       INSERT INTO tracked_wallets (
         address
