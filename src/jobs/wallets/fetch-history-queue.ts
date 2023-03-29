@@ -29,8 +29,7 @@ if (config.syncPacman) {
     QUEUE_NAME,
     async (job: Job) => {
       try {
-        const { address, workspaceId } = job.data;
-        const isWalletCached = await isCachedWallet(address);
+        const { address, workspaceId, isWalletCached } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         const limit = ROW_COUNT;
         const { count: totalCount }: { count: number } = await redb.one(
@@ -98,6 +97,6 @@ if (config.syncPacman) {
   });
 }
 
-export const addToQueue = async (address: number, workspaceId: string) => {
-  await queue.add(randomUUID(), { address, workspaceId });
+export const addToQueue = async (address: number, workspaceId: string, isWalletCached: boolean) => {
+  await queue.add(randomUUID(), { address, workspaceId, isWalletCached });
 };

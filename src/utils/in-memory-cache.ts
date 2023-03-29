@@ -62,7 +62,7 @@ export const saveWallet = async (address: string) => {
 export const isCachedWallet = async (address: string) => {
   try {
     const cachedWallets: Record<string, boolean> = await getCacheWallets();
-
+    console.log(cachedWallets, ">>>>>>>>");
     if (!cachedWallets || !cachedWallets[address]) return false;
 
     return true;
