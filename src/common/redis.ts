@@ -70,10 +70,7 @@ const syncRedisConfig: RedisOptions = {
 };
 
 if (config.syncRedisTls === true) {
-  syncRedisConfig.tls = {
-    host: config.syncRedisHost,
-    port: config.syncRedisPort,
-  };
+  syncRedisConfig.tls = {};
 }
 
 export const syncRedis = new Redis(config.syncRedisUrl, syncRedisConfig);
