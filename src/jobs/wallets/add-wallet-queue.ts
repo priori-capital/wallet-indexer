@@ -27,9 +27,13 @@ if (config.syncPacman) {
       try {
         const { address, workspaceId } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
+        logger.info(QUEUE_NAME, `reached wallet cache`);
         const isWalletCached = await isCachedWallet(address);
+        logger.info(QUEUE_NAME, `reached update cache`);
         await updateWalletCache(address);
+        logger.info(QUEUE_NAME, `reached add to Queue`);
         await addToQueue(address, workspaceId, isWalletCached);
+        logger.info(QUEUE_NAME, `completed add to Queue`);
       } catch (error) {
         logger.error(QUEUE_NAME, `${error}`);
         throw error;
