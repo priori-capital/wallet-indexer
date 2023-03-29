@@ -73,6 +73,7 @@ if (config.syncRedisTls === true) {
   syncRedisConfig.tls = {
     host: config.syncRedisHost,
     port: config.syncRedisPort,
+    checkServerIdentity: () => undefined,
   };
 }
 
