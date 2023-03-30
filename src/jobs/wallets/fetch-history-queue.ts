@@ -33,7 +33,7 @@ if (config.syncPacman) {
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         const limit = ROW_COUNT;
         const { count: totalCount }: { count: number } = await redb.one(
-          `select count(*) from user_transactions ut
+          `select count(1) from user_transactions ut
               where ut.hash in 
               (select ut2.hash from user_transactions ut2
               WHERE from_address = $/address/ or to_address = $/address/)
