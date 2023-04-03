@@ -1,6 +1,6 @@
 import { idb, redb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { isEmpty } from "lodash";
+import { isEmpty, isNil } from "lodash";
 
 const TRACKED_WALLETS = "pacman-wallets";
 
@@ -31,6 +31,15 @@ export const updateWalletCache = async (address: string) => {
   }
 };
 
+export const getTrackedWalletByAddress = async (address: string): Promise<Record<string, boolean>> => {
+  const trackedWallet = await redb.oneOrNone(
+    "select address from tracked_wallets where status = 1 and address = $/address/ ",
+    { address },
+  );
+
+  return trackedWallet;
+};
+
 export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
   const wallets = cache.get<Record<string, boolean>>(TRACKED_WALLETS);
 
@@ -41,7 +50,7 @@ export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
   );
   logger.info("save-wallet-address", `got this wallets from db ${trackedWallets?.length}`);
   return (
-    trackedWallets.reduce((acc: Record<string, boolean>, address) => {
+    trackedWallets.reduce((acc: Record<string, boolean>, { address }) => {
       acc[address] = true;
       return acc;
     }, {}) ?? {}
@@ -76,11 +85,14 @@ export const saveWallet = async (address: string) => {
 export const isCachedWallet = async (address: string) => {
   try {
     const cachedWallets: Record<string, boolean> = await getCacheWallets();
-    console.log(cachedWallets, ">>>>>>>>");
-    if (!cachedWallets || !cachedWallets[address]) return false;
+    if (!cachedWallets || !cachedWallets[address]) {
+      const trackedWallet = await getTrackedWalletByAddress(address);
+      return isNil(trackedWallet);
+    }
 
     return true;
   } catch (err) {
+    logger.error('isCachedWallet', (err as Error).message);
     return false;
   }
 };
