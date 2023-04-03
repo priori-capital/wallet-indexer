@@ -95,7 +95,6 @@ export const isCachedWallet = async (address: string) => {
       if (isNil(trackedWallet)) return false;
 
       await updateWalletCache(address);
-      return true;
     }
 
     return true;
