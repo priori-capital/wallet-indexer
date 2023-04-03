@@ -18,10 +18,14 @@ const inMemoryCache = () => {
 
 export const cache = inMemoryCache();
 
-export const updateWalletCache = async (address: string) => {
+export const enableWalletTracking = async (address: string) => {
   logger.info("saving-wallet", `${address} getting to save in DB`);
   await saveWallet(address);
   logger.info("saving-wallet", `${address} after saving in DB`);
+  await updateWalletCache(address);
+};
+
+export const updateWalletCache = async (address: string) => {
   const walletExists = cache.get<Record<string, boolean>>(TRACKED_WALLETS);
   if (walletExists) {
     walletExists[address] = true;
@@ -85,9 +89,13 @@ export const saveWallet = async (address: string) => {
 export const isCachedWallet = async (address: string) => {
   try {
     const cachedWallets: Record<string, boolean> = await getCacheWallets();
+
     if (!cachedWallets || !cachedWallets[address]) {
       const trackedWallet = await getTrackedWalletByAddress(address);
-      return isNil(trackedWallet);
+      if (isNil(trackedWallet)) return false;
+
+      await updateWalletCache(address);
+      return true;
     }
 
     return true;
