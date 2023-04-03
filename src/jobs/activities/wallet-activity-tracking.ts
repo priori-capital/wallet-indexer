@@ -51,7 +51,6 @@ export class WalletActivityTracking {
         transferEvent,
       };
 
-      transferEvent.amountString = transferEvent.amount?.toString();
       await walletTransactionLogsQueue.add(WALLET_TRANSACTION_LOGS_JOB_NAME, payload);
     }
   }

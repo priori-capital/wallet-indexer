@@ -53,7 +53,7 @@ export type TransferEventData = {
   fromAddress: string;
   toAddress: string;
   amount: number;
-  amountString?: string;
+  // amountString?: string;
   transactionHash: string;
   logIndex: number;
   batchIndex: number;
