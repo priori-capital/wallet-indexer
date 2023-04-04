@@ -1,6 +1,6 @@
 import { idb, redb } from "@/common/db";
 import { logger } from "@/common/logger";
-import { isEmpty } from "lodash";
+import { isEmpty, isNil } from "lodash";
 
 const TRACKED_WALLETS = "pacman-wallets";
 
@@ -18,10 +18,14 @@ const inMemoryCache = () => {
 
 export const cache = inMemoryCache();
 
-export const updateWalletCache = async (address: string) => {
+export const enableWalletTracking = async (address: string) => {
   logger.info("saving-wallet", `${address} getting to save in DB`);
   await saveWallet(address);
   logger.info("saving-wallet", `${address} after saving in DB`);
+  await updateWalletCache(address);
+};
+
+export const updateWalletCache = async (address: string) => {
   const walletExists = cache.get<Record<string, boolean>>(TRACKED_WALLETS);
   if (walletExists) {
     walletExists[address] = true;
@@ -29,6 +33,15 @@ export const updateWalletCache = async (address: string) => {
   } else {
     cache.set(TRACKED_WALLETS, { [address]: true });
   }
+};
+
+export const getTrackedWalletByAddress = async (address: string): Promise<Record<string, boolean>> => {
+  const trackedWallet = await redb.oneOrNone(
+    "select address from tracked_wallets where status = 1 and address = $/address/ ",
+    { address },
+  );
+
+  return trackedWallet;
 };
 
 export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
@@ -41,7 +54,7 @@ export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
   );
   logger.info("save-wallet-address", `got this wallets from db ${trackedWallets?.length}`);
   return (
-    trackedWallets.reduce((acc: Record<string, boolean>, address) => {
+    trackedWallets.reduce((acc: Record<string, boolean>, { address }) => {
       acc[address] = true;
       return acc;
     }, {}) ?? {}
@@ -76,11 +89,17 @@ export const saveWallet = async (address: string) => {
 export const isCachedWallet = async (address: string) => {
   try {
     const cachedWallets: Record<string, boolean> = await getCacheWallets();
-    console.log(cachedWallets, ">>>>>>>>");
-    if (!cachedWallets || !cachedWallets[address]) return false;
+
+    if (!cachedWallets || !cachedWallets[address]) {
+      const trackedWallet = await getTrackedWalletByAddress(address);
+      if (isNil(trackedWallet)) return false;
+
+      await updateWalletCache(address);
+    }
 
     return true;
   } catch (err) {
+    logger.error('isCachedWallet', (err as Error).message);
     return false;
   }
 };

@@ -36,7 +36,7 @@ export class WalletActivityTracking {
     const isFromAddressTracked = await isCachedWallet(transferEvent.fromAddress);
     let isToAddressTracked = false;
     if (!isFromAddressTracked) {
-      isToAddressTracked = await isCachedWallet(transferEvent.fromAddress);
+      isToAddressTracked = await isCachedWallet(transferEvent.toAddress);
     }
 
     const isTrackedAddressTransaction = isFromAddressTracked || isToAddressTracked;
@@ -51,7 +51,6 @@ export class WalletActivityTracking {
         transferEvent,
       };
 
-      transferEvent.amountString = transferEvent.amount?.toString();
       await walletTransactionLogsQueue.add(WALLET_TRANSACTION_LOGS_JOB_NAME, payload);
     }
   }

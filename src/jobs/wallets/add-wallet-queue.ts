@@ -2,7 +2,7 @@ import { syncRedis } from "@/common/redis";
 import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
-import { isCachedWallet, updateWalletCache } from "@/utils/in-memory-cache";
+import { isCachedWallet, enableWalletTracking } from "@/utils/in-memory-cache";
 import { addToQueue } from "./fetch-history-queue";
 
 const QUEUE_NAME = "add-wallet-queue";
@@ -30,7 +30,7 @@ if (config.syncPacman) {
         logger.info(QUEUE_NAME, `reached wallet cache`);
         const isWalletCached = await isCachedWallet(address);
         logger.info(QUEUE_NAME, `reached update cache`);
-        await updateWalletCache(address);
+        await enableWalletTracking(address);
         logger.info(QUEUE_NAME, `reached add to Queue`);
         await addToQueue(address, workspaceId, isWalletCached);
         logger.info(QUEUE_NAME, `completed add to Queue`);
