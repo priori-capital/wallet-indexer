@@ -1,3 +1,4 @@
+import { logger } from "@/common/logger";
 import { BulkJobOptions, RedisOptions } from "bullmq";
 import { randomUUID } from "crypto";
 import Redis from "ioredis";
@@ -73,10 +74,9 @@ if (config.syncRedisTls === true) {
   syncRedisConfig.tls = {};
 }
 
-console.log(syncRedisConfig, ">>>>>>>>>>>>>");
 export const syncRedis = new Redis(config.syncRedisUrl, syncRedisConfig);
 
 syncRedis
   .ping()
-  .then(() => console.log("pinging on sync redis >>>>>>>>"))
-  .catch(() => console.error("Error in ping syncerror >>>>>>>>>"));
+  .then(() => logger.info("Sync redis", "pinging on sync redis >>>>>>>>"))
+  .catch(() => logger.error("Sync redis", "Error in ping syncerror >>>>>>>>>"));

@@ -1,9 +1,8 @@
-import { syncRedis } from "@/common/redis";
-import { Job, Queue, QueueScheduler, Worker } from "bullmq";
-import { config } from "@/config/index";
 import { logger } from "@/common/logger";
-import { idb } from "@/common/db";
+import { syncRedis } from "@/common/redis";
 import { fromBuffer, toBuffer } from "@/common/utils";
+import { config } from "@/config/index";
+import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { randomUUID } from "crypto";
 import * as walletHistoryQueue from "./wallet-history-queue";
 
@@ -33,7 +32,7 @@ if (config.syncPacman) {
         const limit = ROW_COUNT;
         const { count: totalCount }: { count: number } = await idb.one(
           `select count(1) from user_transactions ut
-              where ut.hash in 
+              where ut.hash in
               (select ut2.hash from user_transactions ut2
               WHERE from_address = $/address/ or to_address = $/address/)
           `,
@@ -48,7 +47,7 @@ if (config.syncPacman) {
         while (batch <= totalBatch) {
           const userActivities: walletHistoryQueue.IRawUserTransaction[] = await idb.manyOrNone(
             `select * from user_transactions ut
-              where ut.hash in 
+              where ut.hash in
               (select ut2.hash from user_transactions ut2
               WHERE from_address = $/address/ or to_address = $/address/)
               ORDER BY event_timestamp ASC

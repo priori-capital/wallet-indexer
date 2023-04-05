@@ -4,8 +4,6 @@ import { getEventData } from "@/events-sync/data";
 import { EnhancedEvent, OnChainData } from "@/events-sync/handlers/utils";
 import * as es from "@/events-sync/storage";
 
-// import * as orderUpdatesByMaker from "@/jobs/order-updates/by-maker-queue";
-
 export const handleEvents = async (
   events: EnhancedEvent[],
   chainId: number

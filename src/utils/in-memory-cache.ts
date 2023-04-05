@@ -19,9 +19,8 @@ const inMemoryCache = () => {
 export const cache = inMemoryCache();
 
 export const enableWalletTracking = async (address: string) => {
-  logger.info("saving-wallet", `${address} getting to save in DB`);
   await saveWallet(address);
-  logger.info("saving-wallet", `${address} after saving in DB`);
+  logger.info("save-wallet-for-tracking", `${address} saved to track`);
   await updateWalletCache(address);
 };
 

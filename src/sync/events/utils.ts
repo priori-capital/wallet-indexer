@@ -1,17 +1,16 @@
+import { TransactionResponse } from "@ethersproject/abstract-provider";
 import { AddressZero } from "@ethersproject/constants";
 import { getTxTrace } from "@georgeroman/evm-tx-simulator";
-import { TransactionResponse, TransactionReceipt } from "@ethersproject/abstract-provider";
 
-import { config } from "@/config/index";
 import { getProvider } from "@/common/provider";
 import { bn } from "@/common/utils";
+import * as es from "@/events-sync/storage";
+import { EventKind } from "@/jobs/activities/process-activity-event";
 import { getBlocks, saveBlock } from "@/models/blocks";
 import { getTransactionLogs, saveTransactionLogs } from "@/models/transaction-logs";
 import { getTransactionTrace, saveTransactionTrace } from "@/models/transaction-traces";
 import { getTransaction, saveTransaction, saveTransactions } from "@/models/transactions";
-import * as es from "@/events-sync/storage";
 import { triggerProcessActivityEvent } from "./handlers/utils";
-import { EventKind } from "@/jobs/activities/process-activity-event";
 
 interface ITransactionResponse extends TransactionResponse {
   transactionIndex: number;
@@ -42,6 +41,7 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
               const gasFee = gasPrice && gas ? bn(gasPrice).mul(gas).toString() : undefined;
 
               if (!bn(tx.value).isZero()) {
+                //TODO: Is this needed here
                 nativeTokenTransaction.push({
                   from: tx.from.toLowerCase(),
                   to: (tx.to || AddressZero).toLowerCase(),
@@ -78,18 +78,9 @@ export const fetchBlock = async (chainId: number, blockNumber: number, force = f
             }
           );
 
-          const receipts: TransactionReceipt[] = [];
-
-          if (config.shouldProcessTransactionReceipts) {
-            for await (const tx of block.transactions) {
-              const receipt = await getProvider(chainId).getTransactionReceipt(tx.hash);
-              receipts.push(receipt);
-            }
-          }
-
           // Save all transactions within the block
-          await saveTransactions(chainId, transactions, receipts);
-
+          await saveTransactions(chainId, transactions);
+          //TODO: Is this needed here
           await triggerProcessActivityEvent(
             nativeTokenTransaction,
             chainId,
