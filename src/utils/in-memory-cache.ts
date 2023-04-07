@@ -1,4 +1,4 @@
-import { idb, redb } from "@/common/db";
+import { idb } from "@/common/db";
 import { logger } from "@/common/logger";
 import { isEmpty, isNil } from "lodash";
 
@@ -36,7 +36,7 @@ export const updateWalletCache = async (address: string) => {
 };
 
 export const getTrackedWalletByAddress = async (address: string): Promise<Record<string, boolean>> => {
-  const trackedWallet = await redb.oneOrNone(
+  const trackedWallet = await idb.oneOrNone(
     "select address from tracked_wallets where status = 1 and address = $/address/ ",
     { address },
   );
@@ -49,15 +49,14 @@ export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
 
   if (!isEmpty(wallets)) return wallets;
 
-  const trackedWallets = await redb.manyOrNone(
+  const trackedWallets = await idb.manyOrNone(
     "select address from tracked_wallets where status = 1"
   );
-  logger.info("save-wallet-address", `got this wallets from db ${trackedWallets?.length}`);
   return (
-    trackedWallets.reduce((acc: Record<string, boolean>, { address }) => {
+    (trackedWallets || []).reduce((acc: Record<string, boolean>, { address }) => {
       acc[address] = true;
       return acc;
-    }, {}) ?? {}
+    }, {})
   );
 };
 
@@ -99,7 +98,7 @@ export const isCachedWallet = async (address: string) => {
 
     return true;
   } catch (err) {
-    logger.error('isCachedWallet', (err as Error).message);
+    logger.error("isCachedWallet", (err as Error).message);
     return false;
   }
 };
