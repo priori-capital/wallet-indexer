@@ -32,18 +32,23 @@ if (config.doBackgroundWork) {
   const worker = new Worker(
     QUEUE_NAME,
     async (job: Job) => {
-      const { kind, data } = job.data as EventInfo;
+      try {
+        const { kind, data } = job.data as EventInfo;
 
-      switch (kind) {
-        case EventKind.erc20TransferEvent:
-          await TransferActivity.handleEvent(data as TransferEventData);
-          break;
-        case EventKind.nativeTransferEvent:
-          await TransferActivity.handleEvent(data as TransferEventData);
-          break;
+        switch (kind) {
+          case EventKind.erc20TransferEvent:
+            await TransferActivity.handleEvent(data as TransferEventData);
+            break;
+          case EventKind.nativeTransferEvent:
+            await TransferActivity.handleEvent(data as TransferEventData);
+            break;
+        }
+  
+        await WalletActivityTracking.handleEvent(data as TransferEventData);
+      } catch (err) {
+        logger.error(QUEUE_NAME, `${err}`);
+        throw err;
       }
-
-      await WalletActivityTracking.handleEvent(data as TransferEventData);
     },
     { connection: redis.duplicate(), concurrency: 50 }
   );
