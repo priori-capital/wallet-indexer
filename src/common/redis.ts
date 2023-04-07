@@ -4,6 +4,7 @@ import Redis from "ioredis";
 import Redlock from "redlock";
 
 import { config } from "@/config/index";
+import { logger } from "./logger";
 
 // TODO: Research using a connection pool rather than
 // creating a new connection every time, as we do now.
@@ -73,10 +74,9 @@ if (config.syncRedisTls === true) {
   syncRedisConfig.tls = {};
 }
 
-console.log(syncRedisConfig, ">>>>>>>>>>>>>");
 export const syncRedis = new Redis(config.syncRedisUrl, syncRedisConfig);
 
 syncRedis
   .ping()
-  .then(() => console.log("pinging on sync redis >>>>>>>>"))
-  .catch(() => console.error("Error in ping syncerror >>>>>>>>>"));
+  .then(() => logger.info("REDIS_PING", "Connected to redis"))
+  .catch(() => logger.error("REDIS_PING", "Error in connecting to redis"));
