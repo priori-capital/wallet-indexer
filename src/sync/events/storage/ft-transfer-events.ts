@@ -108,7 +108,6 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
         await idb.none(pgp.helpers.concat(queries));
       }
     }
-    logger.info("ft-events-deadlock", `succedssfull completiom free_chain_id:${chainId}`);
   } catch (err) {
     await wait();
     logger.error(

@@ -2,11 +2,10 @@ import { syncRedis } from "@/common/redis";
 import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
-import { redb } from "@/common/db";
+import { idb } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import { randomUUID } from "crypto";
 import * as walletHistoryQueue from "./wallet-history-queue";
-import { isCachedWallet } from "@/utils/in-memory-cache";
 
 const QUEUE_NAME = "fetch-history-queue";
 const ROW_COUNT = 100;
@@ -32,7 +31,7 @@ if (config.syncPacman) {
         const { address, workspaceId, isWalletCached } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         const limit = ROW_COUNT;
-        const { count: totalCount }: { count: number } = await redb.one(
+        const { count: totalCount }: { count: number } = await idb.one(
           `select count(1) from user_transactions ut
               where ut.hash in 
               (select ut2.hash from user_transactions ut2
@@ -47,7 +46,7 @@ if (config.syncPacman) {
         let batch = 1,
           skip = 0;
         while (batch <= totalBatch) {
-          const userActivities: walletHistoryQueue.IRawUserTransaction[] = await redb.manyOrNone(
+          const userActivities: walletHistoryQueue.IRawUserTransaction[] = await idb.manyOrNone(
             `select * from user_transactions ut
               where ut.hash in 
               (select ut2.hash from user_transactions ut2
