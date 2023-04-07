@@ -1,4 +1,4 @@
-import { redis } from "@/common/redis";
+import { syncRedis } from "@/common/redis";
 import { getTransaction, Transaction } from "@/models/transactions";
 import { isCachedWallet } from "@/utils/in-memory-cache";
 import { Queue, QueueOptions } from "bullmq";
@@ -15,7 +15,7 @@ export interface WalletActivityEvent {
 }
 
 const queueOptions: QueueOptions = {
-  connection: redis.duplicate(),
+  connection: syncRedis.duplicate(),
   defaultJobOptions: {
     attempts: 10,
     removeOnComplete: 100,
