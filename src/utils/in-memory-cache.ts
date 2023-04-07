@@ -63,7 +63,7 @@ export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
 export const saveWallet = async (address: string) => {
   logger.info("save-wallet-address", `${address} adding to tracked wallet`);
   try {
-    const data = await idb.one(
+    const data = await idb.oneOrNone(
       `
       INSERT INTO tracked_wallets (
         address
@@ -78,7 +78,10 @@ export const saveWallet = async (address: string) => {
         address,
       }
     );
-    logger.info("save-wallet-address", `data after saving ${JSON.stringify(data)}`);
+
+    if (data) {
+      logger.info("save-wallet-address", `data after saving ${JSON.stringify(data)}`);
+    }
   } catch (err: any) {
     logger.error("save-wallet-address", err.message as string);
     throw err;
