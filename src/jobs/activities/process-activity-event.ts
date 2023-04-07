@@ -16,9 +16,9 @@ export const queue = new Queue(QUEUE_NAME, {
   connection: redis.duplicate(),
   defaultJobOptions: {
     attempts: 10,
-    removeOnComplete: 100,
+    removeOnComplete: true,
     // TODO: Set to true after fallback mechanism is added to repo
-    removeOnFail: false,
+    removeOnFail: { age: 24 * 3600 },
     backoff: {
       type: "fixed",
       delay: 5000,

@@ -18,7 +18,7 @@ export const queue = new Queue(QUEUE_NAME, {
       delay: 10000,
     },
     removeOnComplete: 100,
-    removeOnFail: 10000,
+    removeOnFail: { count: 1000, age: 24 * 3600 },
     timeout: 120000,
   },
 });

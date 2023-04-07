@@ -51,6 +51,7 @@ const backfillUsdPrice = async () => {
       await idb.none(pgp.helpers.concat([queries]));
       await wait(6000);
     } catch (err) {
+      await wait(60000);
       console.log(err, "error");
     }
   }

@@ -46,7 +46,7 @@ export const queue = new Queue(QUEUE_NAME, {
     // any failed processes to be done by subsequent jobs
     removeOnComplete: true,
     //todo: will make it true, when have fallback mechanism
-    removeOnFail: false,
+    removeOnFail: { age: 24 * 3600 },
     timeout: 60000,
   },
 });
