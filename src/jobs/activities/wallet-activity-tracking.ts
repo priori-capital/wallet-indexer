@@ -52,12 +52,18 @@ export class WalletActivityTracking {
           transaction,
           transferEvent,
         };
-        logger.info(`WalletActivityTracker`, `Tracking: TxHash: ${transaction?.hash}`)
-        logger.info(`WalletActivityTracker`, `Adding Job Data: chainId: ${transferEvent?.chainId},  TxHash: ${transferEvent?.transactionHash}`)
+        logger.info(`WalletActivityTracker`, `Tracking: TxHash: ${transaction?.hash}`);
+        logger.info(
+          `WalletActivityTracker`,
+          `Adding Job Data: chainId: ${transferEvent?.chainId},  TxHash: ${transferEvent?.transactionHash}`
+        );
         await walletTransactionLogsQueue.add(WALLET_TRANSACTION_LOGS_JOB_NAME, payload);
       }
-    } catch(err) {
-      logger.info(`WalletActivityTracker`, `chainId: ${transferEvent?.chainId},  TxHash: ${transferEvent?.transactionHash}`)
+    } catch (err) {
+      logger.info(
+        `WalletActivityTracker`,
+        `chainId: ${transferEvent?.chainId},  TxHash: ${transferEvent?.transactionHash}`
+      );
       logger.error(`WalletActivityTracker`, `${err}`);
       throw err;
     }

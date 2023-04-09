@@ -43,7 +43,7 @@ if (config.doBackgroundWork) {
             await TransferActivity.handleEvent(data as TransferEventData);
             break;
         }
-  
+
         await WalletActivityTracking.handleEvent(data as TransferEventData);
       } catch (err) {
         logger.error(QUEUE_NAME, `${err}`);

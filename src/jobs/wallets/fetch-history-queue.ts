@@ -1,3 +1,4 @@
+import { idb } from "@/common/db";
 import { logger } from "@/common/logger";
 import { syncRedis } from "@/common/redis";
 import { fromBuffer, toBuffer } from "@/common/utils";
@@ -31,11 +32,10 @@ if (config.syncPacman) {
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         const limit = ROW_COUNT;
         const { count: totalCount }: { count: number } = await idb.one(
-          `select count(1) from user_transactions ut
-              where ut.hash in
-              (select ut2.hash from user_transactions ut2
-              WHERE from_address = $/address/ or to_address = $/address/)
-          `,
+          `
+              select count(1) from user_transactions ut2
+              WHERE from_address = $/address/ or to_address = $/address/
+`,
           {
             address: toBuffer(address),
           }
@@ -46,10 +46,9 @@ if (config.syncPacman) {
           skip = 0;
         while (batch <= totalBatch) {
           const userActivities: walletHistoryQueue.IRawUserTransaction[] = await idb.manyOrNone(
-            `select * from user_transactions ut
-              where ut.hash in
-              (select ut2.hash from user_transactions ut2
-              WHERE from_address = $/address/ or to_address = $/address/)
+            `
+              select * from user_transactions ut2
+              WHERE from_address = $/address/ or to_address = $/address/
               ORDER BY event_timestamp ASC
               LIMIT $/limit/
               OFFSET $/skip/`,
