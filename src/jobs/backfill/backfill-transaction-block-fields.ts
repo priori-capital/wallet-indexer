@@ -10,6 +10,7 @@ import { redis } from "@/common/redis";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import { config } from "@/config/index";
 import * as syncEventsUtils from "@/events-sync/utils";
+import { oneDaySecond } from "@/utils/constants";
 
 const QUEUE_NAME = "backfill-transaction-block-fields-queue";
 
@@ -18,7 +19,7 @@ export const queue = new Queue(QUEUE_NAME, {
   defaultJobOptions: {
     attempts: 10,
     removeOnComplete: 100,
-    removeOnFail: { count: 10000, age: 24 * 3600 },
+    removeOnFail: { count: 10000, age: oneDaySecond },
   },
 });
 new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });

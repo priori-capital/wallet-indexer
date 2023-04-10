@@ -9,6 +9,7 @@ import { redis } from "@/common/redis";
 import { config } from "@/config/index";
 import { TransferActivity, TransferEventData } from "@/jobs/activities/transfer-activity";
 import { WalletActivityTracking } from "@/jobs/activities/wallet-activity-tracking";
+import { oneDaySecond } from "@/utils/constants";
 
 const QUEUE_NAME = "process-activity-event-queue";
 
@@ -18,7 +19,7 @@ export const queue = new Queue(QUEUE_NAME, {
     attempts: 10,
     removeOnComplete: true,
     // TODO: Set to true after fallback mechanism is added to repo
-    removeOnFail: { age: 24 * 3600 },
+    removeOnFail: { age: oneDaySecond },
     backoff: {
       type: "fixed",
       delay: 5000,

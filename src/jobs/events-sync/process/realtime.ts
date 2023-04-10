@@ -6,6 +6,7 @@ import { redis } from "@/common/redis";
 import { config } from "@/config/index";
 import { EventsInfo, processEvents } from "@/events-sync/handlers";
 import _ from "lodash";
+import { oneDaySecond } from "@/utils/constants";
 
 const QUEUE_NAME = "events-sync-process-realtime";
 
@@ -18,7 +19,7 @@ export const queue = new Queue(QUEUE_NAME, {
       delay: 10000,
     },
     removeOnComplete: 100,
-    removeOnFail: { count: 10000, age: 24 * 3600 },
+    removeOnFail: { count: 10000, age: oneDaySecond },
     timeout: 120000,
   },
 });

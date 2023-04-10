@@ -4,6 +4,7 @@ import { syncArweave } from "@/arweave-sync/index";
 import { logger } from "@/common/logger";
 import { BullMQBulkJob, redis } from "@/common/redis";
 import { config } from "@/config/index";
+import { oneDaySecond } from "@/utils/constants";
 
 const QUEUE_NAME = "arweave-sync-backfill";
 
@@ -16,7 +17,7 @@ export const queue = new Queue(QUEUE_NAME, {
       delay: 10000,
     },
     removeOnComplete: true,
-    removeOnFail: { age: 24 * 3600 },
+    removeOnFail: { age: oneDaySecond },
     timeout: 120000,
   },
 });

@@ -10,6 +10,7 @@ import { config } from "@/config/index";
 import { unsyncEvents } from "@/events-sync/index";
 import * as backfillEventsSync from "@/jobs/events-sync/backfill-queue";
 import * as blocksModel from "@/models/blocks";
+import { oneDaySecond } from "@/utils/constants";
 
 const QUEUE_NAME = "events-sync-block-check";
 
@@ -22,7 +23,7 @@ export const queue = new Queue(QUEUE_NAME, {
       delay: 30000,
     },
     removeOnComplete: 100,
-    removeOnFail: { count: 10000, age: 24 * 3600 },
+    removeOnFail: { count: 10000, age: oneDaySecond },
     timeout: 60000,
   },
 });

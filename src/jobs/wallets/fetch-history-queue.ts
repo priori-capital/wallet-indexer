@@ -7,6 +7,7 @@ import { fromBuffer, toBuffer } from "@/common/utils";
 import { randomUUID } from "crypto";
 import * as walletHistoryQueue from "./wallet-history-queue";
 import { isCachedWallet } from "@/utils/in-memory-cache";
+import { oneDaySecond } from "@/utils/constants";
 
 const QUEUE_NAME = "fetch-history-queue";
 const ROW_COUNT = 100;
@@ -18,7 +19,7 @@ export const queue = new Queue(QUEUE_NAME, {
     // any failed processes to be done by subsequent jobs
     removeOnComplete: true,
     //todo: will make it true, when have fallback mechanism
-    removeOnFail: { age: 24 * 3600 },
+    removeOnFail: { age: oneDaySecond },
     timeout: 60000,
   },
 });

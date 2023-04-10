@@ -4,6 +4,7 @@ import { config } from "@/config/index";
 import { logger } from "@/common/logger";
 import { isCachedWallet, updateWalletCache } from "@/utils/in-memory-cache";
 import { addToQueue } from "./fetch-history-queue";
+import { oneDaySecond } from "@/utils/constants";
 
 const QUEUE_NAME = "add-wallet-queue";
 
@@ -14,7 +15,7 @@ export const queue = new Queue(QUEUE_NAME, {
     // any failed processes to be done by subsequent jobs
     removeOnComplete: true,
     //todo: will make it true, when have fallback mechanism
-    removeOnFail: { age: 24 * 3600 },
+    removeOnFail: { age: oneDaySecond },
     timeout: 60000,
   },
 });
