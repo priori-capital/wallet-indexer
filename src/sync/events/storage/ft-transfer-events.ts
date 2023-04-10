@@ -31,15 +31,15 @@ const wait = () => new Promise((r) => setTimeout(r, 2000));
 export const addEvents = async (events: Event[], backfill: boolean, chainId: number, retry = 0) => {
   const transferValues: DbEvent[] = [];
   try {
-    events.sort((a, b) => {
-      if (a.baseEventParams.address < b.baseEventParams.address) {
-        return -1;
-      }
-      if (a.baseEventParams.address > b.baseEventParams.address) {
-        return 1;
-      }
-      return 0;
-    });
+    // events.sort((a, b) => {
+    //   if (a.baseEventParams.address < b.baseEventParams.address) {
+    //     return -1;
+    //   }
+    //   if (a.baseEventParams.address > b.baseEventParams.address) {
+    //     return 1;
+    //   }
+    //   return 0;
+    // });
     for (const event of events) {
       transferValues.push({
         address: toBuffer(event.baseEventParams.address),
@@ -79,7 +79,6 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
 
       // Atomically insert the transfer events and update balances
       queries.push(`
-      WITH "x" AS (
         INSERT INTO "ft_transfer_events" (
           "address",
           "block",
@@ -94,87 +93,6 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
           "chainId"
         ) VALUES ${pgp.helpers.values(transferValues, columns)}
         ON CONFLICT DO NOTHING
-        RETURNING
-          "address",
-          ARRAY["from", "to"] AS "owners",
-          ARRAY[-"amount", "amount"] AS "amount_deltas",
-          date_trunc('day', to_timestamp(timestamp)) AS tx_date,
-          ARRAY[0, "amount"] as "total_recieves",
-          ARRAY[0, 1] as "receive_counts",
-          ARRAY["amount", 0] as "total_transfers",
-          ARRAY [1, 0] as "transfer_counts",
-          "chainId"
-      ), ft as (
-        INSERT INTO "ft_balances" (
-          "contract",
-          "owner",
-          "amount",
-          "chain_id"
-        ) (
-          SELECT
-            "y"."address",
-            "y"."owner",
-            SUM("y"."amount_delta"),
-            "y"."chainId"
-          FROM (
-            SELECT
-              "address",
-              unnest("owners") AS "owner",
-              unnest("amount_deltas") AS "amount_delta",
-              "chainId"
-            FROM "x"
-          ) "y"
-          GROUP BY "y"."address", "y"."owner", "y"."chainId"
-        )
-        ON CONFLICT ("contract", "owner", "chain_id") DO
-        UPDATE SET "amount" = "ft_balances"."amount" + "excluded"."amount"
-        RETURNING
-          "contract",
-          "owner",
-          "amount",
-          "chain_id"
-      )
-      INSERT INTO "user_aggregated_transactions_details" (
-        "timestamp",
-        "contract_address",
-        "wallet_address",
-        "total_amount",
-        "total_recieve",
-        "receive_count",
-        "total_transfer",
-        "transfer_count",
-        "usd_price"
-      ) (
-        SELECT
-          "y"."tx_date",
-          "y"."address",
-          "y"."owner",
-          SUM(ft.amount),
-          SUM("y"."total_recieve"),
-          SUM("y"."receive_count"),
-          SUM("y"."total_transfer"),
-          SUM("y"."transfer_count"),
-          0
-        FROM (
-          SELECT
-            "address",
-            unnest("owners") AS "owner",
-            unnest("amount_deltas") AS "amount_delta",
-            "tx_date",
-            unnest("total_recieves") as "total_recieve",
-            unnest("receive_counts") as "receive_count",
-            unnest("total_transfers") as "total_transfer",
-            unnest("transfer_counts") as "transfer_count"
-          FROM "x"
-        ) "y" LEFT join ft on y.address = ft.contract and y.owner = ft."owner"
-        GROUP BY "y"."tx_date", "y"."address", "y"."owner"
-      )
-      ON CONFLICT ("timestamp", "contract_address", "wallet_address") DO
-      UPDATE SET "total_amount" = "user_aggregated_transactions_details"."total_amount" + "excluded"."total_amount",
-      "total_recieve" = "user_aggregated_transactions_details"."total_recieve" + "excluded"."total_recieve",
-      "receive_count" = "user_aggregated_transactions_details"."receive_count" + "excluded"."receive_count",
-      "total_transfer" = "user_aggregated_transactions_details"."total_transfer" + "excluded"."total_transfer",
-      "transfer_count" = "user_aggregated_transactions_details"."transfer_count" + "excluded"."transfer_count"
     `);
     }
 
@@ -190,7 +108,6 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
         await idb.none(pgp.helpers.concat(queries));
       }
     }
-    logger.info("ft-events-deadlock", `succedssfull completiom free_chain_id:${chainId}`);
   } catch (err) {
     await wait();
     logger.error(

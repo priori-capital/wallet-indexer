@@ -130,7 +130,7 @@ export const syncEvents = async (
             });
           }
         } catch (error) {
-          logger.info("sync-events", `Failed to handle events: ${error}`);
+          logger.error("sync-events", `Failed to handle events: ${error}`);
           throw error;
         }
       }

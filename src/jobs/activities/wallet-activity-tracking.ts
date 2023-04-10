@@ -1,9 +1,10 @@
-import { redis } from "@/common/redis";
+import { syncRedis } from "@/common/redis";
 import { getTransaction, Transaction } from "@/models/transactions";
 import { isCachedWallet } from "@/utils/in-memory-cache";
 import { Queue, QueueOptions } from "bullmq";
 
 import { TransferEventData } from "./transfer-activity";
+import { logger } from "@/common/logger";
 
 const WALLET_TRANSACTION_LOGS_QUEUE_NAME = "wallet-transaction-logs-queue";
 const WALLET_TRANSACTION_LOGS_JOB_NAME = "wallet-transaction-logs";
@@ -14,7 +15,7 @@ export interface WalletActivityEvent {
 }
 
 const queueOptions: QueueOptions = {
-  connection: redis.duplicate(),
+  connection: syncRedis.duplicate(),
   defaultJobOptions: {
     attempts: 10,
     removeOnComplete: 100,
@@ -33,26 +34,32 @@ export const walletTransactionLogsQueue = new Queue(
 
 export class WalletActivityTracking {
   static async handleEvent(transferEvent: TransferEventData): Promise<void> {
-    const isFromAddressTracked = await isCachedWallet(transferEvent.fromAddress);
-    let isToAddressTracked = false;
-    if (!isFromAddressTracked) {
-      isToAddressTracked = await isCachedWallet(transferEvent.fromAddress);
-    }
+    try {
+      const isFromAddressTracked = await isCachedWallet(transferEvent.fromAddress);
+      let isToAddressTracked = false;
+      if (!isFromAddressTracked) {
+        isToAddressTracked = await isCachedWallet(transferEvent.toAddress);
+      }
 
-    const isTrackedAddressTransaction = isFromAddressTracked || isToAddressTracked;
+      const isTrackedAddressTransaction = isFromAddressTracked || isToAddressTracked;
 
-    if (isTrackedAddressTransaction) {
-      const transaction = await getTransaction(
-        transferEvent.chainId,
-        transferEvent.transactionHash
-      );
-      const payload: WalletActivityEvent = {
-        transaction,
-        transferEvent,
-      };
-
-      transferEvent.amountString = transferEvent.amount?.toString();
-      await walletTransactionLogsQueue.add(WALLET_TRANSACTION_LOGS_JOB_NAME, payload);
+      if (isTrackedAddressTransaction) {
+        const transaction = await getTransaction(
+          transferEvent.chainId,
+          transferEvent.transactionHash
+        );
+        const payload: WalletActivityEvent = {
+          transaction,
+          transferEvent,
+        };
+        logger.info(`WalletActivityTracker`, `Tracking: TxHash: ${transaction?.hash}`)
+        logger.info(`WalletActivityTracker`, `Adding Job Data: chainId: ${transferEvent?.chainId},  TxHash: ${transferEvent?.transactionHash}`)
+        await walletTransactionLogsQueue.add(WALLET_TRANSACTION_LOGS_JOB_NAME, payload);
+      }
+    } catch(err) {
+      logger.info(`WalletActivityTracker`, `chainId: ${transferEvent?.chainId},  TxHash: ${transferEvent?.transactionHash}`)
+      logger.error(`WalletActivityTracker`, `${err}`);
+      throw err;
     }
   }
 }
