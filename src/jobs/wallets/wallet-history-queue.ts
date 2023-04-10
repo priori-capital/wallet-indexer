@@ -1,7 +1,7 @@
 import { syncRedis } from "@/common/redis";
 import { Queue, QueueScheduler } from "bullmq";
 import { logger } from "@/common/logger";
-import { oneDaySecond } from "@/utils/constants";
+import { oneDayInSeconds } from "@/utils/constants";
 
 const QUEUE_NAME = "wallet-history-queue";
 
@@ -47,7 +47,7 @@ export const queue = new Queue(QUEUE_NAME, {
     // any failed processes to be done by subsequent jobs
     removeOnComplete: true,
     //todo: will make it true, when have fallback mechanism
-    removeOnFail: { age: oneDaySecond },
+    removeOnFail: { age: oneDayInSeconds },
     timeout: 60000,
   },
 });

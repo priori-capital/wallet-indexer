@@ -6,7 +6,7 @@ import { redis } from "@/common/redis";
 import { config } from "@/config/index";
 import { EventsInfo, processEvents } from "@/events-sync/handlers";
 import _ from "lodash";
-import { oneDaySecond } from "@/utils/constants";
+import { oneDayInSeconds } from "@/utils/constants";
 
 const QUEUE_NAME = "events-sync-process-backfill";
 
@@ -19,7 +19,7 @@ export const queue = new Queue(QUEUE_NAME, {
       delay: 10000,
     },
     removeOnComplete: 100,
-    removeOnFail: { count: 1000, age: oneDaySecond },
+    removeOnFail: { count: 1000, age: oneDayInSeconds },
     timeout: 120000,
   },
 });
