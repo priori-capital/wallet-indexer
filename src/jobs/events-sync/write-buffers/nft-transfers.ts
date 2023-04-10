@@ -5,6 +5,7 @@ import { logger } from "@/common/logger";
 import { acquireLock, redis, releaseLock } from "@/common/redis";
 import { config } from "@/config/index";
 import { idb } from "@/common/db";
+import { oneDayInSeconds } from "@/utils/constants";
 
 const QUEUE_NAME = "events-sync-nft-transfers-write";
 
@@ -17,7 +18,7 @@ export const queue = new Queue(QUEUE_NAME, {
       delay: 10000,
     },
     removeOnComplete: true,
-    removeOnFail: 10000,
+    removeOnFail: { count: 10000, age: oneDayInSeconds },
     timeout: 60000,
   },
 });

@@ -6,6 +6,7 @@ import { idb } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import { randomUUID } from "crypto";
 import * as walletHistoryQueue from "./wallet-history-queue";
+import { oneDayInSeconds } from "@/utils/constants";
 
 const QUEUE_NAME = "fetch-history-queue";
 const ROW_COUNT = 100;
@@ -17,7 +18,7 @@ export const queue = new Queue(QUEUE_NAME, {
     // any failed processes to be done by subsequent jobs
     removeOnComplete: true,
     //todo: will make it true, when have fallback mechanism
-    removeOnFail: false,
+    removeOnFail: { age: oneDayInSeconds },
     timeout: 60000,
   },
 });
@@ -33,9 +34,7 @@ if (config.syncPacman) {
         const limit = ROW_COUNT;
         const { count: totalCount }: { count: number } = await idb.one(
           `select count(1) from user_transactions ut
-              where ut.hash in 
-              (select ut2.hash from user_transactions ut2
-              WHERE from_address = $/address/ or to_address = $/address/)
+              WHERE from_address = $/address/ or to_address = $/address/
           `,
           {
             address: toBuffer(address),
@@ -48,9 +47,7 @@ if (config.syncPacman) {
         while (batch <= totalBatch) {
           const userActivities: walletHistoryQueue.IRawUserTransaction[] = await idb.manyOrNone(
             `select * from user_transactions ut
-              where ut.hash in 
-              (select ut2.hash from user_transactions ut2
-              WHERE from_address = $/address/ or to_address = $/address/)
+              WHERE from_address = $/address/ or to_address = $/address/
               ORDER BY event_timestamp ASC
               LIMIT $/limit/
               OFFSET $/skip/`,

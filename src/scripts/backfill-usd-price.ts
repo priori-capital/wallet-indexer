@@ -7,8 +7,6 @@ import { idb, pgp } from "@/common/db";
 import axios from "axios";
 import moment from "moment";
 
-const wait = async (time: number) => new Promise((r) => setTimeout(r, time));
-
 const getCoinHistory = async (id: string) =>
   axios
     .get(
@@ -49,7 +47,6 @@ const backfillUsdPrice = async () => {
           ) VALUES ${pgp.helpers.values(usdPrices, columns)}
         ON CONFLICT DO NOTHING`;
       await idb.none(pgp.helpers.concat([queries]));
-      await wait(6000);
     } catch (err) {
       console.log(err, "error");
     }

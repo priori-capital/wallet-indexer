@@ -9,6 +9,7 @@ import { redis } from "@/common/redis";
 import { config } from "@/config/index";
 import { TransferActivity, TransferEventData } from "@/jobs/activities/transfer-activity";
 import { WalletActivityTracking } from "@/jobs/activities/wallet-activity-tracking";
+import { oneDayInSeconds } from "@/utils/constants";
 
 const QUEUE_NAME = "process-activity-event-queue";
 
@@ -16,9 +17,9 @@ export const queue = new Queue(QUEUE_NAME, {
   connection: redis.duplicate(),
   defaultJobOptions: {
     attempts: 10,
-    removeOnComplete: 100,
+    removeOnComplete: true,
     // TODO: Set to true after fallback mechanism is added to repo
-    removeOnFail: false,
+    removeOnFail: { age: oneDayInSeconds },
     backoff: {
       type: "fixed",
       delay: 5000,
@@ -43,7 +44,7 @@ if (config.doBackgroundWork) {
             await TransferActivity.handleEvent(data as TransferEventData);
             break;
         }
-  
+
         await WalletActivityTracking.handleEvent(data as TransferEventData);
       } catch (err) {
         logger.error(QUEUE_NAME, `${err}`);

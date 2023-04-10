@@ -6,6 +6,7 @@ import { config } from "@/config/index";
 import { getNetworkSettings } from "@/config/network";
 import { EventDataKind } from "@/events-sync/data";
 import { syncEvents } from "@/events-sync/index";
+import { oneDayInSeconds } from "@/utils/constants";
 
 const QUEUE_NAME = "events-sync-backfill";
 
@@ -18,7 +19,7 @@ export const queue = new Queue(QUEUE_NAME, {
       delay: 10000,
     },
     removeOnComplete: true,
-    removeOnFail: 10000,
+    removeOnFail: { count: 10000, age: oneDayInSeconds },
     timeout: 120000,
   },
 });
