@@ -1,1 +1,1 @@
-export const oneDaySecond = 24 * 3600;
+export const oneDayInSeconds = 24 * 3600;
