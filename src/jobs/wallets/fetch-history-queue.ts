@@ -34,9 +34,7 @@ if (config.syncPacman) {
         const limit = ROW_COUNT;
         const { count: totalCount }: { count: number } = await redb.one(
           `select count(1) from user_transactions ut
-              where ut.hash in 
-              (select ut2.hash from user_transactions ut2
-              WHERE from_address = $/address/ or to_address = $/address/)
+              WHERE from_address = $/address/ or to_address = $/address/
           `,
           {
             address: toBuffer(address),
@@ -49,9 +47,7 @@ if (config.syncPacman) {
         while (batch <= totalBatch) {
           const userActivities: walletHistoryQueue.IRawUserTransaction[] = await redb.manyOrNone(
             `select * from user_transactions ut
-              where ut.hash in 
-              (select ut2.hash from user_transactions ut2
-              WHERE from_address = $/address/ or to_address = $/address/)
+              WHERE from_address = $/address/ or to_address = $/address/
               ORDER BY event_timestamp ASC
               LIMIT $/limit/
               OFFSET $/skip/`,
