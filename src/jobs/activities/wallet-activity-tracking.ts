@@ -12,6 +12,7 @@ const WALLET_TRANSACTION_LOGS_JOB_NAME = "wallet-transaction-logs";
 export interface WalletActivityEvent {
   transaction: Transaction;
   transferEvent: TransferEventData;
+  trackedAddress: string;
 }
 
 const queueOptions: QueueOptions = {
@@ -34,10 +35,14 @@ export const walletTransactionLogsQueue = new Queue(
 
 export class WalletActivityTracking {
   static async handleEvent(transferEvent: TransferEventData): Promise<void> {
+
     try {
+      let trackedAddress = transferEvent.fromAddress;
       const isFromAddressTracked = await isCachedWallet(transferEvent.fromAddress);
+
       let isToAddressTracked = false;
       if (!isFromAddressTracked) {
+        trackedAddress = transferEvent.toAddress;
         isToAddressTracked = await isCachedWallet(transferEvent.toAddress);
       }
 
@@ -48,10 +53,13 @@ export class WalletActivityTracking {
           transferEvent.chainId,
           transferEvent.transactionHash
         );
+
         const payload: WalletActivityEvent = {
           transaction,
           transferEvent,
+          trackedAddress,
         };
+
         logger.info(`WalletActivityTracker`, `Tracking: TxHash: ${transaction?.hash}`)
         logger.info(`WalletActivityTracker`, `Adding Job Data: chainId: ${transferEvent?.chainId},  TxHash: ${transferEvent?.transactionHash}`)
         await walletTransactionLogsQueue.add(WALLET_TRANSACTION_LOGS_JOB_NAME, payload);
