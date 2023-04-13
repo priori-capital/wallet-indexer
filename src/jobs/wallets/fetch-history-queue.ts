@@ -31,7 +31,7 @@ if (config.syncPacman) {
       try {
         const { address, workspaceId, isWalletCached } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
-        const limit = ROW_COUNT;
+        let limit = ROW_COUNT;
         const { count: totalCount }: { count: number } = await idb.one(
           `select count(1) from user_transactions ut
               WHERE from_address = $/address/ or to_address = $/address/
@@ -40,11 +40,22 @@ if (config.syncPacman) {
             address: toBuffer(address),
           }
         );
-
+        logger.info(
+          QUEUE_NAME,
+          `History Queue with transaction #${totalCount} of ${address} processing...`
+        );
         const totalBatch = Math.ceil(totalCount / ROW_COUNT);
         let batch = 1,
           skip = 0;
         while (batch <= totalBatch) {
+          if (batch === totalBatch && totalCount % ROW_COUNT > 0) {
+            limit = totalCount % ROW_COUNT;
+            logger.info(
+              QUEUE_NAME,
+              `History Queue with transaction #${totalCount} of ${address} processing queue with limit ${limit} less than ${ROW_COUNT}`
+            );
+          }
+
           const userActivities: walletHistoryQueue.IRawUserTransaction[] = await idb.manyOrNone(
             `select * from user_transactions ut
               WHERE from_address = $/address/ or to_address = $/address/
