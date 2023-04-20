@@ -17,8 +17,14 @@ export const processAddWalletRequest = async (
 ) => {
   const isWalletCached = await isCachedWallet(address);
 
-  await fetchHistoryQueue.addToQueue(address, accountId, workspaceId, isWalletCached);
-  await enableWalletTracking(address, accountId);
+  try {
+    await fetchHistoryQueue.addToQueue(address, accountId, workspaceId, isWalletCached);
+    await enableWalletTracking(accountId, address);
+    return { success: true };
+  } catch (err) {
+    logger.error("WalletTracking", (err as Error).message);
+    return { success: false };
+  }
 };
 
 export const extractApiKeyFromAuthHeader = (authHeader: string) => {
@@ -44,18 +50,20 @@ export const requestWalletTracking: RouteOptions = {
     }),
   },
   handler: async (request: Request) => {
-    const body = request.payload as any;
+    const body = request.payload as { accountId: string; address: string; workspaceId: string };
     const headers = request.headers;
 
-    const authHeader = headers["Authorization"];
+    const authHeader = headers["authorization"];
+    if (!authHeader) throw new Error("Missing authorization header");
+
     const apiKey = extractApiKeyFromAuthHeader(authHeader);
-    if (!apiKey) throw new Error("Auth Error");
+    if (!apiKey) throw new Error("Invalid authorization header");
 
     try {
       const { accountId, address, workspaceId } = body;
       return processAddWalletRequest(accountId, address, workspaceId);
     } catch (error) {
-      logger.error(`get-users-transfers-${version}-handler`, `Handler failure: ${error}`);
+      logger.error(`request-wallet-tracking-${version}-handler`, `Handler failure: ${error}`);
       throw error;
     }
   },
