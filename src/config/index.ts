@@ -8,6 +8,8 @@ export const config = {
   ws137: String(process.env.RPC_137),
 
   adminApiKey: String(process.env.ADMIN_API_KEY),
+  jwtSecret: String(process.env.JWT_SECRET),
+  webhookServerKey: String(process.env.WEBHOOK_SERVER_KEY),
   bullmqAdminPassword: String(process.env.BULLMQ_ADMIN_PASSWORD),
   arweaveRelayerKey: process.env.ARWEAVE_RELAYER_KEY
     ? String(process.env.ARWEAVE_RELAYER_KEY)

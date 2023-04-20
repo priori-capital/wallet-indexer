@@ -13,6 +13,8 @@ import { logger } from "@/common/logger";
 import { config } from "@/config/index";
 import { getNetworkName } from "@/config/network";
 import { allJobQueues } from "@/jobs/index";
+import Jwt from "hapi-auth-jwt2";
+import { JwtPayload } from "jsonwebtoken";
 // import { ApiKeyManager } from "@/models/api-keys";
 // import { RateLimitRules } from "@/models/rate-limit-rules";
 
@@ -65,6 +67,27 @@ export const start = async (chainId = 1): Promise<void> => {
         isValid: username === "admin" && password === config.bullmqAdminPassword,
         credentials: { username },
       };
+    },
+  });
+
+  server.auth.strategy("webhook_server", "basic", {
+    validate: (_request: Hapi.Request, username: string, password: string) => {
+      return {
+        isValid: username === "webhook" && password === config.webhookServerKey,
+        credentials: { username },
+      };
+    },
+  });
+
+  await server.register(Jwt);
+  server.auth.strategy("webhook_client_auth", "jwt", {
+    key: config.jwtSecret,
+    validate: (decoded: JwtPayload, request, h) => {
+      if (decoded?.id) {
+        const isValid =  Number(request.query?.accId) === decoded.id;
+        return { isValid: isValid, credentials: { id: decoded.id } };
+      }
+      return { isValid: false, credentials: null };
     },
   });
 
