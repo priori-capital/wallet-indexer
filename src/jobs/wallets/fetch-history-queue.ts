@@ -29,7 +29,7 @@ if (config.syncPacman) {
     QUEUE_NAME,
     async (job: Job) => {
       try {
-        const { address, workspaceId, isWalletCached } = job.data;
+        const { accountId, address, workspaceId, isWalletCached } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         let limit = ROW_COUNT;
         const { count: totalCount }: { count: number } = await idb.one(
@@ -68,7 +68,8 @@ if (config.syncPacman) {
               address: toBuffer(address),
             }
           );
-          await walletHistoryQueue.addToQueue({
+
+          const payload = {
             address,
             batch,
             totalBatch,
@@ -82,7 +83,12 @@ if (config.syncPacman) {
             })),
             workspaceId,
             isWalletCached,
-          });
+          };
+
+          // await walletHistoryQueue.addToQueue(payload);
+
+          await walletHistoryQueue.invokeWebhookEndpoints(payload);
+
           logger.info(QUEUE_NAME, `History Queue ${batch} out of ${totalBatch} sent successfully`);
 
           if (userActivities?.length === ROW_COUNT) {
@@ -104,6 +110,11 @@ if (config.syncPacman) {
   });
 }
 
-export const addToQueue = async (address: number, workspaceId: string, isWalletCached: boolean) => {
-  await queue.add(randomUUID(), { address, workspaceId, isWalletCached });
+export const addToQueue = async (
+  address: string,
+  accountId: string,
+  workspaceId: string,
+  isWalletCached: boolean
+) => {
+  await queue.add(randomUUID(), { address, accountId, workspaceId, isWalletCached });
 };

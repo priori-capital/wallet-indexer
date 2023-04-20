@@ -2,6 +2,7 @@ import { syncRedis } from "@/common/redis";
 import { Queue, QueueScheduler } from "bullmq";
 import { logger } from "@/common/logger";
 import { oneDayInSeconds } from "@/utils/constants";
+import { callWebhookUrl, getWebhookRequestsForAddress } from "@/common/webhook";
 
 const QUEUE_NAME = "wallet-history-queue";
 
@@ -52,6 +53,39 @@ export const queue = new Queue(QUEUE_NAME, {
   },
 });
 new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
+
+export const invokeWebhookEndpoints = async (payload: {
+  address: string;
+  batch: number;
+  totalBatch: number;
+  transactions: IUserTransaction[];
+  workspaceId: string;
+  isWalletCached: boolean;
+}) => {
+  const { address, batch, totalBatch } = payload;
+
+  // TODO: Correct log message
+  logger.info(QUEUE_NAME, `Added Batch #${batch} of transction to queue for ${address}`);
+
+  const webhookRequests = await getWebhookRequestsForAddress(payload.address);
+
+  for await (const webhookRequest of webhookRequests) {
+    try {
+      const { response } = await callWebhookUrl({ ...webhookRequest, data: payload });
+
+      if (!response?.success) {
+        throw new Error(response?.message);
+      }
+
+      // TODO: Correct log message
+      logger.info(QUEUE_NAME, `History Queue ${batch} out of ${totalBatch} sent successfully`);
+    } catch (err) {
+      // TODO: Correct log message
+      logger.info(QUEUE_NAME, `Error: History Queue ${batch} out of ${totalBatch}`);
+      throw err;
+    }
+  }
+};
 
 export const addToQueue = async (data: {
   address: string;

@@ -3,7 +3,7 @@ import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
 import { isCachedWallet, enableWalletTracking } from "@/utils/in-memory-cache";
-import { addToQueue } from "./fetch-history-queue";
+import * as fetchHistoryQueue from "./fetch-history-queue";
 import { oneDayInSeconds } from "@/utils/constants";
 
 const QUEUE_NAME = "add-wallet-queue";
@@ -21,16 +21,26 @@ export const queue = new Queue(QUEUE_NAME, {
 });
 new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
 
+export const processAddWalletRequest = async (
+  accountId: string,
+  address: string,
+  workspaceId: string
+) => {
+  const isWalletCached = await isCachedWallet(address);
+
+  await fetchHistoryQueue.addToQueue(address, accountId, workspaceId, isWalletCached);
+  await enableWalletTracking(address, accountId);
+};
+
 if (config.syncPacman) {
   const worker = new Worker(
     QUEUE_NAME,
     async (job: Job) => {
       try {
-        const { address, workspaceId } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
-        const isWalletCached = await isCachedWallet(address);
-        await addToQueue(address, workspaceId, isWalletCached);
-        await enableWalletTracking(address);
+
+        const { accountId, address, workspaceId } = job.data;
+        await processAddWalletRequest(accountId, address, workspaceId);
       } catch (error) {
         logger.error(QUEUE_NAME, `${error}`);
         throw error;

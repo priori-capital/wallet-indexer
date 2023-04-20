@@ -4,6 +4,7 @@ import { Server } from "@hapi/hapi";
 import { getHistoryDetails } from "./endpoints/balance/historyDetail";
 import { getBalance } from "./endpoints/balance/totalbalance";
 import { getAssetsDetails } from "./endpoints/balance/assetDetail";
+import * as trackWalletEndpoints from "./endpoints/wallet-tracking";
 
 export const setupRoutes = (server: Server) => {
   server.route({
@@ -40,5 +41,11 @@ export const setupRoutes = (server: Server) => {
     method: "GET",
     path: "/assets",
     options: getAssetsDetails,
+  });
+
+  server.route({
+    method: "POST",
+    path: "/track-wallet",
+    options: trackWalletEndpoints.requestWalletTracking,
   });
 };
