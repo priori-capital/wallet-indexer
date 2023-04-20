@@ -1,4 +1,6 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import axios, { AxiosRequestConfig } from "axios";
 import { uniqueId } from "lodash";
 import { logger } from "./logger";
 import { idb } from "./db";
