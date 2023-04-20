@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Request, RouteOptions } from "@hapi/hapi";
+import { Request, ResponseToolkit, RouteOptions } from "@hapi/hapi";
 
 import { logger } from "@/common/logger";
 import { regex } from "@/common/utils";
@@ -49,22 +49,26 @@ export const requestWalletTracking: RouteOptions = {
       workspaceId: Joi.string().lowercase().uuid({ version: "uuidv4" }).optional(),
     }),
   },
-  handler: async (request: Request) => {
+  handler: async (request: Request, h: ResponseToolkit) => {
     const body = request.payload as { accountId: string; address: string; workspaceId: string };
     const headers = request.headers;
 
     const authHeader = headers["authorization"];
-    if (!authHeader) throw new Error("Missing authorization header");
+    if (!authHeader) {
+      return h.response({ message: "Missing authorization header" }).code(400);
+    }
 
     const apiKey = extractApiKeyFromAuthHeader(authHeader);
-    if (!apiKey) throw new Error("Invalid authorization header");
+    if (!apiKey) {
+      return h.response({ message: "Invalid authorization header" }).code(400);
+    }
 
     try {
       const { accountId, address, workspaceId } = body;
       return processAddWalletRequest(accountId, address, workspaceId);
     } catch (error) {
       logger.error(`request-wallet-tracking-${version}-handler`, `Handler failure: ${error}`);
-      throw error;
+      return h.response({ message: (error as Error).message }).code(500);
     }
   },
 };
