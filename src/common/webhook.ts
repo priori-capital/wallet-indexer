@@ -31,7 +31,7 @@ const SERVICE_NAME = "WebhookService";
 
 export const getWebhookRequestsForAddress = async (
   address: string,
-  accountId?: string
+  accountId?: number
 ): Promise<Omit<WebhookRequest, "data">[]> => {
   let query = `select 
     a."webhook_url" as "webhookUrl",

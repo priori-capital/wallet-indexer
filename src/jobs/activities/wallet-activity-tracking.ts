@@ -8,7 +8,6 @@ import { logger } from "@/common/logger";
 import { callWebhookUrl, getWebhookRequestsForAddress, WebhookRequest } from "@/common/webhook";
 
 const WALLET_TRANSACTION_LOGS_QUEUE_NAME = "wallet-transaction-logs-queue";
-const WALLET_TRANSACTION_LOGS_JOB_NAME = "wallet-transaction-logs";
 
 const EVENT_NAME = "NEW_TRANSACTION";
 
@@ -62,7 +61,13 @@ const invokeWebhookEndpoints = async (
   const webhookRequests = accountTransactionCache.values();
 
   for await (const webhookRequest of webhookRequests) {
-    await callWebhookUrl(webhookRequest, EVENT_NAME, new Date(transferEvent.timestamp));
+    const { response } = await callWebhookUrl(
+      webhookRequest,
+      EVENT_NAME,
+      new Date(transferEvent.timestamp)
+    );
+    if (response?.success) continue;
+    // TODO: Handle failed webhook invocation
   }
 };
 
@@ -92,7 +97,6 @@ export class WalletActivityTracking {
           `Adding Job Data: chainId: ${transferEvent?.chainId},  TxHash: ${transferEvent?.transactionHash}`
         );
 
-        // await walletTransactionLogsQueue.add(WALLET_TRANSACTION_LOGS_JOB_NAME, payload);
         await invokeWebhookEndpoints(transferEvent, payload);
       }
     } catch (err) {

@@ -5,8 +5,10 @@ import { logger } from "@/common/logger";
 import { idb } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import { randomUUID } from "crypto";
-import * as walletHistoryQueue from "./wallet-history-queue";
 import { oneDayInSeconds } from "@/utils/constants";
+
+import * as fetchHistoryBatchQueue from "./wallet-history-batch-queue";
+import { IRawUserTransaction, IWebhookHistoryPayload } from "./wallet-history-webhook-service";
 
 const QUEUE_NAME = "fetch-history-queue";
 const ROW_COUNT = 100;
@@ -56,7 +58,7 @@ if (config.syncPacman) {
             );
           }
 
-          const userActivities: walletHistoryQueue.IRawUserTransaction[] = await idb.manyOrNone(
+          const userActivities: IRawUserTransaction[] = await idb.manyOrNone(
             `select * from user_transactions ut
               WHERE from_address = $/address/ or to_address = $/address/
               ORDER BY event_timestamp ASC
@@ -69,7 +71,7 @@ if (config.syncPacman) {
             }
           );
 
-          const payload = {
+          const payload: IWebhookHistoryPayload = {
             address,
             batch,
             totalBatch,
@@ -85,9 +87,8 @@ if (config.syncPacman) {
             isWalletCached,
           };
 
-          // await walletHistoryQueue.addToQueue(payload);
-
-          await walletHistoryQueue.invokeWebhookEndpoints(payload);
+          const timestamp = new Date();
+          await fetchHistoryBatchQueue.addToQueue(payload, accountId, timestamp);
 
           logger.info(QUEUE_NAME, `History Queue ${batch} out of ${totalBatch} sent successfully`);
 
