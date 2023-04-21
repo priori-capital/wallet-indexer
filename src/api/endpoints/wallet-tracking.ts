@@ -46,7 +46,7 @@ export const requestWalletTracking: RouteOptions = {
   // auth: "webhook_client_auth",
   validate: {
     payload: Joi.object({
-      accountId: Joi.string().uuid({ version: "uuidv4" }).required(),
+      accountId: Joi.number().integer().min(1).required(),
       address: Joi.string().lowercase().pattern(regex.address).required(),
       workspaceId: Joi.string().lowercase().uuid({ version: "uuidv4" }).optional(),
     }),

@@ -32,9 +32,9 @@ export const getWebhookRequestsForAddress = async (
   accountId?: string
 ): Promise<Omit<WebhookRequest, "data">[]> => {
   let query = `select 
-    tw."webhook_url" as "webhookUrl",
-    tw."webhook_auth_key" as "authKey",
-    tw."account_id" as "accountId"
+    a."webhook_url" as "webhookUrl",
+    a."webhook_auth_key" as "authKey",
+    a."id" as "accountId"
   from "tracked_wallets" tw inner join "accounts" a on tw.account_id = a.id and a.active
   where tw.address = $/address/ and tw.status = 1 `;
 
