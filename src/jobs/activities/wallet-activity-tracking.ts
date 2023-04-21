@@ -10,6 +10,8 @@ import { callWebhookUrl, getWebhookRequestsForAddress, WebhookRequest } from "@/
 const WALLET_TRANSACTION_LOGS_QUEUE_NAME = "wallet-transaction-logs-queue";
 const WALLET_TRANSACTION_LOGS_JOB_NAME = "wallet-transaction-logs";
 
+const EVENT_NAME = "NEW_TRANSACTION";
+
 export interface WalletActivityEvent {
   transaction: Transaction;
   transferEvent: TransferEventData;
@@ -60,7 +62,7 @@ const invokeWebhookEndpoints = async (
   const webhookRequests = accountTransactionCache.values();
 
   for await (const webhookRequest of webhookRequests) {
-    await callWebhookUrl(webhookRequest);
+    await callWebhookUrl(webhookRequest, EVENT_NAME, new Date(transferEvent.timestamp));
   }
 };
 

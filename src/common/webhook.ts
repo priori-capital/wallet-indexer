@@ -21,6 +21,8 @@ export interface WebhookResponse {
 
 export interface WebhookInvocation {
   correlationId: string;
+  event: string;
+  timestamp: Date;
   request?: WebhookRequest;
   response?: WebhookResponse;
 }
@@ -62,7 +64,9 @@ const getAuthorizationHeader = (apiKey: string) => apiKey;
 const makeRequest = async (
   url: string,
   apiKey: string,
-  payload: Record<string, any>
+  payload: Record<string, any>,
+  eventName: string,
+  eventTimestamp: Date
 ): Promise<WebhookResponse> => {
   const authHeader = getAuthorizationHeader(apiKey);
 
@@ -71,7 +75,13 @@ const makeRequest = async (
     headers: { Authorization: authHeader },
   };
 
-  const { data, status } = await axios.post(url, payload, config);
+  const body = {
+    event: eventName,
+    timestamp: eventTimestamp,
+    data: payload,
+  };
+
+  const { data, status } = await axios.post(url, body, config);
 
   let success = false;
   if (status >= 200 && status < 400) success = true;
@@ -88,17 +98,27 @@ const makeRequest = async (
 
 export const callWebhookUrl = async (
   request: WebhookRequest,
+  eventName: string,
+  eventTimestamp: Date,
   serviceName?: string
 ): Promise<WebhookInvocation> => {
   const correlationId = generateCorrelationId(serviceName);
   logger.info("WebhookService", `correlationId: ${correlationId}`);
 
   const webhookInvocationRecord: WebhookInvocation = {
+    event: eventName,
+    timestamp: eventTimestamp,
     correlationId: correlationId,
     request: request,
   };
 
-  const response = await makeRequest(request.url, request.authKey, request.data);
+  const response = await makeRequest(
+    request.url,
+    request.authKey,
+    request.data,
+    eventName,
+    eventTimestamp
+  );
   webhookInvocationRecord.response = response;
   return webhookInvocationRecord;
 };

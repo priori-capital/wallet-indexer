@@ -41,6 +41,8 @@ export interface IUserTransaction {
   created_at: Date;
 }
 
+const EVENT_NAME = "TRANSACTION_HISTORY";
+
 export const queue = new Queue(QUEUE_NAME, {
   connection: syncRedis.duplicate(),
   defaultJobOptions: {
@@ -71,17 +73,22 @@ export const invokeWebhookEndpoints = async (payload: {
 
   for await (const webhookRequest of webhookRequests) {
     try {
-      const { response } = await callWebhookUrl({ ...webhookRequest, data: payload });
+      const timestamp = new Date();
+      const { response } = await callWebhookUrl(
+        { ...webhookRequest, data: payload },
+        EVENT_NAME,
+        timestamp
+      );
 
       if (!response?.success) {
         throw new Error(response?.message);
       }
 
       // TODO: Correct log message
-      logger.info(QUEUE_NAME, `History Queue ${batch} out of ${totalBatch} sent successfully`);
+      logger.info(QUEUE_NAME, `History webhook ${batch} out of ${totalBatch} sent successfully`);
     } catch (err) {
       // TODO: Correct log message
-      logger.info(QUEUE_NAME, `Error: History Queue ${batch} out of ${totalBatch}`);
+      logger.info(QUEUE_NAME, `Error: History webhook ${batch} out of ${totalBatch}`);
       throw err;
     }
   }
