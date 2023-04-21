@@ -2,11 +2,11 @@ import { syncRedis } from "@/common/redis";
 import { getTransaction, Transaction } from "@/models/transactions";
 import { isCachedWallet } from "@/utils/in-memory-cache";
 import { Queue, QueueOptions } from "bullmq";
-
-import { TransferEventData } from "./transfer-activity";
 import { logger } from "@/common/logger";
 import { callWebhookUrl, getWebhookRequestsForAddress, WebhookRequest } from "@/common/webhook";
 
+import { TransferEventData } from "./transfer-activity";
+import * as accountWalletActivityTracking from "./account-wallet-activity-tracking";
 const WALLET_TRANSACTION_LOGS_QUEUE_NAME = "wallet-transaction-logs-queue";
 
 const EVENT_NAME = "NEW_TRANSACTION";
@@ -60,14 +60,10 @@ const invokeWebhookEndpoints = async (
 
   const webhookRequests = accountTransactionCache.values();
 
+  const eventTimestamp = new Date(transferEvent.timestamp);
+
   for await (const webhookRequest of webhookRequests) {
-    const { response } = await callWebhookUrl(
-      webhookRequest,
-      EVENT_NAME,
-      new Date(transferEvent.timestamp)
-    );
-    if (response?.success) continue;
-    // TODO: Handle failed webhook invocation
+    await accountWalletActivityTracking.addToQueue(webhookRequest, EVENT_NAME, eventTimestamp);
   }
 };
 
