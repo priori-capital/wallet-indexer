@@ -7,7 +7,7 @@ import { idb } from "./db";
 
 export interface WebhookRequest {
   accountId: string;
-  apiKey: string;
+  authKey: string;
   url: string;
   data: Record<string, any>;
 }
@@ -28,10 +28,19 @@ export interface WebhookInvocation {
 const SERVICE_NAME = "WebhookService";
 
 export const getWebhookRequestsForAddress = async (
-  address: string
+  address: string,
+  accountId?: string
 ): Promise<Omit<WebhookRequest, "data">[]> => {
-  const query = `select * from "tracked_wallets" where address = $/address/ and status = 1 `;
-  const params = { address };
+  let query = `select 
+    tw."webhook_url" as "webhookUrl",
+    tw."webhook_auth_key" as "authKey",
+    tw."account_id" as "accountId"
+  from "tracked_wallets" tw inner join "accounts" a on tw.account_id = a.id and a.active
+  where tw.address = $/address/ and tw.status = 1 `;
+
+  if (accountId) query += "and tx.account_id = $/accountId/ ";
+
+  const params = { address, accountId };
   const trackedWallets = await idb.manyOrNone(query, params);
 
   if (!Array.isArray(trackedWallets)) {
@@ -40,8 +49,8 @@ export const getWebhookRequestsForAddress = async (
   }
 
   return (trackedWallets || []).map((wallet) => ({
-    url: wallet.webhook_url,
-    apiKey: wallet.api_key,
+    url: wallet.webhookUrl,
+    authKey: wallet.authKey,
     accountId: wallet.accountId,
   }));
 };
@@ -50,7 +59,6 @@ const generateCorrelationId = (serviceName?: string): string => uniqueId(service
 
 const getAuthorizationHeader = (apiKey: string) => apiKey;
 
-// TODO: Write axios logic in this
 const makeRequest = async (
   url: string,
   apiKey: string,
@@ -90,7 +98,7 @@ export const callWebhookUrl = async (
     request: request,
   };
 
-  const response = await makeRequest(request.url, request.apiKey, request.data);
+  const response = await makeRequest(request.url, request.authKey, request.data);
   webhookInvocationRecord.response = response;
   return webhookInvocationRecord;
 };

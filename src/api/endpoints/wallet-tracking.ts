@@ -42,6 +42,8 @@ export const requestWalletTracking: RouteOptions = {
       order: 10,
     },
   },
+  // TODO: Uncomment auth
+  // auth: "webhook_client_auth",
   validate: {
     payload: Joi.object({
       accountId: Joi.string().uuid({ version: "uuidv4" }).required(),
