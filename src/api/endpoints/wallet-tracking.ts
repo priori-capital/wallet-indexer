@@ -11,7 +11,6 @@ import Joi from "joi";
 const version = "v1";
 
 export interface RequestWalletTrackingDto {
-  accountId: string;
   address: string;
   workspaceId: string;
 }
@@ -48,31 +47,22 @@ export const requestWalletTracking: RouteOptions = {
       order: 10,
     },
   },
-  // TODO: Uncomment auth
-  // auth: "webhook_client_auth",
+  auth: "webhook_client_auth",
   validate: {
+    query: Joi.object({
+      account_id: Joi.number().integer().min(1).required(),
+    }),
     payload: Joi.object({
-      accountId: Joi.number().integer().min(1).required(),
       address: Joi.string().lowercase().pattern(regex.address).required(),
       workspaceId: Joi.string().lowercase().uuid({ version: "uuidv4" }).optional(),
     }),
   },
   handler: async (request: Request, h: ResponseToolkit) => {
     const body = request.payload as RequestWalletTrackingDto;
-    const headers = request.headers;
-
-    const authHeader = headers["authorization"];
-    if (!authHeader) {
-      return h.response({ message: "Missing authorization header" }).code(400);
-    }
-
-    const apiKey = extractApiKeyFromAuthHeader(authHeader);
-    if (!apiKey) {
-      return h.response({ message: "Invalid authorization header" }).code(400);
-    }
+    const accountId = request.query.account_id;
 
     try {
-      const { accountId, address, workspaceId } = body;
+      const { address, workspaceId } = body;
       return processAddWalletRequest(accountId, address, workspaceId);
     } catch (error) {
       logger.error(`request-wallet-tracking-${version}-handler`, `Handler failure: ${error}`);
