@@ -2,11 +2,11 @@ import { redis } from "@/common/redis";
 import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
-import { isCachedWallet, enableWalletTracking } from "@/utils/in-memory-cache";
-import * as fetchHistoryQueue from "./fetch-history-queue";
+import { randomUUID } from "crypto";
+import * as walletHistoryQueue from "./wallet-history-webhook-service";
 import { oneDayInSeconds } from "@/utils/constants";
 
-const QUEUE_NAME = "add-wallet-queue";
+const QUEUE_NAME = "wallet-history-batch-queue";
 
 export const queue = new Queue(QUEUE_NAME, {
   connection: redis.duplicate(),
@@ -21,26 +21,14 @@ export const queue = new Queue(QUEUE_NAME, {
 });
 new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 
-export const processAddWalletRequest = async (
-  accountId: string,
-  address: string,
-  workspaceId: string
-) => {
-  const isWalletCached = await isCachedWallet(address);
-
-  await fetchHistoryQueue.addToQueue(address, accountId, workspaceId, isWalletCached);
-  await enableWalletTracking(address, accountId);
-};
-
 if (config.syncPacman) {
   const worker = new Worker(
     QUEUE_NAME,
     async (job: Job) => {
       try {
-        logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
+        const { payload, accountId, timestamp } = job.data;
 
-        const { accountId, address, workspaceId } = job.data;
-        await processAddWalletRequest(accountId, address, workspaceId);
+        await walletHistoryQueue.invokeWebhookEndpoints(payload, accountId, timestamp);
       } catch (error) {
         logger.error(QUEUE_NAME, `${error}`);
         throw error;
@@ -52,3 +40,11 @@ if (config.syncPacman) {
     logger.error(QUEUE_NAME, `Worker errored: ${error}`);
   });
 }
+
+export const addToQueue = async (
+  payload: walletHistoryQueue.IWebhookHistoryPayload,
+  accountId: number,
+  timestamp: Date
+) => {
+  await queue.add(randomUUID(), { payload, accountId, timestamp });
+};

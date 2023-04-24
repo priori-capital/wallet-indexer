@@ -1,10 +1,9 @@
-import { BulkJobOptions, RedisOptions } from "bullmq";
+import { BulkJobOptions } from "bullmq";
 import { randomUUID } from "crypto";
 import Redis from "ioredis";
 import Redlock from "redlock";
 
 import { config } from "@/config/index";
-import { logger } from "./logger";
 
 // TODO: Research using a connection pool rather than
 // creating a new connection every time, as we do now.
@@ -64,19 +63,3 @@ export const releaseLock = async (name: string) => {
 export const getLockExpiration = async (name: string) => {
   return await redis.ttl(name);
 };
-
-const syncRedisConfig: RedisOptions = {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-};
-
-if (config.syncRedisTls === true) {
-  syncRedisConfig.tls = {};
-}
-
-export const syncRedis = new Redis(config.syncRedisUrl, syncRedisConfig);
-
-syncRedis
-  .ping()
-  .then(() => logger.info("REDIS_PING", "Connected to redis"))
-  .catch(() => logger.error("REDIS_PING", "Error in connecting to redis"));

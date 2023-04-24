@@ -82,9 +82,14 @@ export const start = async (chainId = 1): Promise<void> => {
   await server.register(Jwt);
   server.auth.strategy("webhook_client_auth", "jwt", {
     key: config.jwtSecret,
-    validate: (decoded: JwtPayload, request, h) => {
+    validate: (decoded: JwtPayload, request: Hapi.Request, h: Hapi.ResponseToolkit) => {
+      const accountId = request.query?.account_id;
+      if (!accountId) {
+        return h.response({ message: "Missing query param - account_id" }).code(400);
+      }
+
       if (decoded?.id) {
-        const isValid =  Number(request.query?.accId) === decoded.id;
+        const isValid = Number(request.query?.account_id) === decoded.id;
         return { isValid: isValid, credentials: { id: decoded.id } };
       }
       return { isValid: false, credentials: null };

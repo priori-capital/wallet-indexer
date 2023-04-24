@@ -6,6 +6,7 @@ import Joi from "joi";
 import moment from "moment";
 import jwt from "jsonwebtoken";
 import { config } from "@/config/index";
+import { WebhookEventTypes } from "@/common/webhook";
 
 export interface RegisterAppDto {
   name: string;
@@ -18,14 +19,16 @@ export const registerApp: RouteOptions = {
   validate: {
     payload: Joi.object({
       name: Joi.string().min(3).required(),
-      email: Joi.string().email({ tlds: { allow: false } }).required(),
+      email: Joi.string()
+        .email({ tlds: { allow: false } })
+        .required(),
       webhookUrl: Joi.string().uri().required(),
       webhookAuthKey: Joi.string().min(8).required(),
-    })
+    }),
   },
   handler: async (request: Request, h) => {
     const data = request.payload as RegisterAppDto;
-    
+
     try {
       const isValidWebhook = await validateWebhook(data.webhookUrl, data.webhookAuthKey);
       if (isValidWebhook) {
@@ -36,11 +39,15 @@ export const registerApp: RouteOptions = {
         `);
 
         if (account?.id) {
-          const secretKey = jwt.sign({ id: account.id }, config.jwtSecret, { issuer: "iss:indexer" });
-          await idb.none(`UPDATE accounts SET secret_key = '${secretKey}' WHERE id = ${account.id}`);
+          const secretKey = jwt.sign({ id: account.id }, config.jwtSecret, {
+            issuer: "iss:indexer",
+          });
+          await idb.none(
+            `UPDATE accounts SET secret_key = '${secretKey}' WHERE id = ${account.id}`
+          );
 
           const respData = { id: account.id, name: data.name, secretKey: secretKey };
-          return h.response({ statusCode: 200, data: respData,  message: "Ok" }).code(200);
+          return h.response({ statusCode: 200, data: respData, message: "Ok" }).code(200);
         }
 
         return h.response({ statusCode: 500, message: "Something went wrong." }).code(500);
@@ -60,7 +67,7 @@ export const updateApp: RouteOptions = {
       name: Joi.string().min(3).required(),
       webhookUrl: Joi.string().uri().required(),
       webhookAuthKey: Joi.string().min(8).required(),
-    })
+    }),
   },
   handler: async (request: Request, h: ResponseToolkit) => {
     try {
@@ -77,7 +84,7 @@ export const updateApp: RouteOptions = {
           WHERE id = ${accountId}
         `);
 
-        return h.response({ statusCode: 200, data,  message: "Ok" }).code(200);
+        return h.response({ statusCode: 200, data, message: "Ok" }).code(200);
       }
 
       return h.response({ statusCode: 400, message: "Webhook URL is not valid." }).code(400);
@@ -91,11 +98,13 @@ export const updateApp: RouteOptions = {
 async function validateWebhook(url: string, authKey: string): Promise<boolean> {
   try {
     const payload = {
-      event: "HEALTH_CHECK",
+      event: WebhookEventTypes.HEALTH_CHECK,
       timestamp: moment().format("YYYY-MM-DD HH:MM:SS"),
-      data: null
-    }
-    const resp = await axios.post(url, payload, { headers: {"Authorization" : `Bearer ${authKey}` } } );
+      data: null,
+    };
+    const resp = await axios.post(url, payload, {
+      headers: { Authorization: `Bearer ${authKey}` },
+    });
     return resp.status === 200;
   } catch (err) {
     return false;

@@ -18,9 +18,9 @@ const inMemoryCache = () => {
 
 export const cache = inMemoryCache();
 
-export const enableWalletTracking = async (address: string) => {
+export const enableWalletTracking = async (accountId: string, address: string) => {
   logger.info("saving-wallet", `${address} getting to save in DB`);
-  await saveWallet(address);
+  await saveWallet(accountId, address);
   logger.info("saving-wallet", `${address} after saving in DB`);
   await updateWalletCache(address);
 };
@@ -60,24 +60,23 @@ export const getCacheWallets = async (): Promise<Record<string, boolean>> => {
   }, {});
 };
 
-export const saveWallet = async (address: string) => {
+export const saveWallet = async (accountId: string, address: string) => {
   logger.info("save-wallet-address", `${address} adding to tracked wallet`);
   try {
-    const data = await idb.oneOrNone(
-      `
-      INSERT INTO tracked_wallets (
-        address
+    const insertTrackedWalletQuery = `
+      INSERT INTO "tracked_wallets" (
+        "account_id",
+        "address"
       ) VALUES (
+        $/accountId/,
         $/address/
       )
       ON CONFLICT DO NOTHING
-      RETURNING
-      "address"
-    `,
-      {
-        address,
-      }
-    );
+      RETURNING * `;
+
+    const params = { address, accountId };
+
+    const data = await idb.oneOrNone(insertTrackedWalletQuery, params);
 
     if (data) {
       logger.info("save-wallet-address", `data after saving ${JSON.stringify(data)}`);
