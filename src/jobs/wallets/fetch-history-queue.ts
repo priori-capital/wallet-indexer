@@ -42,6 +42,23 @@ if (config.syncPacman) {
             address: toBuffer(address),
           }
         );
+
+        if (!totalCount) {
+          logger.info(QUEUE_NAME, `No transactions found for address: ${address}`);
+
+          const payload = {
+            address,
+            batch: 0,
+            totalBatch: 0,
+            transactions: [],
+            workspaceId,
+            isWalletCached,
+          };
+          const eventTimestamp = new Date();
+          await fetchHistoryBatchQueue.addToQueue(payload, accountId, eventTimestamp);
+          return;
+        }
+
         logger.info(
           QUEUE_NAME,
           `History Queue with transaction #${totalCount} of ${address} processing...`

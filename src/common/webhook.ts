@@ -40,7 +40,7 @@ export const getWebhookRequestsForAddress = async (
   from "tracked_wallets" tw inner join "accounts" a on tw.account_id = a.id and a.active
   where tw.address = $/address/ and tw.status = 1 `;
 
-  if (accountId) query += "and tx.account_id = $/accountId/ ";
+  if (accountId) query += "and tw.account_id = $/accountId/ ";
 
   const params = { address, accountId };
   const trackedWallets = await idb.manyOrNone(query, params);

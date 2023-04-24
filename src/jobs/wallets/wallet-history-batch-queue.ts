@@ -46,6 +46,5 @@ export const addToQueue = async (
   accountId: number,
   timestamp: Date
 ) => {
-  // console.log(randomUUID(), { payload, accountId, timestamp });
   await queue.add(randomUUID(), { payload, accountId, timestamp });
 };
