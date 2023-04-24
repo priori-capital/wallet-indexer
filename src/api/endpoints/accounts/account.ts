@@ -6,6 +6,7 @@ import Joi from "joi";
 import moment from "moment";
 import jwt from "jsonwebtoken";
 import { config } from "@/config/index";
+import { WebhookEventTypes } from "@/common/webhook";
 
 export interface RegisterAppDto {
   name: string;
@@ -97,7 +98,7 @@ export const updateApp: RouteOptions = {
 async function validateWebhook(url: string, authKey: string): Promise<boolean> {
   try {
     const payload = {
-      event: "HEALTH_CHECK",
+      event: WebhookEventTypes.HEALTH_CHECK,
       timestamp: moment().format("YYYY-MM-DD HH:MM:SS"),
       data: null,
     };

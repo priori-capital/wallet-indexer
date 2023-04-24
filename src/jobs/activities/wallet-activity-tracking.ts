@@ -3,13 +3,11 @@ import { getTransaction, Transaction } from "@/models/transactions";
 import { isCachedWallet } from "@/utils/in-memory-cache";
 import { Queue, QueueOptions } from "bullmq";
 import { logger } from "@/common/logger";
-import { getWebhookRequestsForAddress, WebhookRequest } from "@/common/webhook";
+import { getWebhookRequestsForAddress, WebhookEventTypes, WebhookRequest } from "@/common/webhook";
 
 import { TransferEventData } from "./transfer-activity";
 import * as accountWalletActivityTracking from "./account-wallet-activity-tracking";
 const WALLET_TRANSACTION_LOGS_QUEUE_NAME = "wallet-transaction-logs-queue";
-
-const EVENT_NAME = "NEW_TRANSACTION";
 
 export interface WalletActivityEvent {
   transaction: Transaction;
@@ -63,7 +61,7 @@ const invokeWebhookEndpoints = async (
   const eventTimestamp = new Date(transferEvent.timestamp * 1000);
 
   for await (const webhookRequest of webhookRequests) {
-    await accountWalletActivityTracking.addToQueue(webhookRequest, EVENT_NAME, eventTimestamp);
+    await accountWalletActivityTracking.addToQueue(webhookRequest, WebhookEventTypes.NEW_TRANSACTION, eventTimestamp);
   }
 };
 
