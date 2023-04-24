@@ -44,8 +44,6 @@ if (config.syncPacman) {
         );
 
         if (!totalCount) {
-          logger.info(QUEUE_NAME, `No transactions found for address: ${address}`);
-
           const payload = {
             address,
             batch: 0,
@@ -56,6 +54,11 @@ if (config.syncPacman) {
           };
           const eventTimestamp = new Date();
           await fetchHistoryBatchQueue.addToQueue(payload, accountId, eventTimestamp);
+
+          logger.info(
+            QUEUE_NAME,
+            `History Queue returning zero transaction for ${address} for workspace ${workspaceId}`
+          );
           return;
         }
 
