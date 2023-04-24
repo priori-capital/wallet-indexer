@@ -61,7 +61,11 @@ const invokeWebhookEndpoints = async (
   const eventTimestamp = new Date(transferEvent.timestamp * 1000);
 
   for await (const webhookRequest of webhookRequests) {
-    await accountWalletActivityTracking.addToQueue(webhookRequest, WebhookEventTypes.NEW_TRANSACTION, eventTimestamp);
+    await accountWalletActivityTracking.addToQueue(
+      webhookRequest,
+      WebhookEventTypes.NEW_TRANSACTION,
+      eventTimestamp
+    );
   }
 };
 
