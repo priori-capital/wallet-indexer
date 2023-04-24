@@ -103,7 +103,7 @@ async function validateWebhook(url: string, authKey: string): Promise<boolean> {
       data: null,
     };
     const resp = await axios.post(url, payload, {
-      headers: { Authorization: `Bearer ${authKey}` },
+      headers: { Authorization: authKey },
     });
     return resp.status === 200;
   } catch (err) {
