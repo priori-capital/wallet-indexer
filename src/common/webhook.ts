@@ -27,6 +27,12 @@ export interface WebhookInvocation {
   response?: WebhookResponse;
 }
 
+export enum WebhookEventTypes {
+  HEALTH_CHECK = "HEALTH_CHECK",
+  TRANSACTION_HISTORY = "TRANSACTION_HISTORY",
+  NEW_TRANSACTION = "NEW_TRANSACTION",
+}
+
 const SERVICE_NAME = "WebhookService";
 
 export const getWebhookRequestsForAddress = async (
@@ -65,7 +71,7 @@ const makeRequest = async (
   url: string,
   apiKey: string,
   payload: Record<string, any>,
-  eventName: string,
+  eventName: WebhookEventTypes,
   eventTimestamp: Date
 ): Promise<WebhookResponse> => {
   const authHeader = getAuthorizationHeader(apiKey);
@@ -97,7 +103,7 @@ const makeRequest = async (
 
 export const callWebhookUrl = async (
   request: WebhookRequest,
-  eventName: string,
+  eventName: WebhookEventTypes,
   eventTimestamp: Date,
   serviceName?: string
 ): Promise<WebhookInvocation> => {
