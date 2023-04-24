@@ -1,4 +1,4 @@
-import { syncRedis } from "@/common/redis";
+import { redis } from "@/common/redis";
 import { Transaction } from "@/models/transactions";
 import { randomUUID } from "crypto";
 import { Job, Queue, QueueOptions, QueueScheduler, Worker } from "bullmq";
@@ -15,7 +15,7 @@ export interface WalletActivityEvent {
 }
 
 const queueOptions: QueueOptions = {
-  connection: syncRedis.duplicate(),
+  connection: redis.duplicate(),
   defaultJobOptions: {
     attempts: 10,
     removeOnComplete: 100,
@@ -27,7 +27,7 @@ const queueOptions: QueueOptions = {
   },
 };
 
-new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
+new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 
 export const accountWalletTransactionLogsQueue = new Queue(QUEUE_NAME, queueOptions);
 
@@ -45,7 +45,7 @@ const worker = new Worker(
       throw error;
     }
   },
-  { connection: syncRedis.duplicate(), concurrency: 1 }
+  { connection: redis.duplicate(), concurrency: 1 }
 );
 
 worker.on("error", (error) => {

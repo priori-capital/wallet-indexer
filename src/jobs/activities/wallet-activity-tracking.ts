@@ -1,9 +1,9 @@
-import { syncRedis } from "@/common/redis";
+import { redis } from "@/common/redis";
 import { getTransaction, Transaction } from "@/models/transactions";
 import { isCachedWallet } from "@/utils/in-memory-cache";
 import { Queue, QueueOptions } from "bullmq";
 import { logger } from "@/common/logger";
-import { callWebhookUrl, getWebhookRequestsForAddress, WebhookRequest } from "@/common/webhook";
+import { getWebhookRequestsForAddress, WebhookRequest } from "@/common/webhook";
 
 import { TransferEventData } from "./transfer-activity";
 import * as accountWalletActivityTracking from "./account-wallet-activity-tracking";
@@ -17,7 +17,7 @@ export interface WalletActivityEvent {
 }
 
 const queueOptions: QueueOptions = {
-  connection: syncRedis.duplicate(),
+  connection: redis.duplicate(),
   defaultJobOptions: {
     attempts: 10,
     removeOnComplete: 100,

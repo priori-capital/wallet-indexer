@@ -1,4 +1,4 @@
-import { syncRedis } from "@/common/redis";
+import { redis } from "@/common/redis";
 import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
@@ -9,7 +9,7 @@ import { oneDayInSeconds } from "@/utils/constants";
 const QUEUE_NAME = "add-wallet-queue";
 
 export const queue = new Queue(QUEUE_NAME, {
-  connection: syncRedis.duplicate(),
+  connection: redis.duplicate(),
   defaultJobOptions: {
     // In order to be as lean as possible, leave retrying
     // any failed processes to be done by subsequent jobs
@@ -19,7 +19,7 @@ export const queue = new Queue(QUEUE_NAME, {
     timeout: 60000,
   },
 });
-new QueueScheduler(QUEUE_NAME, { connection: syncRedis.duplicate() });
+new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 
 export const processAddWalletRequest = async (
   accountId: string,
@@ -46,7 +46,7 @@ if (config.syncPacman) {
         throw error;
       }
     },
-    { connection: syncRedis.duplicate(), concurrency: 1 }
+    { connection: redis.duplicate(), concurrency: 1 }
   );
   worker.on("error", (error) => {
     logger.error(QUEUE_NAME, `Worker errored: ${error}`);
