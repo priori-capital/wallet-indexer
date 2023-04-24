@@ -71,7 +71,6 @@ const makeRequest = async (
   const authHeader = getAuthorizationHeader(apiKey);
 
   const config: AxiosRequestConfig = {
-    auth: { username: "", password: "" },
     headers: { Authorization: authHeader },
   };
 

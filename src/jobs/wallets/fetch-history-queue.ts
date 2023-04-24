@@ -34,13 +34,18 @@ if (config.syncPacman) {
         const { accountId, address, workspaceId, isWalletCached } = job.data;
         logger.info(QUEUE_NAME, `${JSON.stringify(job.data)} --- ${job.name}`);
         let limit = ROW_COUNT;
-        const { count: totalCount }: { count: number } = await idb.one(
+        const { count }: { count: string } = await idb.one(
           `select count(1) from user_transactions ut
               WHERE from_address = $/address/ or to_address = $/address/
           `,
           {
             address: toBuffer(address),
           }
+        );
+        const totalCount = parseInt(count);
+        logger.info(
+          QUEUE_NAME,
+          `History Queue with transaction count #${totalCount} of ${address} processing... ${typeof totalCount}`
         );
 
         if (!totalCount) {
@@ -62,25 +67,6 @@ if (config.syncPacman) {
           return;
         }
 
-        logger.info(
-          QUEUE_NAME,
-          `History Queue with transaction #${totalCount} of ${address} processing...`
-        );
-        if (totalCount === 0) {
-          await walletHistoryQueue.addToQueue({
-            address,
-            batch: 0,
-            totalBatch: 0,
-            transactions: [],
-            workspaceId,
-            isWalletCached,
-          });
-          logger.info(
-            QUEUE_NAME,
-            `History Queue returning zero transaction for ${address} for workspace ${workspaceId}`
-          );
-          return true;
-        }
         const totalBatch = Math.ceil(totalCount / ROW_COUNT);
         let batch = 1,
           skip = 0;
