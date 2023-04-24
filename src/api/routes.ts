@@ -1,4 +1,5 @@
 import * as userTransfersActivityEndpoints from "@/api/endpoints/user-activity/transfers";
+import * as accounts from "@/api/endpoints/accounts/account";
 import { getHistory } from "@/api/endpoints/balance/history";
 import { Server } from "@hapi/hapi";
 import { getHistoryDetails } from "./endpoints/balance/historyDetail";
@@ -7,6 +8,18 @@ import { getAssetsDetails } from "./endpoints/balance/assetDetail";
 import * as trackWalletEndpoints from "./endpoints/wallet-tracking";
 
 export const setupRoutes = (server: Server) => {
+  server.route({
+    method: "POST",
+    path: "/register-app",
+    options: { auth: "webhook_server", ...accounts.registerApp },
+  });
+
+  server.route({
+    method: "POST",
+    path: "/update-app",
+    options: { auth: "webhook_client_auth", ...accounts.updateApp },
+  });
+
   server.route({
     method: "GET",
     path: "/user-transfer-activities",
