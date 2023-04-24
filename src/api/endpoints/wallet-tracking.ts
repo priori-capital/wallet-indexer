@@ -10,6 +10,12 @@ import Joi from "joi";
 
 const version = "v1";
 
+export interface RequestWalletTrackingDto {
+  accountId: string;
+  address: string;
+  workspaceId: string;
+}
+
 export const processAddWalletRequest = async (
   accountId: string,
   address: string,
@@ -52,7 +58,7 @@ export const requestWalletTracking: RouteOptions = {
     }),
   },
   handler: async (request: Request, h: ResponseToolkit) => {
-    const body = request.payload as { accountId: string; address: string; workspaceId: string };
+    const body = request.payload as RequestWalletTrackingDto;
     const headers = request.headers;
 
     const authHeader = headers["authorization"];
