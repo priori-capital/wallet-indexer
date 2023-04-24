@@ -66,6 +66,17 @@ if (config.syncPacman) {
           QUEUE_NAME,
           `History Queue with transaction #${totalCount} of ${address} processing...`
         );
+        if (totalCount === 0) {
+          await walletHistoryQueue.addToQueue({
+            address,
+            batch: 0,
+            totalBatch: 0,
+            transactions: [],
+            workspaceId,
+            isWalletCached,
+          });
+          return true;
+        }
         const totalBatch = Math.ceil(totalCount / ROW_COUNT);
         let batch = 1,
           skip = 0;
