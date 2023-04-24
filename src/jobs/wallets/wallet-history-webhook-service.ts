@@ -1,5 +1,5 @@
 import { logger } from "@/common/logger";
-import { callWebhookUrl, getWebhookRequestsForAddress } from "@/common/webhook";
+import { WebhookEventTypes, callWebhookUrl, getWebhookRequestsForAddress } from "@/common/webhook";
 
 export interface IRawUserTransaction {
   hash: Buffer;
@@ -37,7 +37,6 @@ export interface IUserTransaction {
   created_at: Date;
 }
 
-const EVENT_NAME = "TRANSACTION_HISTORY";
 const SERVICE_NAME = "INVOKE_WEBHOOK";
 
 export interface IWebhookHistoryPayload {
@@ -73,7 +72,7 @@ export const invokeWebhookEndpoints = async (
     const [webhookRequest] = webhookRequests;
     const { response } = await callWebhookUrl(
       { ...webhookRequest, data: payload },
-      EVENT_NAME,
+      WebhookEventTypes.TRANSACTION_HISTORY,
       timestamp
     );
 
