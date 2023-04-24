@@ -75,6 +75,10 @@ if (config.syncPacman) {
             workspaceId,
             isWalletCached,
           });
+          logger.info(
+            QUEUE_NAME,
+            `History Queue returning zero transaction for ${address} for workspace ${workspaceId}`
+          );
           return true;
         }
         const totalBatch = Math.ceil(totalCount / ROW_COUNT);
