@@ -44,7 +44,7 @@ const invokeWebhookEndpoints = async (
 
   const accountTransactionCache = new Map<string, WebhookRequest>();
   const webhookRequestsForSender = await getWebhookRequestsForAddress(transferEvent.fromAddress);
-  const webhookRequestsForRecipient = await getWebhookRequestsForAddress(transferEvent.fromAddress);
+  const webhookRequestsForRecipient = await getWebhookRequestsForAddress(transferEvent.toAddress);
 
   for (const webhookRequest of webhookRequestsForSender) {
     const { accountId } = webhookRequest;
