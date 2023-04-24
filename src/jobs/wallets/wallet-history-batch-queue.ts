@@ -42,7 +42,7 @@ if (config.syncPacman) {
 }
 
 export const addToQueue = async (
-  payload: Record<string, any>,
+  payload: walletHistoryQueue.IWebhookHistoryPayload,
   accountId: number,
   timestamp: Date
 ) => {

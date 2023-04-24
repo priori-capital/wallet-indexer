@@ -1,10 +1,9 @@
-import { BulkJobOptions, RedisOptions } from "bullmq";
+import { BulkJobOptions } from "bullmq";
 import { randomUUID } from "crypto";
 import Redis from "ioredis";
 import Redlock from "redlock";
 
 import { config } from "@/config/index";
-import { logger } from "./logger";
 
 // TODO: Research using a connection pool rather than
 // creating a new connection every time, as we do now.
