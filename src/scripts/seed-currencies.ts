@@ -21,6 +21,7 @@ const fetchCoinsIni = async () => {
         name: "",
         polygonpos: "",
         ethereum: "",
+        bsc: "",
       };
       if (Object.keys(coin[1].platforms).length) {
         s = {
@@ -29,15 +30,19 @@ const fetchCoinsIni = async () => {
           name: coin[1].name,
           ethereum: "",
           polygonpos: "",
+          bsc: "",
         };
         if (
           // eslint-disable-next-line no-prototype-builtins
           coin[1].platforms.hasOwnProperty("ethereum") ||
           // eslint-disable-next-line no-prototype-builtins
-          coin[1].platforms.hasOwnProperty("polygon-pos")
+          coin[1].platforms.hasOwnProperty("polygon-pos") ||
+          // eslint-disable-next-line no-prototype-builtins
+          coin[1].platforms.hasOwnProperty("binance-smart-chain")
         ) {
           s.ethereum = coin[1].platforms["ethereum"];
           s.polygonpos = coin[1].platforms["polygon-pos"];
+          s.bsc = coin[1].platforms["binance-smart-chain"];
           tokenList.push(s);
         }
       }

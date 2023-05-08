@@ -27,6 +27,15 @@ export const ethereumNetworks = [
     historyHost: "https://polygonscan.com/",
     alias: "matic",
   },
+  {
+    id: 56,
+    networkId: 56,
+    name: "bsc",
+    decimals: 18,
+    color: "#690496",
+    historyHost: "https://bscscan.com/",
+    alias: "bsc",
+  },
 ];
 
 export const getNetworkName = (chainId = 1) => {
@@ -39,6 +48,8 @@ export const getNetworkName = (chainId = 1) => {
       return "optimism";
     case 137:
       return "polygon";
+    case 56:
+      return "bsc";
     default:
       return "unknown";
   }
@@ -117,7 +128,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
         ws: config.ws1,
       };
     // Polygon
-    case 137: {
+    case 137:
       return {
         ...defaultNetworkSettings,
         enableWebSocket: true,
@@ -159,7 +170,22 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
         rpc: config.rpc137,
         ws: config.ws137,
       };
-    }
+    case 56:
+      return {
+        ...defaultNetworkSettings,
+        enableWebSocket: true,
+        enableReorgCheck: true,
+        realtimeSyncFrequencySeconds: 10,
+        realtimeSyncMaxBlockLag: 16,
+        backfillBlockBatchSize: 16,
+        reorgCheckFrequency: [1, 5, 10, 30, 60],
+        coingecko: {
+          networkId: "bsc",
+        },
+        chainId: 56,
+        rpc: config.rpc56,
+        ws: config.ws56,
+      };
     // Default
     default:
       return {

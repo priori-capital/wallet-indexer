@@ -3,7 +3,7 @@
 
 import { config as dotEnvConfig } from "dotenv";
 dotEnvConfig();
-import data from "./data/erc20tokenlist1674058920336.json";
+import data from "./data/erc20tokenlist1683521011643.json";
 import { idb } from "@/common/db";
 import { toBuffer } from "@/common/utils";
 
@@ -18,6 +18,9 @@ const seedAssets = async () => {
       }
       if (x.polygonpos) {
         dbrows.push({ currencyAddress: x.polygonpos, chainId: 137 });
+      }
+      if (x.bsc) {
+        dbrows.push({ currencyAddress: x.bsc, chainId: 56 });
       }
       await Promise.all(
         dbrows.map((row) => {

@@ -6,6 +6,8 @@ export const config = {
   ws1: String(process.env.WS_1),
   rpc137: String(process.env.RPC_137),
   ws137: String(process.env.RPC_137),
+  rpc56: String(process.env.RPC_56),
+  ws56: String(process.env.RPC_56),
 
   adminApiKey: String(process.env.ADMIN_API_KEY),
   jwtSecret: String(process.env.JWT_SECRET),
