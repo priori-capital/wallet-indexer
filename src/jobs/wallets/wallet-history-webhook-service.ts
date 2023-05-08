@@ -29,6 +29,11 @@ export interface IRawUserTransaction {
   t2_gas_fee: string | null;
   t2_gas_limit: string | null;
   t2_status: TransactionStatus;
+  t3_gas_used: string | null;
+  t3_gas_price: string | null;
+  t3_gas_fee: string | null;
+  t3_gas_limit: string | null;
+  t3_status: TransactionStatus;
 }
 
 export interface IUserTransaction {

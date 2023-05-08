@@ -81,10 +81,12 @@ if (config.syncPacman) {
 
           const userActivities: IRawUserTransaction[] = await idb.manyOrNone(
             `select *, ut.hash as ut_hash, t1.gas_used as t1_gas_used, t1.gas_price as t1_gas_price, t1.gas_fee as t1_gas_fee, t1.gas_limit as t1_gas_limit, t1.status as t1_status,
-              t2.gas_used as t2_gas_used, t2.gas_price as t2_gas_price, t2.gas_fee as t2_gas_fee, t2.gas_limit as t2_gas_limit, t2.status as t2_status
+              t2.gas_used as t2_gas_used, t2.gas_price as t2_gas_price, t2.gas_fee as t2_gas_fee, t2.gas_limit as t2_gas_limit, t2.status as t2_status,
+              t3.gas_used as t3_gas_used, t3.gas_price as t3_gas_price, t3.gas_fee as t3_gas_fee, t3.gas_limit as t3_gas_limit, t3.status as t3_status
               from user_transactions ut
               left outer join transactions_1 t1 ON ut.hash = t1.hash
   	          left outer join transactions_137 t2 on ut.hash = t2.hash
+              left outer join transactions_56 t3 on ut.hash = t3.hash
               WHERE from_address = $/address/ or to_address = $/address/
               ORDER BY event_timestamp ASC
               LIMIT $/limit/
@@ -154,6 +156,14 @@ const gasDetails = (activity: IRawUserTransaction) => {
         gasFee: activity.t2_gas_fee,
         gasLimit: activity.t2_gas_limit,
         status: activity.t2_status,
+      };
+    case 56:
+      return {
+        gasUsed: activity.t3_gas_used,
+        gasPrice: activity.t3_gas_price,
+        gasFee: activity.t3_gas_fee,
+        gasLimit: activity.t3_gas_limit,
+        status: activity.t3_status,
       };
     default:
       return {
