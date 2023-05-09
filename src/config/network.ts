@@ -72,7 +72,7 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
     realtimeSyncFrequencySeconds: 15,
     realtimeSyncMaxBlockLag: 16,
     backfillBlockBatchSize: 16,
-    reorgCheckFrequency: [1, 5, 10, 30, 60],
+    reorgCheckFrequency: [1, 5, 10, 30, 60], // In minutes
     chainId: 1,
     rpc: config.rpc1,
     ws: config.ws1,
@@ -121,11 +121,10 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
       return {
         ...defaultNetworkSettings,
         enableWebSocket: true,
-        enableReorgCheck: true,
-        realtimeSyncFrequencySeconds: 10,
-        realtimeSyncMaxBlockLag: 16,
-        backfillBlockBatchSize: 16,
-        reorgCheckFrequency: [1, 5, 10, 30, 60],
+        realtimeSyncFrequencySeconds: 2,
+        realtimeSyncMaxBlockLag: 32,
+        backfillBlockBatchSize: 60,
+        reorgCheckFrequency: [30],
         coingecko: {
           networkId: "polygon-pos",
         },

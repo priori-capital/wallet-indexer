@@ -125,6 +125,7 @@ if (config.syncPacman) {
           }
           batch++;
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         logger.error(QUEUE_NAME, `${error} ${error.stack}`);
         throw error;
