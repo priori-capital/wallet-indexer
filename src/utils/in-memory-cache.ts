@@ -81,6 +81,7 @@ export const saveWallet = async (accountId: string, address: string) => {
     if (data) {
       logger.info("save-wallet-address", `data after saving ${JSON.stringify(data)}`);
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     logger.error("save-wallet-address", err.message as string);
     throw err;
