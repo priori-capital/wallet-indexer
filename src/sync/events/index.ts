@@ -129,8 +129,8 @@ export const syncEvents = async (
               log,
             });
           }
-        } catch (error) {
-          logger.error("sync-events", `Failed to handle events: ${error}`);
+        } catch (error: any) {
+          logger.error("sync-events", `Failed to handle events: ${error?.stack}`);
           throw error;
         }
       }

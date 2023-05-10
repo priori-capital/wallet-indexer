@@ -38,15 +38,15 @@ if (config.doBackgroundWork && config.doEventsSyncBackfill) {
         );
 
         await syncEvents(chainId, fromBlock, toBlock, { backfill, syncDetails });
-      } catch (error) {
-        logger.error(QUEUE_NAME, `Events backfill syncing failed: ${error}`);
+      } catch (error: any) {
+        logger.error(QUEUE_NAME, `Events backfill syncing failed: ${error.stack}`);
         throw error;
       }
     },
     { connection: redis.duplicate(), concurrency: 15 }
   );
-  worker.on("error", (error) => {
-    logger.error(QUEUE_NAME, `Worker errored: ${error}`);
+  worker.on("error", (error: any) => {
+    logger.error(QUEUE_NAME, `Worker errored: ${error.stack}`);
   });
 }
 
