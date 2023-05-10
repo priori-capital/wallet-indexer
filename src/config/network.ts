@@ -30,11 +30,12 @@ export const ethereumNetworks = [
   {
     id: 56,
     networkId: 56,
-    name: "bsc",
+    name: "BNB",
     decimals: 18,
     color: "#690496",
+    symbol: "bnb",
     historyHost: "https://bscscan.com/",
-    alias: "bsc",
+    alias: "BNB",
   },
 ];
 
@@ -175,12 +176,38 @@ export const getNetworkSettings = (chainId = 1): NetworkSettings => {
         ...defaultNetworkSettings,
         enableWebSocket: true,
         enableReorgCheck: true,
-        realtimeSyncFrequencySeconds: 10,
-        realtimeSyncMaxBlockLag: 16,
+        realtimeSyncFrequencySeconds: 5,
+        realtimeSyncMaxBlockLag: 32,
         backfillBlockBatchSize: 16,
         reorgCheckFrequency: [1, 5, 10, 30, 60],
         coingecko: {
-          networkId: "bsc",
+          networkId: "binance-smart-chain",
+        },
+        onStartup: async () => {
+          // Insert the native currency
+          await Promise.all([
+            idb.none(
+              `
+                INSERT INTO "currencies" (
+                  contract,
+                  name,
+                  symbol,
+                  decimals,
+                  metadata,
+                  chain_id,
+                  coingecko_id
+                ) VALUES (
+                  '\\x00',
+                  'BNB',
+                  'bnb',
+                  18,
+                  '{"coingeckoCurrencyId": "binancecoin"}',
+                  56,
+                  'binancecoin'
+                ) ON CONFLICT DO NOTHING
+              `
+            ),
+          ]);
         },
         chainId: 56,
         rpc: config.rpc56,
