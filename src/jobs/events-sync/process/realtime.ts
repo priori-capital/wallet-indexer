@@ -34,15 +34,17 @@ if (config.doBackgroundWork) {
 
       try {
         await processEvents(info);
-      } catch (error) {
-        logger.error(QUEUE_NAME, `Events processing failed: ${error}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        logger.error(QUEUE_NAME, `Events processing failed: ${error.stack}`);
         throw error;
       }
     },
     { connection: redis.duplicate(), concurrency: 20 }
   );
-  worker.on("error", (error) => {
-    logger.error(QUEUE_NAME, `Worker errored: ${error}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  worker.on("error", (error: any) => {
+    logger.error(QUEUE_NAME, `Worker errored: ${error.stack}`);
   });
 }
 

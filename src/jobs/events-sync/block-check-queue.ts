@@ -81,15 +81,17 @@ if (config.doBackgroundWork) {
             await handleOrphanBlock({ number: block, hash: blockHash });
           }
         }
-      } catch (error) {
-        logger.error(QUEUE_NAME, `Block check failed: ${error}`);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        logger.error(QUEUE_NAME, `Block check failed: ${error.stack}`);
         throw error;
       }
     },
     { connection: redis.duplicate(), concurrency: 10 }
   );
-  worker.on("error", (error) => {
-    logger.error(QUEUE_NAME, `Worker errored: ${error}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  worker.on("error", (error: any) => {
+    logger.error(QUEUE_NAME, `Worker errored: ${error.stack}`);
   });
 }
 
