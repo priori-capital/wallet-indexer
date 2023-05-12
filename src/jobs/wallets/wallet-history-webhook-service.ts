@@ -12,7 +12,7 @@ export interface IRawUserTransaction {
   amount: number;
   metadata: {
     logIndex: number;
-    BatchIndex: number;
+    batchIndex: number;
   };
   block_hash: Buffer;
   block: number;
@@ -40,7 +40,7 @@ export interface IUserTransaction {
   amount: number;
   metadata: {
     logIndex: number;
-    BatchIndex: number;
+    batchIndex: number;
   };
   block_hash: string;
   block: number;
