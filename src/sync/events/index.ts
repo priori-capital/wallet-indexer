@@ -129,8 +129,9 @@ export const syncEvents = async (
               log,
             });
           }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-          logger.error("sync-events", `Failed to handle events: ${error?.stack}`);
+          logger.error("sync-events", `Failed to handle events: ${error}`);
           throw error;
         }
       }

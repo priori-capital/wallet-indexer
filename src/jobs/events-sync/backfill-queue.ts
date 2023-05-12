@@ -38,15 +38,21 @@ if (config.doBackgroundWork && config.doEventsSyncBackfill) {
         );
 
         await syncEvents(chainId, fromBlock, toBlock, { backfill, syncDetails });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        logger.error(QUEUE_NAME, `Events backfill syncing failed: ${error.stack}`);
+        let err = error;
+        if (error?.error?.error) {
+          err = error.error.error;
+        }
+        logger.error(QUEUE_NAME, `Events backfill syncing failed: ${err}`);
         throw error;
       }
     },
     { connection: redis.duplicate(), concurrency: 15 }
   );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   worker.on("error", (error: any) => {
-    logger.error(QUEUE_NAME, `Worker errored: ${error.stack}`);
+    logger.error(QUEUE_NAME, `Worker errored: ${error}`);
   });
 }
 
