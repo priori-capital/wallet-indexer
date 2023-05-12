@@ -26,6 +26,7 @@ export const registerApp: RouteOptions = {
       webhookAuthKey: Joi.string().min(8).required(),
     }),
   },
+  auth: "webhook_server",
   handler: async (request: Request, h) => {
     const data = request.payload as RegisterAppDto;
 
@@ -69,6 +70,7 @@ export const updateApp: RouteOptions = {
       webhookAuthKey: Joi.string().min(8).required(),
     }),
   },
+  auth: "webhook_client_auth",
   handler: async (request: Request, h: ResponseToolkit) => {
     try {
       const data = request.payload as RegisterAppDto;
