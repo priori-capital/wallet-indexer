@@ -6,6 +6,7 @@ import { getHistoryDetails } from "./endpoints/balance/historyDetail";
 import { getBalance } from "./endpoints/balance/totalbalance";
 import { getAssetsDetails } from "./endpoints/balance/assetDetail";
 import * as trackWalletEndpoints from "./endpoints/wallet-tracking";
+import * as userTransactionEndpoints from "./endpoints/user-transactions";
 
 export const setupRoutes = (server: Server) => {
   server.route({
@@ -60,5 +61,11 @@ export const setupRoutes = (server: Server) => {
     method: "POST",
     path: "/track-wallet",
     options: trackWalletEndpoints.requestWalletTracking,
+  });
+
+  server.route({
+    method: "GET",
+    path: "/transaction-log",
+    options: userTransactionEndpoints.fetchTransactionLog,
   });
 };
