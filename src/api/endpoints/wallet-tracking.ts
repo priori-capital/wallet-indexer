@@ -32,12 +32,6 @@ export const processAddWalletRequest = async (
   }
 };
 
-export const extractApiKeyFromAuthHeader = (authHeader: string) => {
-  const [typePart, apiKeyPart] = authHeader.split(" ");
-  if (typePart === "Bearer") return apiKeyPart;
-  return null;
-};
-
 export const requestWalletTracking: RouteOptions = {
   description: "Request tracking for a wallet address",
   notes: "Request tracking for a wallet address using apiKey.",

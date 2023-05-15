@@ -16,12 +16,6 @@ export interface RequestTransactionLogDto {
   chain_id: number;
 }
 
-export const extractApiKeyFromAuthHeader = (authHeader: string) => {
-  const [typePart, apiKeyPart] = authHeader.split(" ");
-  if (typePart === "Bearer") return apiKeyPart;
-  return null;
-};
-
 export const fetchTransactionLog: RouteOptions = {
   description: "Fetch user transaction by tx hash and chain id",
   notes: "Fetch user transaction by tx hash and chain id",
