@@ -1,4 +1,5 @@
 import { idb, pgp } from "@/common/db";
+import { emitEvent } from "@/common/kafka";
 import { logger } from "@/common/logger";
 import { toBuffer } from "@/common/utils";
 import { BaseEventParams } from "@/events-sync/parser";
@@ -41,7 +42,7 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
     //   return 0;
     // });
     for (const event of events) {
-      transferValues.push({
+      const dbEvent = {
         address: toBuffer(event.baseEventParams.address),
         block: event.baseEventParams.block,
         block_hash: toBuffer(event.baseEventParams.blockHash),
@@ -53,7 +54,10 @@ export const addEvents = async (events: Event[], backfill: boolean, chainId: num
         to: toBuffer(event.to),
         amount: event.amount,
         chainId: chainId,
-      });
+      };
+
+      transferValues.push(dbEvent);
+      await emitEvent(dbEvent);
     }
 
     // transferValues.sort((a, b) => Buffer.compare(a.address, b.address));
