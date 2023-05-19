@@ -3,6 +3,6 @@ node {
   cleanWs()
   checkout scm
   wrapper(
-    configFilePath: 'config.properties'
+    configFilePath: 'k8-Menifest/config.properties'
   )
 }
