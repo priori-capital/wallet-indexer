@@ -74,16 +74,19 @@ if (config.doBackgroundWork) {
         // latest blocks might be missing due to upstream chain reorgs):
         // https://ethereum.stackexchange.com/questions/109660/eth-getlogs-and-some-missing-logs
         await redis.set(`${QUEUE_NAME}-chain${chainId}-last-block`, headBlock - 5);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        logger.error(
-          QUEUE_NAME,
-          `Events realtime syncing failed for chain ${chainId}: ${error.stack}`
-        );
+        let err = error;
+        if (error?.error?.error) {
+          err = error.error.error;
+        }
+        logger.error(QUEUE_NAME, `Events realtime syncing failed for chain ${chainId}: ${err}`);
         throw error;
       }
     },
     { connection: redis.duplicate(), concurrency: 3 }
   );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   worker.on("error", (error: any) => {
     logger.error(QUEUE_NAME, `Worker errored: ${error.stack}`);
   });

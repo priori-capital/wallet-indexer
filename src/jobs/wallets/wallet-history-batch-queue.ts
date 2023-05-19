@@ -36,8 +36,9 @@ if (config.syncPacman) {
     },
     { connection: redis.duplicate(), concurrency: 1 }
   );
-  worker.on("error", (error) => {
-    logger.error(QUEUE_NAME, `Worker errored: ${error}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  worker.on("error", (error: any) => {
+    logger.error(QUEUE_NAME, `Worker errored: ${error.stack}`);
   });
 }
 

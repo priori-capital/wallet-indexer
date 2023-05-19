@@ -101,13 +101,19 @@ if (config.syncPacman) {
             batch,
             totalBatch,
             transactions: userActivities.map((activity) => ({
-              ...activity,
               ...gasDetails(activity),
               hash: fromBuffer(activity.ut_hash),
               contract: fromBuffer(activity.contract),
               from_address: fromBuffer(activity.from_address),
               to_address: fromBuffer(activity.to_address),
               block_hash: fromBuffer(activity.block_hash),
+              type: activity.type,
+              amount: activity.amount,
+              metadata: activity.metadata,
+              block: activity.block,
+              event_timestamp: activity.event_timestamp,
+              chain_id: activity.chain_id,
+              created_at: activity.created_at,
             })),
             workspaceId,
             isWalletCached,
@@ -127,14 +133,15 @@ if (config.syncPacman) {
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        logger.error(QUEUE_NAME, `${error} ${error.stack}`);
+        logger.error(QUEUE_NAME, `${error.stack}`);
         throw error;
       }
     },
     { connection: redis.duplicate(), concurrency: 1 }
   );
-  worker.on("error", (error) => {
-    logger.error(QUEUE_NAME, `Worker errored: ${error}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  worker.on("error", (error: any) => {
+    logger.error(QUEUE_NAME, `Worker errored: ${error.stack}`);
   });
 }
 

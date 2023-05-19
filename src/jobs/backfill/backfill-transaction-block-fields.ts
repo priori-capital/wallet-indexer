@@ -88,8 +88,8 @@ if (config.doBackgroundWork) {
     { connection: redis.duplicate(), concurrency: 1 }
   );
 
-  worker.on("error", (error) => {
-    logger.error(QUEUE_NAME, `Worker errored: ${error}`);
+  worker.on("error", (error: any) => {
+    logger.error(QUEUE_NAME, `Worker errored: ${error.stack}`);
   });
 
   // !!! DISABLED
