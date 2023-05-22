@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:  dev-indexer-deployment
+  name: dev-indexer-deployment
   namespace: dev
   labels:
     app: dev-indexer
@@ -13,17 +13,17 @@ spec:
   template:
     metadata:
       labels:
-        app:  dev-indexer
+        app: dev-indexer
     spec:
       containers:
-      - name:  dev-indexer-container
-        image:  377321893543.dkr.ecr.us-east-1.amazonaws.com/dev-priori-indexer
+      - name: dev-indexer-container
+        image: 377321893543.dkr.ecr.us-east-1.amazonaws.com/dev-priori-indexer
         imagePullPolicy: Always
         envFrom:
-            - configMapRef:
-                name: dev-indexer-config
-            - secretRef:
-                name: dev-indexer-secret
+          - configMapRef:
+              name: dev-indexer-config
+          - secretRef:
+              name: dev-indexer-secret
         resources:
           requests:
             cpu: 1000m
@@ -32,8 +32,16 @@ spec:
             cpu: 1000m
             memory: 2024Mi
         ports:
-        - containerPort:  3000
-          name:  dev-indexer
+        - containerPort: 3000
+          name: dev-indexer
+        readinessProbe:
+          httpGet:
+            path: /   
+            port: 3000       
+          initialDelaySeconds: 5    
+          periodSeconds: 5          
+          failureThreshold: 3       
+          successThreshold: 1
       imagePullSecrets:
-          - name: ecr-registry-secret    
+        - name: ecr-registry-secret
       restartPolicy: Always
