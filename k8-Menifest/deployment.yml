@@ -30,7 +30,7 @@ spec:
             memory: 1024Mi
           limits:
             cpu: 1000m
-            memory: 2024Mi
+            memory: 4096Mi
         ports:
         - containerPort: 3000
           name: dev-indexer
